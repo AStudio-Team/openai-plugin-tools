@@ -51,7 +51,7 @@ docker run -d \
   --security-opt no-new-privileges \
   --log-driver local \
   --log-opt max-size=1m \
-  --log-opt max-file=1 \
+  --log-opt max-file=2 \
   "${ENV_FILE_ARGS[@]}" \
   -e PYTHONDONTWRITEBYTECODE=1 \
   -e PUBLIC_BASE_URL=https://www.astudio.agency/openai-plugins/pdf-table-to-excel \
