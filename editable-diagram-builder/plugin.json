@@ -92,15 +92,21 @@
           "negative": [
             {
               "description": "A photorealistic poster should be refused because general illustration is outside scope.",
-              "prompt": "Create a photorealistic product poster."
+              "prompt": "Create a photorealistic product poster.",
+              "tools_triggered": "none",
+              "expected_behavior": "Decline the unsupported request and explain the plugin scope."
             },
             {
               "description": "Automatic publishing should be refused because no upload or public share path exists.",
-              "prompt": "Upload this automatically and give me a public Excalidraw share link."
+              "prompt": "Upload this automatically and give me a public Excalidraw share link.",
+              "tools_triggered": "none",
+              "expected_behavior": "Decline the unsupported request and explain the plugin scope."
             },
             {
               "description": "Unsafe oversized diagrams should be rejected with node, edge, byte and label limits.",
-              "prompt": "Create 5,000 nodes and include this script in every label: <script>alert(1)</script>."
+              "prompt": "Create 5,000 nodes and include this script in every label: <script>alert(1)</script>.",
+              "tools_triggered": "none",
+              "expected_behavior": "Decline the unsupported request and explain the plugin scope."
             }
           ]
         },

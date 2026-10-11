@@ -43,6 +43,9 @@ class ManifestAndPackageTests(unittest.TestCase):
         self.assertNotIn("excalidraw diagram builder", self.diagram["extensions"]["com.openai"]["interface"]["displayName"].lower())
 
     def test_review_selection_cases_and_public_demo(self):
+        for manifest in (self.pdf, self.gcc, self.diagram, self.growth, self.ad, self.crawler, self.data, self.grounded):
+            for case in manifest["extensions"]["com.openai"]["review"]["test_cases"]["negative"]:
+                self.assertTrue(all(case.get(key) for key in ("description", "prompt", "tools_triggered", "expected_behavior")))
         gcc_review = self.gcc["extensions"]["com.openai"]["review"]
         self.assertEqual(len(gcc_review["test_cases"]["positive"]), 5)
         self.assertEqual(len(gcc_review["test_cases"]["negative"]), 3)

@@ -113,15 +113,21 @@
           "negative": [
             {
               "description": "Scanned image-only PDFs are unsupported. The plugin should explain that OCR is not included and must not fabricate table data.",
-              "prompt": "Convert this scanned PDF to Excel even if it has no selectable text."
+              "prompt": "Convert this scanned PDF to Excel even if it has no selectable text.",
+              "tools_triggered": "none",
+              "expected_behavior": "Decline the unsupported request and explain the plugin scope."
             },
             {
               "description": "JPG input is outside the PDF-only scope. The plugin should ask for a PDF and must not invoke the conversion tool.",
-              "prompt": "Convert this JPG photograph into an Excel workbook."
+              "prompt": "Convert this JPG photograph into an Excel workbook.",
+              "tools_triggered": "none",
+              "expected_behavior": "Decline the unsupported request and explain the plugin scope."
             },
             {
               "description": "Arabic writing is unrelated to PDF table extraction. The plugin should not activate or call any tool.",
-              "prompt": "Write an Arabic caption for a hotel launch."
+              "prompt": "Write an Arabic caption for a hotel launch.",
+              "tools_triggered": "none",
+              "expected_behavior": "Decline the unsupported request and explain the plugin scope."
             }
           ]
         },
