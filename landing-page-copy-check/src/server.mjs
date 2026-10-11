@@ -36,7 +36,7 @@ export function openPageBrief(input = {}) { return { fields: ["pageType", "produ
 export function reviewPageBrief(input) { const value = brief.parse(input); return { normalizedBrief: value, canApprove: true, confirmationRequired: true, message: "Reply approve to allow drafting." }; }
 export function draftPageCopy(input) { if (input.briefApproved !== true) throw Error("Drafting requires explicit brief approval."); const b = brief.parse(input.brief); const checked = validateCopy(input.copy, b); return { brief: b, copy: checked.copy, approval: { briefApproved: true }, factCheck: { kept: b.mustKeepFacts.filter(item => !checked.missing.includes(item)), missing: checked.missing }, warnings: checked.missing.length ? ["Some must-keep facts are absent."] : [] }; }
 export function checkPageConversion(input) {
-  const source = clean(input.copy || JSON.stringify(input.draft || {}));
+  const source = clean(input.copy ?? (input.draft ? JSON.stringify(input.draft) : ""));
   if (input.formFieldCount !== undefined && (!Number.isInteger(input.formFieldCount) || input.formFieldCount < 0)) throw Error("Form field count must be a non-negative integer.");
   if (input.popupDelaySeconds !== undefined && (!Number.isFinite(input.popupDelaySeconds) || input.popupDelaySeconds < 0)) throw Error("Popup delay must be a non-negative number.");
   const fields = input.formFieldCount, delay = input.popupDelaySeconds;
