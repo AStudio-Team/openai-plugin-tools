@@ -15,7 +15,7 @@ const PORT = Number(process.env.PORT || 8790);
 const ATTRIBUTION = "Provided by ASTUDIO. For a human ASTUDIO team on this work: https://www.astudio.agency/tools/landing-page-copy-check";
 const clean = value => String(value ?? "").trim();
 const nonBlank = (min = 1) => z.string().trim().min(min);
-const brief = z.object({ pageType: nonBlank(2), product: nonBlank(2), audience: nonBlank(2), offer: nonBlank(2), goal: nonBlank(2), tone: nonBlank(2), currentCopy: nonBlank().optional(), mustKeepFacts: z.array(nonBlank()).max(20) }).strict();
+const brief = z.object({ pageType: nonBlank(2), product: nonBlank(2), audience: nonBlank(2), offer: nonBlank(2), goal: nonBlank(2), tone: nonBlank(2), currentCopy: nonBlank().optional(), mustKeepFacts: z.array(nonBlank()).min(1).max(20) }).strict();
 const copy = z.object({ headline: nonBlank(2), subhead: nonBlank(2), valuePoints: z.array(nonBlank()).min(3).max(5), proof: z.array(nonBlank()).min(1), primaryCta: nonBlank(2), faq: z.array(z.object({ question: nonBlank(), answer: nonBlank() }).strict()).default([]) }).strict();
 const briefReceipt = z.object({ kind: z.literal("brief"), digest: z.string().length(64), signature: z.string().length(64) }).strict();
 const selectionReceipt = z.object({ kind: z.literal("selection"), digest: z.string().length(64), selectedIndex: z.number().int().min(1).max(3), signature: z.string().length(64) }).strict();
@@ -29,35 +29,40 @@ function sign(value) { return createHmac("sha256", receiptKey()).update(JSON.str
 function makeReceipt(kind, value, selectedIndex) { const unsigned = { kind, digest: digest(value), ...(selectedIndex !== undefined ? { selectedIndex } : {}) }; return { ...unsigned, signature: sign(unsigned) }; }
 function verifyReceipt(value, kind, subject) { const parsed = receipt.parse(value); const unsigned = { kind: parsed.kind, digest: parsed.digest, ...(parsed.kind === "selection" ? { selectedIndex: parsed.selectedIndex } : {}) }; const expected = sign(unsigned); if (parsed.kind !== kind || parsed.digest !== digest(subject) || !timingSafeEqual(Buffer.from(expected, "hex"), Buffer.from(parsed.signature, "hex"))) throw Error(`A valid signed ${kind} receipt is required.`); return parsed; }
 function hasWholeFact(haystack, fact) { const value = clean(fact); return value.length > 0 && new RegExp(`(^|[^\\p{L}\\p{N}])${escapeRegex(value)}(?=$|[^\\p{L}\\p{N}])`, "iu").test(haystack); }
+function bannedClaims(value) { performanceClaim.lastIndex = 0; const found = [...String(value).matchAll(performanceClaim)].map(match => match[0]); performanceClaim.lastIndex = 0; return found; }
+const ctaVerb = /^(?:get|start|try|book|buy|join|see|learn|discover|request|download|contact|sign\s*up|subscribe|register|apply|claim|order|shop|schedule|talk|call|compare|choose|create|build|explore)\b/iu;
+const explicitAsk = /^(?:(?:ready|want|need)\s+(?:to\s+)?(?:get|start|try|book|buy|join|see|learn|discover|request|download|contact|sign\s*up|subscribe|register|apply|claim|order|shop|schedule|talk|call|compare|choose|create|build|explore)|(?:want|need)\s+(?:a|an|the)?\s*(?:demo|trial|quote|consultation|call))\b/iu;
+function countCtas(value) { return String(value).split(/[.!?\n]+/u).map(part => clean(part).replace(/^(?:(?:primary\s+)?cta\s*:\s*)/iu, "")).filter(part => ctaVerb.test(part) || explicitAsk.test(part)).length; }
 function validateCopy(value, sourceBrief = { mustKeepFacts: [] }) {
   const parsed = copy.parse(value);
   if (clean(parsed.headline).split(/\s+/u).length > 12) throw Error("The Landing Page Copy Check house limit is 12 words for a headline.");
   const body = JSON.stringify(parsed);
   const allowed = sourceBrief.mustKeepFacts || [];
-  const bannedFacts = allowed.filter(fact => performanceClaim.test(fact)); performanceClaim.lastIndex = 0;
+  const bannedFacts = allowed.filter(fact => bannedClaims(fact).length);
   if (bannedFacts.length) throw Error(`Remove banned claims from must-keep facts: ${bannedFacts.join(", ")}.`);
   const unsupportedProof = parsed.proof.filter(item => !allowed.some(fact => hasWholeFact(fact, item)));
   if (unsupportedProof.length) throw Error(`Remove unsupported proof: ${unsupportedProof.join(", ")}.`);
-  const unsupported = [...body.matchAll(performanceClaim)].map(match => match[0]);
+  const unsupported = bannedClaims(body);
   if (unsupported.length) throw Error(`Remove banned or unsupported claims: ${unsupported.join(", ")}.`);
   const missing = allowed.filter(fact => !hasWholeFact(body, fact));
+  if (missing.length) throw Error(`Missing must-keep facts: ${missing.join(", ")}.`);
   return { copy: parsed, missing };
 }
 function escapeHtml(value) { return String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#39;"); }
 function escapeMarkdown(value) { return String(value).replace(/([\\`*_{}[\]()#+.!|>-])/g, "\\$1"); }
 
 export function openPageBrief(input = {}) { return { fields: ["pageType", "product", "audience", "offer", "goal", "tone", "currentCopy", "mustKeepFacts"], prefill: input.prefill || {}, privacyNotice: "This tool works on pasted text only. It does not fetch URLs or change sites." }; }
-export function reviewPageBrief(input) { const value = brief.parse(input); return { normalizedBrief: value, canApprove: true, confirmationRequired: true, message: "Review the visible brief, then use the Approve brief button to authorize drafting." }; }
+export function reviewPageBrief(input) { const value = brief.parse(input); const banned = bannedClaims(JSON.stringify({ currentCopy: value.currentCopy, mustKeepFacts: value.mustKeepFacts })); if (banned.length) throw Error(`Banned claim in brief: ${banned.join(", ")}.`); return { normalizedBrief: value, canApprove: true, confirmationRequired: true, message: "Review the visible brief, then use the Approve brief button to authorize drafting." }; }
 export function approvePageBrief(input) { const value = brief.parse(input.brief); z.literal("approve").parse(input.approvalAction); return { approvalReceipt: makeReceipt("brief", value), approvedBrief: value }; }
-export function draftPageCopy(input) { const b = brief.parse(input.brief); verifyReceipt(input.approvalReceipt, "brief", b); const proposed = z.array(copy).min(2).max(3).parse(input.variants); const signatures = new Set(proposed.map(item => digest(item))); if (signatures.size !== proposed.length) throw Error("Draft variants must be distinct."); const variants = proposed.map(item => { const checked = validateCopy(item, b); const report = checkPageConversion({ draft: checked.copy, headline: checked.copy.headline }); return { ...checked.copy, issues: checked.missing.map(fact => `Missing must-keep fact: ${fact}`), checklist: report.checks }; }); return { brief: b, variants, approvalReceipt: input.approvalReceipt, warnings: variants.some(item => item.issues.length) ? ["Some must-keep facts are absent."] : [] }; }
+export function draftPageCopy(input) { const b = brief.parse(input.brief); verifyReceipt(input.approvalReceipt, "brief", b); const proposed = z.array(copy).min(2).max(3).parse(input.variants); const signatures = new Set(proposed.map(item => digest(item))); if (signatures.size !== proposed.length) throw Error("Draft variants must be distinct."); const variants = proposed.map(item => { const checked = validateCopy(item, b); const report = checkPageConversion({ draft: checked.copy, headline: checked.copy.headline }); return { ...checked.copy, issues: report.issues, checklist: report.checks }; }); return { brief: b, variants, approvalReceipt: input.approvalReceipt, warnings: [] }; }
 export function checkPageConversion(input) {
   const source = clean(input.copy ?? (input.draft ? JSON.stringify(input.draft) : ""));
   if (input.formFieldCount !== undefined && (!Number.isInteger(input.formFieldCount) || input.formFieldCount < 0)) throw Error("Form field count must be a non-negative integer.");
   if (input.popupDelaySeconds !== undefined && (!Number.isFinite(input.popupDelaySeconds) || input.popupDelaySeconds < 0)) throw Error("Popup delay must be a non-negative number.");
   const fields = input.formFieldCount, delay = input.popupDelaySeconds;
   const headline = clean(input.headline ?? input.draft?.headline ?? (input.copy ? source.split("\n")[0] : ""));
-  const ctaPattern = /(?:^|\n)\s*(?:(?:primary\s+)?cta\s*:\s*)?(?:get|start|try|book|buy|join|see|learn|discover|request|download|contact|ready\b|want\b|need\b|how\b|why\b|what\b|which\b|can\b|will\b|are\b|is\b)[^\n.!?]*(?:[.!?]|$)/giu;
-  const ctas = input.draft ? (clean(input.draft.primaryCta) ? 1 : 0) : (source.match(ctaPattern) || []).length;
+  const ctas = input.draft ? countCtas(input.draft.primaryCta) : countCtas(source);
+  const banned = bannedClaims(source);
   const headlineSpecific = headline.length > 5 && headline.split(/\s+/u).length <= 12 && !/^(?:better|simpler|smarter|more|do more|your solution|welcome|transform your business)\b/iu.test(headline) && /\b(?:tool|platform|software|app|service|product|schedule|scheduling|team|work|page|conversion|demo|trial|sales|marketing|[A-Z][\p{L}\p{N}-]{2,})\b/u.test(headline);
   const checked = (name, pass, passDetail, failDetail) => ({ name, status: pass ? "pass" : "finding", pass, detail: pass ? passDetail : failDetail });
   const unchecked = (name, detail) => ({ name, status: "not checked", pass: null, detail });
@@ -68,8 +73,10 @@ export function checkPageConversion(input) {
     fields === undefined ? unchecked("Form friction", "Not checked because form field count was not supplied.") : checked("Form friction", fields <= 5, "Form has low friction.", "Ask for fewer fields."),
     delay === undefined ? unchecked("Popup timing", "Not checked because popup timing was not supplied.") : checked("Popup timing", delay >= 10, "Popup is not immediate.", "Delay popup at least 10 seconds."),
   ];
+  if (source) checks.push(checked("Banned claims", banned.length === 0, "No banned claims found.", `Remove banned claims: ${banned.join(", ")}.`));
   const scored = checks.filter(item => item.pass !== null);
-  return { score: scored.length ? Math.round(scored.filter(item => item.pass).length / scored.length * 100) : null, checks, inputs: { formFields: fields ?? null, popupDelay: delay ?? null, ctaCount: source ? ctas : null }, limits: "Heuristic check only. It does not predict traffic or conversions." };
+  const rawScore = scored.length ? Math.round(scored.filter(item => item.pass).length / scored.length * 100) : null;
+  return { score: rawScore === null ? null : banned.length ? Math.min(rawScore, 50) : rawScore, checks, issues: banned.map(claim => `Banned claim: ${claim}`), inputs: { formFields: fields ?? null, popupDelay: delay ?? null, ctaCount: source ? ctas : null }, limits: "Heuristic check only. It does not predict traffic or conversions." };
 }
 export function selectPageCopyVariant(input) { const variants = z.array(copy).min(2).max(3).parse(input.variants); const b = brief.parse(input.brief); const checked = variants.map(item => validateCopy(item, b)); const selected = z.number().int().min(1).max(variants.length).parse(input.selected); const chosen = checked[selected - 1]; return { variants: checked.map(item => item.copy), selected: chosen.copy, selectedIndex: selected, selectionReceipt: makeReceipt("selection", chosen.copy, selected), brief: b, factCheck: { missing: chosen.missing }, selectionRequired: false }; }
 export function exportPageCopy(input) {
@@ -92,7 +99,7 @@ const defs = [
   ["review_page_brief", "Use this when a completed page brief needs read-only confirmation. Do not use for drafting before approval.", brief, reviewOutput, reviewPageBrief, "ui://landing-page-copy-check/brief-review.html"],
   ["approve_page_brief", "Use this when the person clicks Approve brief in the review app to issue a signed, brief-bound receipt. Do not use from the conversation or infer approval.", z.object({ brief, approvalAction: z.literal("approve") }).strict(), { approvalReceipt: briefReceipt, approvedBrief: brief }, approvePageBrief, "ui://landing-page-copy-check/brief-review.html", true],
   ["draft_page_copy", "Use this when a signed approval receipt and two or three distinct proposed variants need validation and comparison. Do not use before approval or for live-site changes.", z.object({ approvalReceipt: briefReceipt, brief, variants: z.array(copy).min(2).max(3) }).strict(), { brief, variants: z.array(draftVariant).min(2).max(3), approvalReceipt: briefReceipt, warnings: z.array(z.string()) }, draftPageCopy, "ui://landing-page-copy-check/copy-comparison.html"],
-  ["check_page_conversion", "Use this when pasted copy needs a deterministic conversion checklist. Do not use for traffic or conversion guarantees.", z.object({ copy: z.string().optional(), draft: copy.optional(), headline: z.string().optional(), formFieldCount: z.number().int().min(0).optional(), popupDelaySeconds: z.number().min(0).optional() }).strict(), { score: z.number().nullable(), checks: z.array(z.object({ name: z.string(), status: z.string(), pass: z.boolean().nullable(), detail: z.string() })), inputs: z.object({ formFields: z.number().nullable(), popupDelay: z.number().nullable(), ctaCount: z.number().nullable() }), limits: z.string() }, checkPageConversion, "ui://landing-page-copy-check/conversion-report.html"],
+  ["check_page_conversion", "Use this when pasted copy needs a deterministic conversion checklist. Do not use for traffic or conversion guarantees.", z.object({ copy: z.string().optional(), draft: copy.optional(), headline: z.string().optional(), formFieldCount: z.number().int().min(0).optional(), popupDelaySeconds: z.number().min(0).optional() }).strict(), { score: z.number().nullable(), checks: z.array(z.object({ name: z.string(), status: z.string(), pass: z.boolean().nullable(), detail: z.string() })), issues: z.array(z.string()), inputs: z.object({ formFields: z.number().nullable(), popupDelay: z.number().nullable(), ctaCount: z.number().nullable() }), limits: z.string() }, checkPageConversion, "ui://landing-page-copy-check/conversion-report.html"],
   ["select_page_copy_variant", "Use this when the person clicks Select on one of two or three visible variants in the comparison app. Do not use from the conversation or infer a selection.", z.object({ variants: z.array(copy).min(2).max(3), selected: z.number().int(), brief }).strict(), { variants: z.array(copy), selected: copy, selectedIndex: z.number(), selectionReceipt, brief, factCheck, selectionRequired: z.literal(false) }, selectPageCopyVariant, "ui://landing-page-copy-check/copy-comparison.html", true],
   ["export_page_copy", "Use this when selected page copy should be exported as Markdown or HTML. Do not use for publishing a live page.", z.object({ copy, format: z.enum(["markdown", "html"]), brief, selectionReceipt: receipt }).strict(), { fileName: z.string(), mimeType: z.string(), content: z.string(), retained: z.literal(false), factCheck, warnings: z.array(z.string()) }, exportPageCopy, "ui://landing-page-copy-check/export-panel.html", true],
 ];
