@@ -1,0 +1,7 @@
+node_modules
+npm-debug.log
+tests
+review
+skills
+*.zip
+.DS_Store
