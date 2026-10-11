@@ -21,9 +21,12 @@ The service is stateless and closed-world. It does not publish, schedule, access
 
 ```bash
 npm ci --ignore-scripts
+export APPROVAL_HMAC_KEY=<32 or more random bytes>
 npm test
 npm start
 ```
+
+The deployment supplies `APPROVAL_HMAC_KEY` through its environment file.
 
 The local server listens on port 8790 by default. Its MCP endpoint is `/mcp`, health endpoints are `/health` and `/ready`, and public product pages start at `/`.
 
