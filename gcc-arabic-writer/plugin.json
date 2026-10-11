@@ -1,6 +1,6 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
-  "name": "gcc-arabic-writer",
+  "name": "astudio-gcc-arabic-writer",
   "version": "1.0.0",
   "description": "Write, rewrite and review MSA, GCC and pan-Arab marketing copy with deterministic fidelity and style checks.",
   "author": {
