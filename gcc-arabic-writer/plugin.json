@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "astudio-gcc-arabic-writer",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Write, rewrite and review MSA, GCC and pan-Arab marketing copy with deterministic fidelity and style checks.",
   "author": {
     "name": "ASTUDIO",
@@ -16,7 +16,7 @@
       "interface": {
         "displayName": "GCC Arabic Writer",
         "shortDescription": "GCC Arabic copy and checks",
-        "longDescription": "Write, rewrite and review Arabic marketing, advertising, brand and luxury copy for GCC and pan-Arab audiences. Use it for MSA copy, UAE or Saudi market adaptation, taglines, captions, websites, product descriptions, press releases, video scripts and business copy. ChatGPT writes the copy. Read-only tools normalize briefs, check numeric, URL and caller-protected literal preservation, and flag transparent style risks. Country dialect always requires native-market review.",
+        "longDescription": "Write, rewrite and review Arabic marketing, advertising, brand and luxury copy for GCC and pan-Arab audiences. A focused brief builder lets you review and explicitly send the deliverable, market, surface, voice, message, facts, protected literals and constraints before ChatGPT writes. Read-only review results support revision or selection. Text fallbacks remain available. MSA is the default, and country dialect always requires native-market review.",
         "developerName": "ASTUDIO",
         "category": "Productivity",
         "capabilities": ["Arabic marketing copywriting", "MSA copy", "GCC and pan-Arab localization", "UAE and Saudi market adaptation", "Arabic taglines and captions", "Luxury Arabic copy", "Arabic literal fidelity checks"],
@@ -87,7 +87,7 @@
         "commerce_description": "This plugin does not sell products or process payments."
       },
       "publication": {
-        "release_notes": "Initial public release with MSA-first GCC and pan-Arab writing guidance plus deterministic brief, literal-preservation and style checks.",
+        "release_notes": "Adds a human-reviewed Arabic brief builder and interactive fidelity and lint review with explicit revision paths, while preserving complete text fallbacks and MSA-first safeguards.",
         "translations": {
           "ar-SA": {
             "subtitle": "كتابة عربية لأسواق الخليج",
