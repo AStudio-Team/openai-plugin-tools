@@ -33,7 +33,7 @@
         "shortDescription": "Check product links to buy",
         "longDescription": "Verified Buy Link is a shopping research tool that checks the exact product pages you paste before you buy. Confirm the product, variant, delivery country, currency and budget at a checkpoint; the plugin then inspects one to five supplied product pages and reports evidence for product match, retailer identity, price, delivery and return terms, with a recheck before any link is opened. It is for shoppers comparing specific listings. Limits: it never searches for retailers, finds deals, buys, reserves, logs in, adds to cart or guarantees authenticity; pages are fetched only where a documented access right and robots permission exist.",
         "developerName": "ASTUDIO",
-        "category": "Shopping",
+        "category": "Other",
         "capabilities": [
           "Confirm product, variant and delivery country first",
           "Compare up to five exact product pages you paste",

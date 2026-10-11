@@ -34,7 +34,7 @@
         "shortDescription": "Ad copy ideas and checks",
         "longDescription": "Ad Creative Lab is a productivity tool that writes and checks ad copy from a campaign brief you approve, for Meta (Facebook, Instagram), Google responsive search ads, LinkedIn, TikTok and X. Fill the guided brief, approve it at a human checkpoint, compare three to five text-only concepts, pick one or ask for a visible revision, check the copy against each platform's character limits and your approved claims, and export CSV, JSON or Markdown. It is for advertisers, performance marketers and agencies. Limits: text only; it never connects to ad accounts, publishes ads, generates images or video, or forecasts results.",
         "developerName": "ASTUDIO",
-        "category": "Productivity",
+        "category": "Creativity",
         "capabilities": [
           "Guided campaign brief",
           "Your approval before any concept",
