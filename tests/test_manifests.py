@@ -17,10 +17,11 @@ class ManifestAndPackageTests(unittest.TestCase):
         self.data = json.loads((ROOT / "open-data-fetcher" / "plugin.json").read_text())
         self.diagram = json.loads((ROOT / "editable-diagram-builder" / "plugin.json").read_text())
         self.grounded = json.loads((ROOT / "grounded-citations" / "plugin-package" / "plugin.json").read_text())
+        self.schema = json.loads((ROOT / "schema-markup-generator" / "plugin.json").read_text())
 
     def test_astudio_is_publisher_for_all_products(self):
         self.assertEqual(self.gcc["name"], "astudio-gcc-arabic-writer")
-        for manifest in (self.gcc, self.pdf, self.ad, self.growth, self.landing_copy, self.crawler, self.data, self.diagram, self.grounded):
+        for manifest in (self.gcc, self.pdf, self.ad, self.growth, self.landing_copy, self.crawler, self.data, self.diagram, self.grounded, self.schema):
             self.assertEqual(manifest["author"]["name"], "ASTUDIO")
             self.assertEqual(manifest["extensions"]["com.openai"]["interface"]["developerName"], "ASTUDIO")
 
@@ -144,6 +145,11 @@ class ManifestAndPackageTests(unittest.TestCase):
         self.assertEqual(len(review["test_cases"]["negative"]), 3)
         mcp = json.loads((ROOT / "landing-page-copy-check" / "mcp.json").read_text())
         self.assertEqual(mcp["mcpServers"]["landing-page-copy-check"]["url"], "https://www.astudio.agency/openai-plugins/landing-page-copy-check/mcp")
+
+    def test_schema_markup_package_has_public_mcp_and_attribution(self):
+        mcp = json.loads((ROOT / "schema-markup-generator" / "mcp.json").read_text())
+        self.assertEqual(mcp["mcpServers"]["schema-markup-generator"]["url"], "https://www.astudio.agency/openai-plugins/schema-markup-generator/mcp")
+        self.assertIn("MIT", (ROOT / "schema-markup-generator" / "NOTICE").read_text())
     def test_next_version_and_interaction_docs_are_consistent(self):
         for product in ("gcc-arabic-writer", "pdf-table-to-excel"):
             package = json.loads((ROOT / product / "package.json").read_text())

@@ -1,6 +1,7 @@
 import subprocess
 import tempfile
 import unittest
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -9,6 +10,14 @@ BLOCK = ROOT / "deploy" / "tools.astudio.agency.caddy"
 
 
 class DeployConfigTests(unittest.TestCase):
+    def test_caddyfile_has_no_inline_blocks(self):
+        inline_blocks = [
+            line
+            for line in BLOCK.read_text().splitlines()
+            if re.match(r"^\s*\w+\s+\{.*\}\s*$", line)
+        ]
+        self.assertEqual(inline_blocks, [], "Caddy blocks must place braces on separate lines")
+
     def test_inserts_and_replaces_managed_block_inside_main_site(self):
         original = """{
     email test@example.com
@@ -50,6 +59,11 @@ astudio.agency, www.astudio.agency {
         self.assertIn('docker build --pull -t "$GROUNDED_IMAGE" grounded-citations', script)
         self.assertIn('docker build --pull -t "$LAUNCH_PLAN_IMAGE" launch-plan-builder', script)
         self.assertIn("LAUNCH_PLAN_STATE_FILE", script)
+        self.assertIn('docker build --pull -t "$SCHEMA_MARKUP_IMAGE" schema-markup-generator', script)
+        self.assertIn('run_container "$SCHEMA_MARKUP_CONTAINER" "$SCHEMA_MARKUP_IMAGE" 8790 local', script)
+        self.assertIn('wait_healthy "$SCHEMA_MARKUP_CONTAINER"', script)
+        self.assertIn('"__SCHEMA_MARKUP_UPSTREAM__", schema_markup', script)
+        self.assertIn('check_health https://www.astudio.agency/openai-plugins/schema-markup-generator/health schema-markup-generator', script)
         self.assertIn("--memory 512m", script)
         self.assertIn("--pids-limit 64", script)
         self.assertIn("--log-opt max-file=2", script)
@@ -122,6 +136,8 @@ astudio.agency, www.astudio.agency {
         self.assertIn("__LAUNCH_PLAN_UPSTREAM__:8790", block)
         self.assertIn("/openai-plugins/launch-plan-builder/mcp", block)
         self.assertIn("handle_path /tools/launch-plan-builder*", block)
+        self.assertIn("__SCHEMA_MARKUP_UPSTREAM__:8790", block)
+        self.assertIn("/openai-plugins/schema-markup-generator/mcp", block)
         self.assertIn("/openai-plugins/grounded-citations/mcp", block)
         self.assertIn("max_size 1MB", block)
         self.assertIn("max_size 128KB", block)
@@ -134,6 +150,17 @@ astudio.agency, www.astudio.agency {
         self.assertIn("handle_path /openai-plugins/verified-buy-link/*", block)
         self.assertIn("handle_path /tools/verified-buy-link*", block)
         self.assertLess(block.index("handle_path /tools/verified-buy-link*"), block.index("handle_path /tools/*"))
+
+    def test_every_plugin_mcp_block_forwards_client_ip(self):
+        block = BLOCK.read_text()
+        mcp_blocks = re.findall(
+            r"^    handle /openai-plugins/[^/]+/mcp \{.*?(?=^    handle |\Z)",
+            block,
+            flags=re.MULTILINE | re.DOTALL,
+        )
+        self.assertTrue(mcp_blocks, "expected OpenAI plugin MCP blocks")
+        for mcp_block in mcp_blocks:
+            self.assertIn("header_up X-Plugin-Client-IP {remote_host}", mcp_block)
 
     def test_deploy_shell_is_syntactically_valid(self):
         subprocess.run(["bash", "-n", str(ROOT / "deploy" / "deploy-production.sh")], check=True)
