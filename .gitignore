@@ -1,10 +1,16 @@
 node_modules/
+**/dist/
 .venv/
 __pycache__/
 *.pyc
 .DS_Store
 build/
+**/dist/
 PROJECT.md
 PLAN.md
 reports/
 gcc-arabic-writer/evals/
+FACTS.md
+FACTS.md.bak
+.FACTS.lock
+CHANGES-BY-CLAUDE.md

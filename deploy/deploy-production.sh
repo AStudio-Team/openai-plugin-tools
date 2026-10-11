@@ -8,6 +8,11 @@ RELEASE_DIR="/opt/openai-plugin-tools/releases/${RELEASE_SHA}"
 STATE_DIR="/opt/openai-plugin-tools"
 PDF_STATE_FILE="${STATE_DIR}/current-pdf-container"
 ARABIC_STATE_FILE="${STATE_DIR}/current-arabic-container"
+AD_STATE_FILE="${STATE_DIR}/current-ad-creative-lab-container"
+GROWTH_STATE_FILE="${STATE_DIR}/current-growth-container"
+CRAWLER_STATE_FILE="${STATE_DIR}/current-crawler-container"
+DATA_STATE_FILE="${STATE_DIR}/current-data-container"
+DIAGRAM_STATE_FILE="${STATE_DIR}/current-diagram-container"
 BUY_LINK_STATE_FILE="${STATE_DIR}/current-verified-buy-link-container"
 LEGACY_STATE_FILE="${STATE_DIR}/current-container"
 ENV_FILE="${STATE_DIR}/openai.env"
@@ -15,13 +20,29 @@ CADDYFILE="/opt/websites/caddy/Caddyfile"
 BACKUP="${CADDYFILE}.plugin-tools.${DEPLOY_ID}.bak"
 PDF_IMAGE="openai-plugin-pdf:${RELEASE_SHA}"
 ARABIC_IMAGE="openai-plugin-arabic:${RELEASE_SHA}"
-BUY_LINK_IMAGE="openai-plugin-verified-buy-link:${RELEASE_SHA}"
+AD_IMAGE="openai-plugin-ad-creative-lab:${RELEASE_SHA}"
 PDF_CONTAINER="openai-plugin-pdf-${DEPLOY_ID}"
 ARABIC_CONTAINER="openai-plugin-arabic-${DEPLOY_ID}"
+AD_CONTAINER="openai-plugin-ad-creative-lab-${DEPLOY_ID}"
+CRAWLER_IMAGE="openai-plugin-crawler-auditor:${RELEASE_SHA}"
+CRAWLER_CONTAINER="openai-plugin-crawler-auditor-${DEPLOY_ID}"
+DATA_IMAGE="openai-plugin-data:${RELEASE_SHA}"
+DATA_CONTAINER="openai-plugin-data-${DEPLOY_ID}"
+DIAGRAM_IMAGE="openai-plugin-diagram:${RELEASE_SHA}"
+DIAGRAM_CONTAINER="openai-plugin-diagram-${DEPLOY_ID}"
+BUY_LINK_IMAGE="openai-plugin-verified-buy-link:${RELEASE_SHA}"
 BUY_LINK_CONTAINER="openai-plugin-verified-buy-link-${DEPLOY_ID}"
 RENDERED_BLOCK="/tmp/openai-plugin-tools-${DEPLOY_ID}.caddy"
+RENDERED_FIXTURES="/tmp/ai-crawler-fixtures-${DEPLOY_ID}.caddy"
 PREVIOUS_PDF_CONTAINER=""
 PREVIOUS_ARABIC_CONTAINER=""
+PREVIOUS_AD_CONTAINER=""
+GROWTH_IMAGE="openai-plugin-growth:${RELEASE_SHA}"
+GROWTH_CONTAINER="openai-plugin-growth-${DEPLOY_ID}"
+PREVIOUS_GROWTH_CONTAINER=""
+PREVIOUS_CRAWLER_CONTAINER=""
+PREVIOUS_DATA_CONTAINER=""
+PREVIOUS_DIAGRAM_CONTAINER=""
 PREVIOUS_BUY_LINK_CONTAINER=""
 CONFIG_MUTATED=0
 SWITCHED=0
@@ -40,6 +61,21 @@ elif [ -s "$LEGACY_STATE_FILE" ]; then
 fi
 if [ -s "$ARABIC_STATE_FILE" ]; then
   PREVIOUS_ARABIC_CONTAINER="$(tr -cd 'A-Za-z0-9_.-' < "$ARABIC_STATE_FILE")"
+fi
+if [ -s "$AD_STATE_FILE" ]; then
+  PREVIOUS_AD_CONTAINER="$(tr -cd 'A-Za-z0-9_.-' < "$AD_STATE_FILE")"
+fi
+if [ -s "$GROWTH_STATE_FILE" ]; then
+  PREVIOUS_GROWTH_CONTAINER="$(tr -cd 'A-Za-z0-9_.-' < "$GROWTH_STATE_FILE")"
+fi
+if [ -s "$CRAWLER_STATE_FILE" ]; then
+  PREVIOUS_CRAWLER_CONTAINER="$(tr -cd 'A-Za-z0-9_.-' < "$CRAWLER_STATE_FILE")"
+fi
+if [ -s "$DATA_STATE_FILE" ]; then
+  PREVIOUS_DATA_CONTAINER="$(tr -cd 'A-Za-z0-9_.-' < "$DATA_STATE_FILE")"
+fi
+if [ -s "$DIAGRAM_STATE_FILE" ]; then
+  PREVIOUS_DIAGRAM_CONTAINER="$(tr -cd 'A-Za-z0-9_.-' < "$DIAGRAM_STATE_FILE")"
 fi
 if [ -s "$BUY_LINK_STATE_FILE" ]; then
   PREVIOUS_BUY_LINK_CONTAINER="$(tr -cd 'A-Za-z0-9_.-' < "$BUY_LINK_STATE_FILE")"
@@ -60,7 +96,8 @@ rollback() {
   trap - EXIT INT TERM HUP
   local rollback_ok=1
   if [ "$CONFIG_MUTATED" -eq 1 ] && [ -f "$BACKUP" ]; then
-    if ! cp "$BACKUP" "${CADDYFILE}.rollback-${DEPLOY_ID}" || ! mv "${CADDYFILE}.rollback-${DEPLOY_ID}" "$CADDYFILE"; then
+    # Write into the existing file: the Caddy container bind-mounts this path and follows the inode, so a rename would leave it reading the old content.
+    if ! cp "$BACKUP" "$CADDYFILE"; then
       rollback_ok=0
     elif ! docker exec websites-caddy-1 caddy validate --config /etc/caddy/Caddyfile; then
       rollback_ok=0
@@ -71,15 +108,25 @@ rollback() {
   if [ "$rollback_ok" -eq 1 ]; then
     write_state "$PDF_STATE_FILE" "$PREVIOUS_PDF_CONTAINER"
     write_state "$ARABIC_STATE_FILE" "$PREVIOUS_ARABIC_CONTAINER"
+    write_state "$AD_STATE_FILE" "$PREVIOUS_AD_CONTAINER"
+    write_state "$GROWTH_STATE_FILE" "$PREVIOUS_GROWTH_CONTAINER"
+    write_state "$CRAWLER_STATE_FILE" "$PREVIOUS_CRAWLER_CONTAINER"
+    write_state "$DATA_STATE_FILE" "$PREVIOUS_DATA_CONTAINER"
+    write_state "$DIAGRAM_STATE_FILE" "$PREVIOUS_DIAGRAM_CONTAINER"
     write_state "$BUY_LINK_STATE_FILE" "$PREVIOUS_BUY_LINK_CONTAINER"
-    docker rm -f "$PDF_CONTAINER" "$ARABIC_CONTAINER" "$BUY_LINK_CONTAINER" >/dev/null 2>&1 || true
+    docker rm -f "$PDF_CONTAINER" "$ARABIC_CONTAINER" "$AD_CONTAINER" "$GROWTH_CONTAINER" "$CRAWLER_CONTAINER" "$DATA_CONTAINER" "$DIAGRAM_CONTAINER" "$BUY_LINK_CONTAINER" >/dev/null 2>&1 || true
   else
     write_state "$PDF_STATE_FILE" "$PDF_CONTAINER"
     write_state "$ARABIC_STATE_FILE" "$ARABIC_CONTAINER"
+    write_state "$AD_STATE_FILE" "$AD_CONTAINER"
+    write_state "$GROWTH_STATE_FILE" "$GROWTH_CONTAINER"
+    write_state "$CRAWLER_STATE_FILE" "$CRAWLER_CONTAINER"
+    write_state "$DATA_STATE_FILE" "$DATA_CONTAINER"
+    write_state "$DIAGRAM_STATE_FILE" "$DIAGRAM_CONTAINER"
     write_state "$BUY_LINK_STATE_FILE" "$BUY_LINK_CONTAINER"
     echo "rollback failed; candidate containers were kept running for recovery" >&2
   fi
-  rm -f "${PDF_STATE_FILE}.tmp" "${ARABIC_STATE_FILE}.tmp" "${BUY_LINK_STATE_FILE}.tmp" "${CADDYFILE}.rollback-${DEPLOY_ID}"
+  rm -f "${PDF_STATE_FILE}.tmp" "${ARABIC_STATE_FILE}.tmp" "${AD_STATE_FILE}.tmp" "${GROWTH_STATE_FILE}.tmp" "${CRAWLER_STATE_FILE}.tmp" "${DATA_STATE_FILE}.tmp" "${DIAGRAM_STATE_FILE}.tmp" "${BUY_LINK_STATE_FILE}.tmp" "${CADDYFILE}.rollback-${DEPLOY_ID}"
   return $((1 - rollback_ok))
 }
 
@@ -98,11 +145,35 @@ trap 'exit 129' HUP
 cd "$RELEASE_DIR"
 docker build --pull -t "$PDF_IMAGE" pdf-table-to-excel
 docker build --pull -t "$ARABIC_IMAGE" gcc-arabic-writer
+docker build --pull -t "$AD_IMAGE" ad-creative-lab
+docker build --pull -t "$GROWTH_IMAGE" growth-marketing-planner
+docker build --pull -t "$CRAWLER_IMAGE" ai-crawler-readiness-auditor
+docker build --pull -t "$DATA_IMAGE" open-data-fetcher
+docker build --pull -t "$DIAGRAM_IMAGE" editable-diagram-builder
 docker build --pull -t "$BUY_LINK_IMAGE" verified-buy-link
 
 ENV_FILE_ARGS=()
 if [ -s "$ENV_FILE" ]; then
   ENV_FILE_ARGS=(--env-file "$ENV_FILE")
+fi
+EXPECTED_OPENAI_CHALLENGE="$(python3 - "$ENV_FILE" <<'PY'
+import sys
+from pathlib import Path
+path = Path(sys.argv[1])
+value = ""
+if path.is_file():
+    for line in path.read_text().splitlines():
+        if line.startswith("OPENAI_APPS_CHALLENGE="):
+            value = line.split("=", 1)[1]
+            break
+if not value or value == "configure-before-production":
+    raise SystemExit("OPENAI_APPS_CHALLENGE must be configured before deployment")
+print(value)
+PY
+)"
+if ! grep -Eq '^CHECKPOINT_SECRET=.{32,}$' "$ENV_FILE" 2>/dev/null; then
+  echo "CHECKPOINT_SECRET with at least 32 bytes is required in ${ENV_FILE}" >&2
+  exit 78
 fi
 BUY_LINK_ARGS=()
 if [ -s "${STATE_DIR}/verified-buy-link-source-rights.json" ]; then
@@ -113,7 +184,12 @@ run_container() {
   local name="$1"
   local image="$2"
   local port="$3"
-  shift 3
+  local log_driver="$4"
+  shift 4
+  local log_args=(--log-driver local --log-opt max-size=1m --log-opt max-file=2)
+  if [ "$log_driver" = "none" ]; then
+    log_args=(--log-driver none)
+  fi
   docker run -d \
     --name "$name" \
     --restart unless-stopped \
@@ -126,9 +202,7 @@ run_container() {
     --tmpfs /tmp:rw,noexec,nosuid,size=64m \
     --cap-drop ALL \
     --security-opt no-new-privileges \
-    --log-driver local \
-    --log-opt max-size=1m \
-    --log-opt max-file=2 \
+    "${log_args[@]}" \
     "${ENV_FILE_ARGS[@]}" \
     -e ALLOWED_HOSTS=www.astudio.agency,astudio.agency,127.0.0.1,localhost \
     -e PORT="$port" \
@@ -136,11 +210,21 @@ run_container() {
     "$image"
 }
 
-run_container "$PDF_CONTAINER" "$PDF_IMAGE" 8788 \
+run_container "$PDF_CONTAINER" "$PDF_IMAGE" 8788 local \
   -e PYTHONDONTWRITEBYTECODE=1 \
   -e PUBLIC_BASE_URL=https://www.astudio.agency/openai-plugins/pdf-table-to-excel
-run_container "$ARABIC_CONTAINER" "$ARABIC_IMAGE" 8789
-run_container "$BUY_LINK_CONTAINER" "$BUY_LINK_IMAGE" 8790 "${BUY_LINK_ARGS[@]}"
+run_container "$ARABIC_CONTAINER" "$ARABIC_IMAGE" 8789 local
+run_container "$AD_CONTAINER" "$AD_IMAGE" 8790 local
+run_container "$GROWTH_CONTAINER" "$GROWTH_IMAGE" 8790 none
+run_container "$CRAWLER_CONTAINER" "$CRAWLER_IMAGE" 8790 local \
+  -e MAX_CONCURRENT_AUDITS=4 \
+  -e ALLOWED_HOSTS=www.astudio.agency,astudio.agency,127.0.0.1,localhost,fixtures.astudio.agency,ready.fixtures.astudio.agency,robots-blocked.fixtures.astudio.agency,llms-html.fixtures.astudio.agency,invalid-jsonld.fixtures.astudio.agency,sitemap-timeout.fixtures.astudio.agency
+run_container "$DATA_CONTAINER" "$DATA_IMAGE" 8791 local \
+  -e PUBLIC_BASE_URL=https://www.astudio.agency/openai-plugins/open-data-fetcher \
+  -e APP_ORIGIN=https://www.astudio.agency
+run_container "$DIAGRAM_CONTAINER" "$DIAGRAM_IMAGE" 8790 local \
+  -e TRUST_PROXY_HEADER=true
+run_container "$BUY_LINK_CONTAINER" "$BUY_LINK_IMAGE" 8790 local "${BUY_LINK_ARGS[@]}"
 
 wait_healthy() {
   local container="$1"
@@ -157,21 +241,36 @@ wait_healthy() {
 }
 wait_healthy "$PDF_CONTAINER"
 wait_healthy "$ARABIC_CONTAINER"
+wait_healthy "$AD_CONTAINER"
+wait_healthy "$GROWTH_CONTAINER"
+wait_healthy "$CRAWLER_CONTAINER"
+wait_healthy "$DATA_CONTAINER"
+wait_healthy "$DIAGRAM_CONTAINER"
 wait_healthy "$BUY_LINK_CONTAINER"
 
-python3 - "$PDF_CONTAINER" "$ARABIC_CONTAINER" "$BUY_LINK_CONTAINER" deploy/tools.astudio.agency.caddy "$RENDERED_BLOCK" <<'PY'
+python3 - "$PDF_CONTAINER" "$ARABIC_CONTAINER" "$AD_CONTAINER" "$GROWTH_CONTAINER" "$CRAWLER_CONTAINER" "$DATA_CONTAINER" "$DIAGRAM_CONTAINER" "$BUY_LINK_CONTAINER" deploy/tools.astudio.agency.caddy "$RENDERED_BLOCK" <<'PY'
 import sys
 from pathlib import Path
-pdf, arabic, buy_link, source, target = sys.argv[1:]
+pdf, arabic, ad, growth, crawler, data, diagram, buy_link, source, target = sys.argv[1:]
 text = Path(source).read_text()
-text = text.replace("__PDF_PLUGIN_UPSTREAM__", pdf).replace("__ARABIC_PLUGIN_UPSTREAM__", arabic).replace("__VERIFIED_BUY_LINK_UPSTREAM__", buy_link)
-if "__PDF_PLUGIN_UPSTREAM__" in text or "__ARABIC_PLUGIN_UPSTREAM__" in text or "__VERIFIED_BUY_LINK_UPSTREAM__" in text:
+text = text.replace("__PDF_PLUGIN_UPSTREAM__", pdf).replace("__ARABIC_PLUGIN_UPSTREAM__", arabic).replace("__AD_CREATIVE_LAB_UPSTREAM__", ad).replace("__GROWTH_PLUGIN_UPSTREAM__", growth).replace("__CRAWLER_PLUGIN_UPSTREAM__", crawler).replace("__DATA_PLUGIN_UPSTREAM__", data).replace("__DIAGRAM_PLUGIN_UPSTREAM__", diagram).replace("__VERIFIED_BUY_LINK_UPSTREAM__", buy_link)
+if "__PDF_PLUGIN_UPSTREAM__" in text or "__ARABIC_PLUGIN_UPSTREAM__" in text or "__AD_CREATIVE_LAB_UPSTREAM__" in text or "__GROWTH_PLUGIN_UPSTREAM__" in text or "__CRAWLER_PLUGIN_UPSTREAM__" in text or "__DATA_PLUGIN_UPSTREAM__" in text or "__DIAGRAM_PLUGIN_UPSTREAM__" in text or "__VERIFIED_BUY_LINK_UPSTREAM__" in text:
     raise SystemExit("unresolved upstream placeholder")
+Path(target).write_text(text)
+PY
+python3 - "$CRAWLER_CONTAINER" deploy/fixtures.astudio.agency.caddy "$RENDERED_FIXTURES" <<'PY'
+import sys
+from pathlib import Path
+crawler, source, target = sys.argv[1:]
+text = Path(source).read_text().replace("__CRAWLER_PLUGIN_UPSTREAM__", crawler)
+if "__CRAWLER_PLUGIN_UPSTREAM__" in text:
+    raise SystemExit("unresolved fixture upstream placeholder")
 Path(target).write_text(text)
 PY
 
 cp "$CADDYFILE" "$BACKUP"
 python3 deploy/update-caddy.py "$CADDYFILE" "$RENDERED_BLOCK"
+python3 deploy/update-fixture-caddy.py "$CADDYFILE" "$RENDERED_FIXTURES"
 CONFIG_MUTATED=1
 if ! docker exec websites-caddy-1 caddy validate --config /etc/caddy/Caddyfile; then
   exit 1
@@ -203,12 +302,74 @@ check_mcp() {
     | python3 -c "import json,sys; data=json.load(sys.stdin); tools=data['result']['tools']; actual={tool['name'] for tool in tools}; expected=set('$expected_tools'.split(',')); assert actual == expected, (actual, expected); assert all(isinstance(tool.get('inputSchema'), dict) and tool['inputSchema'].get('type') == 'object' for tool in tools); assert all(isinstance(tool.get('outputSchema'), dict) and tool['outputSchema'].get('type') == 'object' for tool in tools)"
 }
 
+check_resources() {
+  local url="$1"
+  local expected_resources="$2"
+  python3 - "$url" "$expected_resources" <<'PY'
+import json
+import sys
+import urllib.request
+
+url, expected_csv = sys.argv[1:]
+headers = {"Content-Type": "application/json", "Accept": "application/json, text/event-stream", "User-Agent": "astudio-plugin-tools-deploy-check/1.0"}
+
+def post(payload):
+    request = urllib.request.Request(url, data=json.dumps(payload).encode(), headers=headers, method="POST")
+    with urllib.request.urlopen(request, timeout=20) as response:
+        return json.load(response)
+
+listed = post({"jsonrpc": "2.0", "id": 10, "method": "resources/list"})["result"]["resources"]
+expected = set(expected_csv.split(","))
+actual = {resource["uri"] for resource in listed}
+assert actual == expected, (actual, expected)
+closed_csp = {"connectDomains": [], "resourceDomains": [], "frameDomains": [], "baseUriDomains": []}
+for index, resource in enumerate(listed, start=11):
+    assert resource["mimeType"] == "text/html;profile=mcp-app"
+    assert resource["_meta"]["ui"]["csp"] == closed_csp
+    content = post({"jsonrpc": "2.0", "id": index, "method": "resources/read", "params": {"uri": resource["uri"]}})["result"]["contents"][0]
+    assert content["uri"] == resource["uri"]
+    assert content["mimeType"] == "text/html;profile=mcp-app"
+    assert content["_meta"]["ui"]["csp"] == closed_csp
+    assert content["text"].strip()
+    assert "globalThis.ExtApps=" in content["text"]
+    assert "/*__EXT_APPS_BUNDLE__*/" not in content["text"]
+PY
+}
+
 check_health https://www.astudio.agency/tools/health pdf-table-to-excel
 check_health https://www.astudio.agency/openai-plugins/pdf-table-to-excel/ready pdf-table-to-excel
 check_mcp https://www.astudio.agency/openai-plugins/pdf-table-to-excel/mcp pdf-table-to-excel convert_pdf_tables_to_excel
+check_resources https://www.astudio.agency/openai-plugins/pdf-table-to-excel/mcp ui://pdf-table-to-excel/result-preview.html
 check_health https://www.astudio.agency/openai-plugins/gcc-arabic-writer/health gcc-arabic-writer
 check_health https://www.astudio.agency/openai-plugins/gcc-arabic-writer/ready gcc-arabic-writer
 check_mcp https://www.astudio.agency/openai-plugins/gcc-arabic-writer/mcp gcc-arabic-writer prepare_gcc_arabic_brief,check_arabic_factual_fidelity,lint_gcc_arabic_copy
+check_resources https://www.astudio.agency/openai-plugins/gcc-arabic-writer/mcp ui://gcc-arabic-writer/brief-builder.html,ui://gcc-arabic-writer/copy-review.html
+check_health https://www.astudio.agency/openai-plugins/ad-creative-lab/health ad-creative-lab
+check_mcp https://www.astudio.agency/openai-plugins/ad-creative-lab/mcp ad-creative-lab prepare_campaign_brief,review_campaign_brief,approve_campaign_brief,present_concept_options,submit_concept_decision,validate_platform_copy,export_creative_package
+check_health https://www.astudio.agency/openai-plugins/growth-marketing-planner/health growth-marketing-planner
+check_health https://www.astudio.agency/openai-plugins/growth-marketing-planner/ready growth-marketing-planner
+check_mcp https://www.astudio.agency/openai-plugins/growth-marketing-planner/mcp growth-marketing-planner open_growth_brief,review_growth_brief,compare_growth_strategies,finalize_growth_plan,export_growth_plan
+ACTUAL_OPENAI_CHALLENGE="$(curl --fail --silent --show-error https://www.astudio.agency/.well-known/openai-apps-challenge)"
+if [ "$ACTUAL_OPENAI_CHALLENGE" != "$EXPECTED_OPENAI_CHALLENGE" ]; then
+  echo "OpenAI Apps challenge response mismatch" >&2
+  exit 1
+fi
+curl --fail --silent --show-error \
+  -H 'Content-Type: application/json' \
+  -H 'Accept: application/json, text/event-stream' \
+  --data '{"jsonrpc":"2.0","id":5,"method":"tools/call","params":{"name":"open_growth_brief","arguments":{}}}' \
+  https://www.astudio.agency/openai-plugins/growth-marketing-planner/mcp \
+  | python3 -c 'import json,sys; data=json.load(sys.stdin); result=data["result"]; assert not result.get("isError"); structured=result["structuredContent"]; assert structured["formVersion"] == "1.0.0" and structured["requiredFields"]'
+check_health https://www.astudio.agency/openai-plugins/ai-crawler-readiness-auditor/health ai-crawler-readiness-auditor
+check_health https://www.astudio.agency/openai-plugins/ai-crawler-readiness-auditor/ready ai-crawler-readiness-auditor
+check_mcp https://www.astudio.agency/openai-plugins/ai-crawler-readiness-auditor/mcp ai-crawler-readiness-auditor validate_audit_target,run_readiness_audit
+python3 deploy/check-crawler-public.py https://www.astudio.agency/openai-plugins/ai-crawler-readiness-auditor/mcp
+check_health https://www.astudio.agency/openai-plugins/open-data-fetcher/health open-data-fetcher
+check_health https://www.astudio.agency/openai-plugins/open-data-fetcher/ready open-data-fetcher
+check_mcp https://www.astudio.agency/openai-plugins/open-data-fetcher/mcp open-data-fetcher search_open_data,discover_datasets,inspect_open_dataset,preview_open_dataset,prepare_open_data_export
+check_health https://www.astudio.agency/openai-plugins/editable-diagram-builder/health editable-diagram-builder
+check_health https://www.astudio.agency/openai-plugins/editable-diagram-builder/ready editable-diagram-builder
+check_mcp https://www.astudio.agency/openai-plugins/editable-diagram-builder/mcp editable-diagram-builder open_diagram_brief,confirm_diagram_brief,render_diagram_preview,apply_diagram_edits,export_excalidraw
 check_health https://www.astudio.agency/openai-plugins/verified-buy-link/health verified-buy-link
 check_health https://www.astudio.agency/openai-plugins/verified-buy-link/ready verified-buy-link
 check_mcp https://www.astudio.agency/openai-plugins/verified-buy-link/mcp verified-buy-link open_verified_buy_link,verify_buy_options,render_buy_comparison,inspect_buy_option,refresh_buy_options
@@ -233,17 +394,27 @@ rm -f "$PDF_CHECK_JSON" "$PDF_CHECK_XLSX"
 
 printf '%s\n' "$PDF_CONTAINER" > "${PDF_STATE_FILE}.tmp"
 printf '%s\n' "$ARABIC_CONTAINER" > "${ARABIC_STATE_FILE}.tmp"
+printf '%s\n' "$AD_CONTAINER" > "${AD_STATE_FILE}.tmp"
+printf '%s\n' "$GROWTH_CONTAINER" > "${GROWTH_STATE_FILE}.tmp"
+printf '%s\n' "$CRAWLER_CONTAINER" > "${CRAWLER_STATE_FILE}.tmp"
+printf '%s\n' "$DATA_CONTAINER" > "${DATA_STATE_FILE}.tmp"
+printf '%s\n' "$DIAGRAM_CONTAINER" > "${DIAGRAM_STATE_FILE}.tmp"
 printf '%s\n' "$BUY_LINK_CONTAINER" > "${BUY_LINK_STATE_FILE}.tmp"
 mv "${PDF_STATE_FILE}.tmp" "$PDF_STATE_FILE"
 mv "${ARABIC_STATE_FILE}.tmp" "$ARABIC_STATE_FILE"
+mv "${AD_STATE_FILE}.tmp" "$AD_STATE_FILE"
+mv "${GROWTH_STATE_FILE}.tmp" "$GROWTH_STATE_FILE"
+mv "${CRAWLER_STATE_FILE}.tmp" "$CRAWLER_STATE_FILE"
+mv "${DATA_STATE_FILE}.tmp" "$DATA_STATE_FILE"
+mv "${DIAGRAM_STATE_FILE}.tmp" "$DIAGRAM_STATE_FILE"
 mv "${BUY_LINK_STATE_FILE}.tmp" "$BUY_LINK_STATE_FILE"
 COMMITTED=1
 rm -f "$LEGACY_STATE_FILE"
-for previous in "$PREVIOUS_PDF_CONTAINER" "$PREVIOUS_ARABIC_CONTAINER" "$PREVIOUS_BUY_LINK_CONTAINER"; do
-  if [ -n "$previous" ] && [ "$previous" != "$PDF_CONTAINER" ] && [ "$previous" != "$ARABIC_CONTAINER" ] && [ "$previous" != "$BUY_LINK_CONTAINER" ]; then
+for previous in "$PREVIOUS_PDF_CONTAINER" "$PREVIOUS_ARABIC_CONTAINER" "$PREVIOUS_AD_CONTAINER" "$PREVIOUS_GROWTH_CONTAINER" "$PREVIOUS_CRAWLER_CONTAINER" "$PREVIOUS_DATA_CONTAINER" "$PREVIOUS_DIAGRAM_CONTAINER" "$PREVIOUS_BUY_LINK_CONTAINER"; do
+  if [ -n "$previous" ] && [ "$previous" != "$PDF_CONTAINER" ] && [ "$previous" != "$ARABIC_CONTAINER" ] && [ "$previous" != "$AD_CONTAINER" ] && [ "$previous" != "$GROWTH_CONTAINER" ] && [ "$previous" != "$CRAWLER_CONTAINER" ] && [ "$previous" != "$DATA_CONTAINER" ] && [ "$previous" != "$DIAGRAM_CONTAINER" ] && [ "$previous" != "$BUY_LINK_CONTAINER" ]; then
     docker rm -f "$previous" >/dev/null 2>&1 || true
   fi
 done
-rm -f "$BACKUP" "$RENDERED_BLOCK"
+rm -f "$BACKUP" "$RENDERED_BLOCK" "$RENDERED_FIXTURES"
 
-echo "deployed ${RELEASE_SHA} as ${PDF_CONTAINER}, ${ARABIC_CONTAINER} and ${BUY_LINK_CONTAINER}"
+echo "deployed ${RELEASE_SHA} as ${PDF_CONTAINER}, ${ARABIC_CONTAINER}, ${AD_CONTAINER}, ${GROWTH_CONTAINER}, ${CRAWLER_CONTAINER}, ${DATA_CONTAINER}, ${DIAGRAM_CONTAINER} and ${BUY_LINK_CONTAINER}"
