@@ -18,7 +18,7 @@ test("non-string URLs, dates and nested types block review and reduce checker sc
   for(const [type,facts,path] of [
     ["Person",{name:"A","@id":42},"facts.@id"],
     ["Organization",{name:"A",url:"https://example.test",foundingDate:2012},"facts.foundingDate"],
-    ["FAQPage",{mainEntity:[{"@type":42,name:"Q",acceptedAnswer:{"@type":"Answer",text:"A"}}]},"facts.mainEntity.0.@type"]
+    ["FAQPage",{mainEntity:[{"@type":42,name:"Q",acceptedAnswer:{"@type":"Answer",text:"A"}}]},"facts.mainEntity.0"]
   ]){
     const brief={pageType:type,pageUrl:"https://example.test",facts},reviewed=reviewSchemaBrief(brief);
     assert.equal(reviewed.canApprove,false,path);
@@ -33,6 +33,39 @@ test("checker applies HTTPS URL policy to Product url",()=>{
   const checked=checkSchemaMarkup({jsonLd:JSON.stringify({"@context":"https://schema.org","@type":"Product",name:"Bag",url:"http://not-https.test",image:"https://example.test/bag.jpg",offers:{price:"10",priceCurrency:"AED",availability:"https://schema.org/InStock"},sku:"B1",brand:"Brand"})});
   assert.ok(checked.score<100);
   assert.ok(checked.reasons.some(reason=>reason.includes("facts.url")&&reason.includes("HTTPS")));
+});
+
+test("only per-type required properties block approval",()=>{
+  const cases=[
+    ["Product",{name:"Bag",image:"https://example.test/bag.jpg"}],
+    ["FAQPage",{mainEntity:[{"@type":"Question",name:"Q",acceptedAnswer:{"@type":"Answer",text:"A"}}]}],
+    ["HowTo",{name:"Guide",step:[{"@type":"HowToStep",text:"Do it"}]}],
+    ["BreadcrumbList",{itemListElement:[{"@type":"ListItem",position:1,name:"Home",item:"https://example.test"}]}]
+  ];
+  for(const [pageType,facts] of cases){
+    const reviewed=reviewSchemaBrief({pageType,pageUrl:"https://example.test/page",facts});
+    assert.equal(reviewed.canApprove,true,`${pageType}: ${JSON.stringify(reviewed.invalid)}`);
+    assert.ok(reviewed.warnings.every(message=>!message.includes("required")));
+  }
+});
+
+test("Event URL and date shapes block review and reduce score",()=>{
+  const facts={name:"Opening",startDate:"2026-10-12",location:"Dubai",eventStatus:"not-a-url",doorTime:"not-a-date"};
+  const reviewed=reviewSchemaBrief({pageType:"Event",pageUrl:"https://example.test/event",facts});
+  assert.equal(reviewed.canApprove,false);
+  assert.ok(reviewed.invalid.some(issue=>issue.path==="facts.eventStatus"));
+  assert.ok(reviewed.invalid.some(issue=>issue.path==="facts.doorTime"));
+  const checked=checkSchemaMarkup({jsonLd:JSON.stringify({"@context":"https://schema.org","@type":"Event",...facts})});
+  assert.ok(checked.score<100);
+  assert.ok(checked.reasons.some(reason=>reason.includes("facts.eventStatus")));
+  assert.ok(checked.reasons.some(reason=>reason.includes("facts.doorTime")));
+});
+
+test("recognised nested types warn on uncommon child properties without blocking",()=>{
+  const facts={name:"A",address:"Dubai",geo:{"@type":"GeoCoordinates",latitude:25.2,longitude:55.3,x:"kept"}};
+  const reviewed=reviewSchemaBrief({pageType:"LocalBusiness",pageUrl:"https://example.test",facts});
+  assert.equal(reviewed.canApprove,true,JSON.stringify(reviewed.invalid));
+  assert.ok(reviewed.warnings.some(message=>message.includes("facts.geo.x")&&message.includes("uncommon property for GeoCoordinates, kept as supplied")));
 });
 
 test("typed nested objects approve across supported parent properties",()=>{
