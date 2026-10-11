@@ -103,7 +103,6 @@
             }
           ]
         },
-        "demo_recording_status": "required-before-portal-submission",
         "commerce": false,
         "commerce_description": "Research-only. The app does not purchase, reserve, add to cart, start checkout or process payments."
       },
