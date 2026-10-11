@@ -1,0 +1,12 @@
+AI Crawler Readiness Auditor
+Copyright (c) 2026 ASTUDIO
+
+This product includes concepts adapted from the MIT-licensed ai-visibility-audit source skill. No private reports, benchmarks, tests, or third-party product wording are included.
+
+Production dependencies and licenses:
+- @modelcontextprotocol/sdk, MIT
+- @modelcontextprotocol/ext-apps, MIT
+- ipaddr.js, MIT
+- zod, MIT
+
+See THIRD_PARTY_LICENSES.json and sbom.cdx.json in the source release for the generated dependency inventory.
