@@ -78,11 +78,11 @@ jobs:
         run: |
           npm test
           npm run check
+          npm audit --audit-level=high
       - name: Test Landing Page Copy Check MCP App
         working-directory: landing-page-copy-check
         run: |
           npm test
-          npm audit --audit-level=high
           npm audit --audit-level=high
       - name: Test Open Data MCP App
         working-directory: open-data-fetcher

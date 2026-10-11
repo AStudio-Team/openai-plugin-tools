@@ -205,7 +205,7 @@ if ! grep -Eq '^CHECKPOINT_SECRET=.{32,}$' "$ENV_FILE" 2>/dev/null; then
   exit 78
 fi
 if ! grep -Eq '^APPROVAL_HMAC_KEY=.{32,}$' "$ENV_FILE" 2>/dev/null; then
-  echo "APPROVAL_HMAC_KEY with at least 32 bytes is required in ${ENV_FILE} (approval receipts)" >&2
+  echo "APPROVAL_HMAC_KEY with at least 32 bytes is required in ${ENV_FILE} (Ad Creative Lab approval receipts)" >&2
   exit 78
 fi
 BUY_LINK_ARGS=()
@@ -294,7 +294,7 @@ from pathlib import Path
 pdf, arabic, ad, growth, crawler, data, diagram, buy_link, grounded, launch_plan, landing_copy, source, target = sys.argv[1:]
 text = Path(source).read_text()
 text = text.replace("__PDF_PLUGIN_UPSTREAM__", pdf).replace("__ARABIC_PLUGIN_UPSTREAM__", arabic).replace("__AD_CREATIVE_LAB_UPSTREAM__", ad).replace("__GROWTH_PLUGIN_UPSTREAM__", growth).replace("__CRAWLER_PLUGIN_UPSTREAM__", crawler).replace("__DATA_PLUGIN_UPSTREAM__", data).replace("__DIAGRAM_PLUGIN_UPSTREAM__", diagram).replace("__VERIFIED_BUY_LINK_UPSTREAM__", buy_link).replace("__GROUNDED_PLUGIN_UPSTREAM__", grounded).replace("__LAUNCH_PLAN_UPSTREAM__", launch_plan).replace("__LANDING_COPY_UPSTREAM__", landing_copy)
-if "__PDF_PLUGIN_UPSTREAM__" in text or "__ARABIC_PLUGIN_UPSTREAM__" in text or "__AD_CREATIVE_LAB_UPSTREAM__" in text or "__GROWTH_PLUGIN_UPSTREAM__" in text or "__CRAWLER_PLUGIN_UPSTREAM__" in text or "__DATA_PLUGIN_UPSTREAM__" in text or "__DIAGRAM_PLUGIN_UPSTREAM__" in text or "__VERIFIED_BUY_LINK_UPSTREAM__" in text or "__GROUNDED_PLUGIN_UPSTREAM__" in text or "__LANDING_COPY_UPSTREAM__" in text:
+if "__PDF_PLUGIN_UPSTREAM__" in text or "__ARABIC_PLUGIN_UPSTREAM__" in text or "__AD_CREATIVE_LAB_UPSTREAM__" in text or "__GROWTH_PLUGIN_UPSTREAM__" in text or "__CRAWLER_PLUGIN_UPSTREAM__" in text or "__DATA_PLUGIN_UPSTREAM__" in text or "__DIAGRAM_PLUGIN_UPSTREAM__" in text or "__VERIFIED_BUY_LINK_UPSTREAM__" in text or "__GROUNDED_PLUGIN_UPSTREAM__" in text or "__LAUNCH_PLAN_UPSTREAM__" in text or "__LANDING_COPY_UPSTREAM__" in text:
     raise SystemExit("unresolved upstream placeholder")
 Path(target).write_text(text)
 PY
