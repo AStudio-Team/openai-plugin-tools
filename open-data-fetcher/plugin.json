@@ -103,7 +103,6 @@
             }
           ]
         },
-        "demo_recording_status": "required-before-portal-submission",
         "commerce": false,
         "commerce_description": "This plugin does not sell data or process payments."
       },

@@ -49,9 +49,8 @@ def validate_manifest(path: Path) -> None:
             if not case.get("prompt") or "should" not in str(case.get("description", "")).lower():
                 fail(f"incomplete negative review case: {path}")
         demo_url = review.get("demo_recording_url")
-        demo_status = review.get("demo_recording_status")
-        if not demo_url and demo_status != "required-before-portal-submission":
-            fail(f"missing truthful demo recording gate: {path}")
+        if "demo_recording_status" in review:
+            fail(f"demo_recording_status is rejected by the OpenAI portal validator (extra input): {path}")
         if demo_url and not str(demo_url).startswith("https://"):
             fail(f"invalid demo recording URL: {path}")
 
