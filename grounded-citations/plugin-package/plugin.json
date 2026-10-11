@@ -31,7 +31,7 @@
       "interface": {
         "displayName": "Grounded Citations",
         "shortDescription": "Verify citations and quotes",
-        "longDescription": "Turn user-provided public web pages, attached documents, and pasted source text into a numbered citation ledger. Review source scope before IDs are assigned, verify that exact quotes occur in extracted source text, render source lists mechanically, and check a draft for unknown IDs, mapping errors, citation limits, coverage, and missing evidence. The service verifies provenance mechanics, not whether a claim is true.",
+        "longDescription": "Grounded Citations is a productivity tool that checks citations and quotes against the sources you supply: public web pages, attached documents or pasted text. Confirm the source scope, get a numbered source list, verify that each quote really appears in its source, check a draft's citation IDs, Sources list and links, and render the sources block. It is for writers, researchers, students and editors. Limits: it verifies provenance mechanics, not whether a claim is true; it does not search the web for new sources or give legal or academic review.",
         "developerName": "ASTUDIO",
         "category": "Productivity",
         "capabilities": [
@@ -42,9 +42,9 @@
           "Source list rendering"
         ],
         "websiteURL": "https://www.astudio.agency/tools/grounded-citations",
-        "supportURL": "https://www.astudio.agency/openai-plugins/grounded-citations/support",
-        "privacyPolicyURL": "https://www.astudio.agency/openai-plugins/grounded-citations/privacy",
-        "termsOfServiceURL": "https://www.astudio.agency/openai-plugins/grounded-citations/terms",
+        "supportURL": "https://www.astudio.agency/tools/support",
+        "privacyPolicyURL": "https://www.astudio.agency/tools/privacy",
+        "termsOfServiceURL": "https://www.astudio.agency/tools/terms",
         "defaultPrompt": [
           "Check the citations in this draft against these three sources.",
           "Find an exact quote in my attached PDF that supports this claim.",
@@ -109,7 +109,8 @@
           ]
         },
         "commerce": false,
-        "commerce_description": "This plugin does not sell products or process payments."
+        "commerce_description": "This plugin does not sell products or process payments.",
+        "demo_recording_url": "https://www.astudio.agency/tools/review/grounded-citations-demo.mp4"
       },
       "publication": {
         "release_notes": "Initial release with guided source intake, three MCP App widgets, exact quote matching, deterministic draft checks, bounded session retention, and complete text fallback."

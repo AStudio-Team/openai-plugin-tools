@@ -31,7 +31,7 @@
       "interface": {
         "displayName": "Open Data Fetcher",
         "shortDescription": "Find official open datasets",
-        "longDescription": "Search US Data.gov, UK Data.gov.uk and World Bank Open Data through a human-controlled MCP App. Choose a dataset yourself, review its source, rights and size, inspect a bounded sample, choose columns and filters, then confirm a temporary CSV, JSON Lines or Parquet download. Green rights permit export, amber opens the publisher by default and red blocks server export. The app accepts no arbitrary URLs or credentials and does not use browser automation.",
+        "longDescription": "Open Data Fetcher is a productivity tool for finding official public datasets on US Data.gov, UK Data.gov.uk and World Bank Open Data. Search, choose the dataset yourself, review its publisher, licence and size, preview up to 200 rows, pick columns and filters, and export a temporary CSV, JSON Lines or Parquet file. It is for analysts, researchers, journalists and students. Limits: only those three official catalogs; no arbitrary URLs, credentials, private data or browser automation; red-rights datasets are not exported.",
         "developerName": "ASTUDIO",
         "category": "Productivity",
         "capabilities": [
@@ -42,9 +42,9 @@
           "Export CSV, JSON Lines or Parquet"
         ],
         "websiteURL": "https://www.astudio.agency/tools/open-data-fetcher",
-        "supportURL": "https://www.astudio.agency/tools/open-data-fetcher/support",
-        "privacyPolicyURL": "https://www.astudio.agency/tools/open-data-fetcher/privacy",
-        "termsOfServiceURL": "https://www.astudio.agency/tools/open-data-fetcher/terms",
+        "supportURL": "https://www.astudio.agency/tools/support",
+        "privacyPolicyURL": "https://www.astudio.agency/tools/privacy",
+        "termsOfServiceURL": "https://www.astudio.agency/tools/terms",
         "defaultPrompt": [
           "Find a World Bank dataset on renewable energy and let me pick one.",
           "Search US open data for road traffic counts and preview it.",
@@ -104,7 +104,8 @@
           ]
         },
         "commerce": false,
-        "commerce_description": "This plugin does not sell data or process payments."
+        "commerce_description": "This plugin does not sell data or process payments.",
+        "demo_recording_url": "https://www.astudio.agency/tools/review/open-data-fetcher-demo.mp4"
       },
       "publication": {
         "release_notes": "Initial release with three official adapters, mandatory human checkpoints, fail-closed rights handling, bounded preview and temporary host-mediated export."

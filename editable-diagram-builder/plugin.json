@@ -31,7 +31,7 @@
       "interface": {
         "displayName": "Editable Diagram Builder",
         "shortDescription": "Flowcharts you can edit",
-        "longDescription": "Create flowcharts, system architecture diagrams, sequence diagrams and concept maps through a mandatory human-reviewed brief. Compare deterministic layouts, make bounded visual edits and download a native editable .excalidraw JSON file. The tool does not upload files, publish share links or store diagram content. It is independent and is not endorsed by the Excalidraw project.",
+        "longDescription": "Editable Diagram Builder is a productivity tool that turns a description into a flowchart, system architecture diagram, sequence diagram or concept map you can edit. Approve a short brief, review deterministic layouts in a visual preview, make bounded edits, and download a native editable .excalidraw file. It is for product, operations and engineering people who need a clean diagram fast. Limits: it does not upload files, publish share links or store diagram content, and it is independent of and not endorsed by the Excalidraw project.",
         "developerName": "ASTUDIO",
         "category": "Productivity",
         "capabilities": [
@@ -105,7 +105,8 @@
           ]
         },
         "commerce": false,
-        "commerce_description": "This plugin does not sell products or process payments."
+        "commerce_description": "This plugin does not sell products or process payments.",
+        "demo_recording_url": "https://www.astudio.agency/tools/review/editable-diagram-builder-demo.mp4"
       },
       "publication": {
         "release_notes": "Initial compatibility-safe release with mandatory brief approval, deterministic layouts, visual revision and native editable download."
