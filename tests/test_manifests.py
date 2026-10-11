@@ -154,6 +154,14 @@ class ManifestAndPackageTests(unittest.TestCase):
     def test_growth_mcp_public_prefix_is_exact(self):
         mcp = json.loads((ROOT / "growth-marketing-planner" / "mcp.json").read_text())
         self.assertEqual(mcp["mcpServers"]["growth-marketing-planner"]["url"], "https://www.astudio.agency/openai-plugins/growth-marketing-planner/mcp")
+    def test_landing_copy_version_is_consistent(self):
+        package = json.loads((ROOT / "landing-page-copy-check" / "package.json").read_text())
+        lock = json.loads((ROOT / "landing-page-copy-check" / "package-lock.json").read_text())
+        self.assertEqual(self.landing_copy["version"], "1.0.1")
+        self.assertEqual(package["version"], "1.0.1")
+        self.assertEqual(lock["version"], "1.0.1")
+        self.assertEqual(lock["packages"][""]["version"], "1.0.1")
+
     def test_landing_copy_mcp_public_prefix_is_exact(self):
         review = self.landing_copy["extensions"]["com.openai"]["review"]
         self.assertEqual(len(review["test_cases"]["positive"]), 5)
