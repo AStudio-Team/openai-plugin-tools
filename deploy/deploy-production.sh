@@ -12,6 +12,7 @@ AD_STATE_FILE="${STATE_DIR}/current-ad-creative-lab-container"
 GROWTH_STATE_FILE="${STATE_DIR}/current-growth-container"
 CRAWLER_STATE_FILE="${STATE_DIR}/current-crawler-container"
 DATA_STATE_FILE="${STATE_DIR}/current-data-container"
+DIAGRAM_STATE_FILE="${STATE_DIR}/current-diagram-container"
 LEGACY_STATE_FILE="${STATE_DIR}/current-container"
 ENV_FILE="${STATE_DIR}/openai.env"
 CADDYFILE="/opt/websites/caddy/Caddyfile"
@@ -26,6 +27,8 @@ CRAWLER_IMAGE="openai-plugin-crawler-auditor:${RELEASE_SHA}"
 CRAWLER_CONTAINER="openai-plugin-crawler-auditor-${DEPLOY_ID}"
 DATA_IMAGE="openai-plugin-data:${RELEASE_SHA}"
 DATA_CONTAINER="openai-plugin-data-${DEPLOY_ID}"
+DIAGRAM_IMAGE="openai-plugin-diagram:${RELEASE_SHA}"
+DIAGRAM_CONTAINER="openai-plugin-diagram-${DEPLOY_ID}"
 RENDERED_BLOCK="/tmp/openai-plugin-tools-${DEPLOY_ID}.caddy"
 RENDERED_FIXTURES="/tmp/ai-crawler-fixtures-${DEPLOY_ID}.caddy"
 PREVIOUS_PDF_CONTAINER=""
@@ -36,6 +39,7 @@ GROWTH_CONTAINER="openai-plugin-growth-${DEPLOY_ID}"
 PREVIOUS_GROWTH_CONTAINER=""
 PREVIOUS_CRAWLER_CONTAINER=""
 PREVIOUS_DATA_CONTAINER=""
+PREVIOUS_DIAGRAM_CONTAINER=""
 CONFIG_MUTATED=0
 SWITCHED=0
 COMMITTED=0
@@ -65,6 +69,9 @@ if [ -s "$CRAWLER_STATE_FILE" ]; then
 fi
 if [ -s "$DATA_STATE_FILE" ]; then
   PREVIOUS_DATA_CONTAINER="$(tr -cd 'A-Za-z0-9_.-' < "$DATA_STATE_FILE")"
+fi
+if [ -s "$DIAGRAM_STATE_FILE" ]; then
+  PREVIOUS_DIAGRAM_CONTAINER="$(tr -cd 'A-Za-z0-9_.-' < "$DIAGRAM_STATE_FILE")"
 fi
 
 write_state() {
@@ -98,7 +105,8 @@ rollback() {
     write_state "$GROWTH_STATE_FILE" "$PREVIOUS_GROWTH_CONTAINER"
     write_state "$CRAWLER_STATE_FILE" "$PREVIOUS_CRAWLER_CONTAINER"
     write_state "$DATA_STATE_FILE" "$PREVIOUS_DATA_CONTAINER"
-    docker rm -f "$PDF_CONTAINER" "$ARABIC_CONTAINER" "$AD_CONTAINER" "$GROWTH_CONTAINER" "$CRAWLER_CONTAINER" "$DATA_CONTAINER" >/dev/null 2>&1 || true
+    write_state "$DIAGRAM_STATE_FILE" "$PREVIOUS_DIAGRAM_CONTAINER"
+    docker rm -f "$PDF_CONTAINER" "$ARABIC_CONTAINER" "$AD_CONTAINER" "$GROWTH_CONTAINER" "$CRAWLER_CONTAINER" "$DATA_CONTAINER" "$DIAGRAM_CONTAINER" >/dev/null 2>&1 || true
   else
     write_state "$PDF_STATE_FILE" "$PDF_CONTAINER"
     write_state "$ARABIC_STATE_FILE" "$ARABIC_CONTAINER"
@@ -106,9 +114,10 @@ rollback() {
     write_state "$GROWTH_STATE_FILE" "$GROWTH_CONTAINER"
     write_state "$CRAWLER_STATE_FILE" "$CRAWLER_CONTAINER"
     write_state "$DATA_STATE_FILE" "$DATA_CONTAINER"
+    write_state "$DIAGRAM_STATE_FILE" "$DIAGRAM_CONTAINER"
     echo "rollback failed; candidate containers were kept running for recovery" >&2
   fi
-  rm -f "${PDF_STATE_FILE}.tmp" "${ARABIC_STATE_FILE}.tmp" "${AD_STATE_FILE}.tmp" "${GROWTH_STATE_FILE}.tmp" "${CRAWLER_STATE_FILE}.tmp" "${DATA_STATE_FILE}.tmp" "${CADDYFILE}.rollback-${DEPLOY_ID}"
+  rm -f "${PDF_STATE_FILE}.tmp" "${ARABIC_STATE_FILE}.tmp" "${AD_STATE_FILE}.tmp" "${GROWTH_STATE_FILE}.tmp" "${CRAWLER_STATE_FILE}.tmp" "${DATA_STATE_FILE}.tmp" "${DIAGRAM_STATE_FILE}.tmp" "${CADDYFILE}.rollback-${DEPLOY_ID}"
   return $((1 - rollback_ok))
 }
 
@@ -131,6 +140,7 @@ docker build --pull -t "$AD_IMAGE" ad-creative-lab
 docker build --pull -t "$GROWTH_IMAGE" growth-marketing-planner
 docker build --pull -t "$CRAWLER_IMAGE" ai-crawler-readiness-auditor
 docker build --pull -t "$DATA_IMAGE" open-data-fetcher
+docker build --pull -t "$DIAGRAM_IMAGE" editable-diagram-builder
 
 ENV_FILE_ARGS=()
 if [ -s "$ENV_FILE" ]; then
@@ -151,6 +161,10 @@ if not value or value == "configure-before-production":
 print(value)
 PY
 )"
+if ! grep -Eq '^CHECKPOINT_SECRET=.{32,}$' "$ENV_FILE" 2>/dev/null; then
+  echo "CHECKPOINT_SECRET with at least 32 bytes is required in ${ENV_FILE}" >&2
+  exit 78
+fi
 
 run_container() {
   local name="$1"
@@ -194,6 +208,8 @@ run_container "$CRAWLER_CONTAINER" "$CRAWLER_IMAGE" 8790 local \
 run_container "$DATA_CONTAINER" "$DATA_IMAGE" 8791 local \
   -e PUBLIC_BASE_URL=https://www.astudio.agency/openai-plugins/open-data-fetcher \
   -e APP_ORIGIN=https://www.astudio.agency
+run_container "$DIAGRAM_CONTAINER" "$DIAGRAM_IMAGE" 8790 local \
+  -e TRUST_PROXY_HEADER=true
 
 wait_healthy() {
   local container="$1"
@@ -214,14 +230,15 @@ wait_healthy "$AD_CONTAINER"
 wait_healthy "$GROWTH_CONTAINER"
 wait_healthy "$CRAWLER_CONTAINER"
 wait_healthy "$DATA_CONTAINER"
+wait_healthy "$DIAGRAM_CONTAINER"
 
-python3 - "$PDF_CONTAINER" "$ARABIC_CONTAINER" "$AD_CONTAINER" "$GROWTH_CONTAINER" "$CRAWLER_CONTAINER" "$DATA_CONTAINER" deploy/tools.astudio.agency.caddy "$RENDERED_BLOCK" <<'PY'
+python3 - "$PDF_CONTAINER" "$ARABIC_CONTAINER" "$AD_CONTAINER" "$GROWTH_CONTAINER" "$CRAWLER_CONTAINER" "$DATA_CONTAINER" "$DIAGRAM_CONTAINER" deploy/tools.astudio.agency.caddy "$RENDERED_BLOCK" <<'PY'
 import sys
 from pathlib import Path
-pdf, arabic, ad, growth, crawler, data, source, target = sys.argv[1:]
+pdf, arabic, ad, growth, crawler, data, diagram, source, target = sys.argv[1:]
 text = Path(source).read_text()
-text = text.replace("__PDF_PLUGIN_UPSTREAM__", pdf).replace("__ARABIC_PLUGIN_UPSTREAM__", arabic).replace("__AD_CREATIVE_LAB_UPSTREAM__", ad).replace("__GROWTH_PLUGIN_UPSTREAM__", growth).replace("__CRAWLER_PLUGIN_UPSTREAM__", crawler).replace("__DATA_PLUGIN_UPSTREAM__", data)
-if "__PDF_PLUGIN_UPSTREAM__" in text or "__ARABIC_PLUGIN_UPSTREAM__" in text or "__AD_CREATIVE_LAB_UPSTREAM__" in text or "__GROWTH_PLUGIN_UPSTREAM__" in text or "__CRAWLER_PLUGIN_UPSTREAM__" in text or "__DATA_PLUGIN_UPSTREAM__" in text:
+text = text.replace("__PDF_PLUGIN_UPSTREAM__", pdf).replace("__ARABIC_PLUGIN_UPSTREAM__", arabic).replace("__AD_CREATIVE_LAB_UPSTREAM__", ad).replace("__GROWTH_PLUGIN_UPSTREAM__", growth).replace("__CRAWLER_PLUGIN_UPSTREAM__", crawler).replace("__DATA_PLUGIN_UPSTREAM__", data).replace("__DIAGRAM_PLUGIN_UPSTREAM__", diagram)
+if "__PDF_PLUGIN_UPSTREAM__" in text or "__ARABIC_PLUGIN_UPSTREAM__" in text or "__AD_CREATIVE_LAB_UPSTREAM__" in text or "__GROWTH_PLUGIN_UPSTREAM__" in text or "__CRAWLER_PLUGIN_UPSTREAM__" in text or "__DATA_PLUGIN_UPSTREAM__" in text or "__DIAGRAM_PLUGIN_UPSTREAM__" in text:
     raise SystemExit("unresolved upstream placeholder")
 Path(target).write_text(text)
 PY
@@ -334,6 +351,9 @@ python3 deploy/check-crawler-public.py https://www.astudio.agency/openai-plugins
 check_health https://www.astudio.agency/openai-plugins/open-data-fetcher/health open-data-fetcher
 check_health https://www.astudio.agency/openai-plugins/open-data-fetcher/ready open-data-fetcher
 check_mcp https://www.astudio.agency/openai-plugins/open-data-fetcher/mcp open-data-fetcher search_open_data,discover_datasets,inspect_open_dataset,preview_open_dataset,prepare_open_data_export
+check_health https://www.astudio.agency/openai-plugins/editable-diagram-builder/health editable-diagram-builder
+check_health https://www.astudio.agency/openai-plugins/editable-diagram-builder/ready editable-diagram-builder
+check_mcp https://www.astudio.agency/openai-plugins/editable-diagram-builder/mcp editable-diagram-builder open_diagram_brief,confirm_diagram_brief,render_diagram_preview,apply_diagram_edits,export_excalidraw
 curl --fail --silent --show-error \
   -H 'Content-Type: application/json' \
   -H 'Accept: application/json, text/event-stream' \
@@ -359,19 +379,21 @@ printf '%s\n' "$AD_CONTAINER" > "${AD_STATE_FILE}.tmp"
 printf '%s\n' "$GROWTH_CONTAINER" > "${GROWTH_STATE_FILE}.tmp"
 printf '%s\n' "$CRAWLER_CONTAINER" > "${CRAWLER_STATE_FILE}.tmp"
 printf '%s\n' "$DATA_CONTAINER" > "${DATA_STATE_FILE}.tmp"
+printf '%s\n' "$DIAGRAM_CONTAINER" > "${DIAGRAM_STATE_FILE}.tmp"
 mv "${PDF_STATE_FILE}.tmp" "$PDF_STATE_FILE"
 mv "${ARABIC_STATE_FILE}.tmp" "$ARABIC_STATE_FILE"
 mv "${AD_STATE_FILE}.tmp" "$AD_STATE_FILE"
 mv "${GROWTH_STATE_FILE}.tmp" "$GROWTH_STATE_FILE"
 mv "${CRAWLER_STATE_FILE}.tmp" "$CRAWLER_STATE_FILE"
 mv "${DATA_STATE_FILE}.tmp" "$DATA_STATE_FILE"
+mv "${DIAGRAM_STATE_FILE}.tmp" "$DIAGRAM_STATE_FILE"
 COMMITTED=1
 rm -f "$LEGACY_STATE_FILE"
-for previous in "$PREVIOUS_PDF_CONTAINER" "$PREVIOUS_ARABIC_CONTAINER" "$PREVIOUS_AD_CONTAINER" "$PREVIOUS_GROWTH_CONTAINER" "$PREVIOUS_CRAWLER_CONTAINER" "$PREVIOUS_DATA_CONTAINER"; do
-  if [ -n "$previous" ] && [ "$previous" != "$PDF_CONTAINER" ] && [ "$previous" != "$ARABIC_CONTAINER" ] && [ "$previous" != "$AD_CONTAINER" ] && [ "$previous" != "$GROWTH_CONTAINER" ] && [ "$previous" != "$CRAWLER_CONTAINER" ] && [ "$previous" != "$DATA_CONTAINER" ]; then
+for previous in "$PREVIOUS_PDF_CONTAINER" "$PREVIOUS_ARABIC_CONTAINER" "$PREVIOUS_AD_CONTAINER" "$PREVIOUS_GROWTH_CONTAINER" "$PREVIOUS_CRAWLER_CONTAINER" "$PREVIOUS_DATA_CONTAINER" "$PREVIOUS_DIAGRAM_CONTAINER"; do
+  if [ -n "$previous" ] && [ "$previous" != "$PDF_CONTAINER" ] && [ "$previous" != "$ARABIC_CONTAINER" ] && [ "$previous" != "$AD_CONTAINER" ] && [ "$previous" != "$GROWTH_CONTAINER" ] && [ "$previous" != "$CRAWLER_CONTAINER" ] && [ "$previous" != "$DATA_CONTAINER" ] && [ "$previous" != "$DIAGRAM_CONTAINER" ]; then
     docker rm -f "$previous" >/dev/null 2>&1 || true
   fi
 done
 rm -f "$BACKUP" "$RENDERED_BLOCK" "$RENDERED_FIXTURES"
 
-echo "deployed ${RELEASE_SHA} as ${PDF_CONTAINER}, ${ARABIC_CONTAINER}, ${AD_CONTAINER}, ${GROWTH_CONTAINER}, ${CRAWLER_CONTAINER} and ${DATA_CONTAINER}"
+echo "deployed ${RELEASE_SHA} as ${PDF_CONTAINER}, ${ARABIC_CONTAINER}, ${AD_CONTAINER}, ${GROWTH_CONTAINER}, ${CRAWLER_CONTAINER}, ${DATA_CONTAINER} and ${DIAGRAM_CONTAINER}"

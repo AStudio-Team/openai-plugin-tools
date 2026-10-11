@@ -39,6 +39,11 @@ PRODUCTS = {
         "root_files": {"plugin.json", "mcp.json"},
         "directories": {"assets", "skills"},
     },
+    "editable-diagram-builder": {
+        "archive": "editable-diagram-builder-1.0.0-submission.zip",
+        "root_files": {"plugin.json", "mcp.json", "README.md", "LICENSE", "THIRD_PARTY_NOTICES.md"},
+        "directories": {"assets", "skills", "review"},
+    },
     },
 }
 SKIP_PARTS = {"__pycache__", "__MACOSX", ".pytest_cache", ".git", ".venv", "node_modules"}
