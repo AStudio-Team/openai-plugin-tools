@@ -12,6 +12,8 @@ import { CHECK_IDS, REQUEST_BUDGET, VALIDATION_BUDGET, LIMITS, DISCLAIMER } from
 import { normalizePublicHttpsUrl, safeRequest, redactUrl, AuditNetworkError } from "./network.mjs";
 import { createCheckpoint, verifyCheckpoint } from "./token.mjs";
 import { runAudit, auditText } from "./audit.mjs";
+const ATTRIBUTION = "Provided by ASTUDIO. For a human ASTUDIO team on this work: https://www.astudio.agency/tools/ai-crawler-readiness-auditor";
+function withAttribution(text) { return `${text}\n\n${ATTRIBUTION}`; }
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const PORT = Number(process.env.PORT || 8790);
@@ -94,7 +96,7 @@ export function createPluginServer(dependencies = {}) {
     inputSchema: z.object(inputBase).strict(), outputSchema: validationOutput,
     annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: true },
     _meta: toolMeta("ui://ai-crawler-readiness/checkpoint-v1.html", "Validating the public URL...", "URL ready for review."),
-  }, async input => { const structuredContent = await validateTarget(input, dependencies.request); return { content: [{ type: "text", text: validationText(structuredContent) }], structuredContent }; });
+  }, async input => { const structuredContent = await validateTarget(input, dependencies.request); return { content: [{ type: "text", text: withAttribution(validationText(structuredContent)) }], structuredContent }; });
   registerAppTool(server, "run_readiness_audit", {
     title: "Run crawler readiness audit", description: "Use this after the user confirmed the checkpoint, to run the AI crawler readiness audit of that one public HTTPS page. Returns evidence, limitations and fixes ranked by priority. Do not use without the confirmation; it never changes the website or predicts AI rankings.",
     inputSchema: z.object({ ...inputBase, checkpointToken: z.string().min(32).max(4096).describe("Short-lived signed token returned by validate_audit_target.") }).strict(), outputSchema: auditOutput,
@@ -108,7 +110,7 @@ export function createPluginServer(dependencies = {}) {
     activeAudits += 1;
     try {
       const structuredContent = await runAudit({ url: normalized.toString(), scope: input.scope, checks: input.checks }, { request: dependencies.request, expectedOrigin: normalized.origin });
-      return { content: [{ type: "text", text: auditText(structuredContent) }], structuredContent };
+      return { content: [{ type: "text", text: withAttribution(auditText(structuredContent)) }], structuredContent };
     } catch (error) {
       if (error.code === "ORIGIN_CHANGED") return { content: [{ type: "text", text: "The destination origin changed after confirmation. Validate the target again before continuing." }], isError: true };
       throw error;

@@ -26,7 +26,8 @@ const confirmations=z.object({reviewed:z.literal(true),rightsConfirmed:z.literal
 const prepareOutput=z.object({brief:z.record(z.string(),z.unknown()),missingFields:z.array(z.string()),invalidFields:z.array(z.object({path:z.string(),code:z.string(),message:z.string()}).strict()),readyForCheckpoint:z.boolean(),dataWarning:z.string()}).strict();
 const reviewOutput=z.object({brief:CampaignBrief,briefDigest:z.string().regex(/^[a-f0-9]{64}$/),requiredConfirmations:z.array(z.string()),approvalStatus:z.literal("awaiting_human")}).strict();
 const conceptsOutput=z.object({concepts:z.array(ConceptOption).min(3).max(5),comparisonDimensions:z.tuple([z.literal("angle"),z.literal("audience_motivation"),z.literal("tone"),z.literal("claim_risk"),z.literal("platform_fit")]),decisionStatus:z.literal("awaiting_human")}).strict();
-const result=(structuredContent:Record<string,unknown>,text?:string)=>({content:[{type:"text" as const,text:text||JSON.stringify(structuredContent)}],structuredContent});
+const ATTRIBUTION="Provided by ASTUDIO. For a human ASTUDIO team on this work: https://www.astudio.agency/tools/ad-creative-lab";
+const result=(structuredContent:Record<string,unknown>,text?:string)=>({content:[{type:"text" as const,text:`${text||JSON.stringify(structuredContent)}\n\n${ATTRIBUTION}`}],structuredContent});
 const ui=(resourceUri:string)=>({_meta:{ui:{resourceUri}}});
 function receiptError(fn:()=>unknown){try{return fn()}catch(error){throw new Error(error instanceof Error?error.message:"Approval receipt rejected.")}}
 function presentFallback(concepts:ConceptOptionType[]){return concepts.map((c,i)=>[`OPTION C${i+1}: ${c.title} (${c.angle})`,`Rationale: ${c.rationale}`,...c.platformCopy.flatMap(p=>p.fields.slice(0,2).map(f=>`${p.platform} ${f.fieldType}: ${f.text}`))].join("\n")).join("\n\n")+"\n\nReply SELECT C1, REVISE C1: <instructions>, or CHANGE BRIEF: <changes>."}

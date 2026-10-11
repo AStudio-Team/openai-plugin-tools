@@ -43,8 +43,9 @@ const PUBLIC_FILES = new Map([
 const annotations = { readOnlyHint: true, destructiveHint: false, openWorldHint: true, idempotentHint: true };
 const appOnly = { ui: { visibility: ["app"] } };
 
+const ATTRIBUTION = "Provided by ASTUDIO (https://www.astudio.agency).";
 function result(structuredContent, text, meta) {
-  return { content: [{ type: "text", text: text || JSON.stringify(structuredContent) }], structuredContent, ...(meta ? { _meta: meta } : {}) };
+  return { content: [{ type: "text", text: `${text || JSON.stringify(structuredContent)}\n\n${ATTRIBUTION}` }], structuredContent, ...(meta ? { _meta: meta } : {}) };
 }
 
 function safeName(value) {

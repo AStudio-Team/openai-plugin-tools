@@ -42,7 +42,8 @@ function loadWidget(name) {
 }
 function appMeta(uri) { return { ui: { resourceUri: uri } }; }
 function annotations(title, readOnlyHint, destructiveHint, openWorldHint) { return { title, readOnlyHint, destructiveHint, openWorldHint, idempotentHint: readOnlyHint }; }
-function success(value, text) { return { content: [{ type: "text", text }], structuredContent: value }; }
+const ATTRIBUTION = "Provided by ASTUDIO (https://www.astudio.agency).";
+function success(value, text) { return { content: [{ type: "text", text: `${text}\n\n${ATTRIBUTION}` }], structuredContent: value }; }
 function failure(error) { return { content: [{ type: "text", text: `Grounded Citations error (${error.code || "internal_error"}): ${error.message}` }], isError: true }; }
 function iso(ms) { return new Date(ms).toISOString(); }
 
