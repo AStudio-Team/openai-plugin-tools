@@ -199,12 +199,48 @@ check_mcp() {
     | python3 -c "import json,sys; data=json.load(sys.stdin); tools=data['result']['tools']; actual={tool['name'] for tool in tools}; expected=set('$expected_tools'.split(',')); assert actual == expected, (actual, expected); assert all(isinstance(tool.get('inputSchema'), dict) and tool['inputSchema'].get('type') == 'object' for tool in tools); assert all(isinstance(tool.get('outputSchema'), dict) and tool['outputSchema'].get('type') == 'object' for tool in tools)"
 }
 
+check_resources() {
+  local url="$1"
+  local expected_resources="$2"
+  python3 - "$url" "$expected_resources" <<'PY'
+import json
+import sys
+import urllib.request
+
+url, expected_csv = sys.argv[1:]
+headers = {"Content-Type": "application/json", "Accept": "application/json, text/event-stream"}
+
+def post(payload):
+    request = urllib.request.Request(url, data=json.dumps(payload).encode(), headers=headers, method="POST")
+    with urllib.request.urlopen(request, timeout=20) as response:
+        return json.load(response)
+
+listed = post({"jsonrpc": "2.0", "id": 10, "method": "resources/list"})["result"]["resources"]
+expected = set(expected_csv.split(","))
+actual = {resource["uri"] for resource in listed}
+assert actual == expected, (actual, expected)
+closed_csp = {"connectDomains": [], "resourceDomains": [], "frameDomains": [], "baseUriDomains": []}
+for index, resource in enumerate(listed, start=11):
+    assert resource["mimeType"] == "text/html;profile=mcp-app"
+    assert resource["_meta"]["ui"]["csp"] == closed_csp
+    content = post({"jsonrpc": "2.0", "id": index, "method": "resources/read", "params": {"uri": resource["uri"]}})["result"]["contents"][0]
+    assert content["uri"] == resource["uri"]
+    assert content["mimeType"] == "text/html;profile=mcp-app"
+    assert content["_meta"]["ui"]["csp"] == closed_csp
+    assert content["text"].strip()
+    assert "globalThis.ExtApps=" in content["text"]
+    assert "/*__EXT_APPS_BUNDLE__*/" not in content["text"]
+PY
+}
+
 check_health https://www.astudio.agency/tools/health pdf-table-to-excel
 check_health https://www.astudio.agency/openai-plugins/pdf-table-to-excel/ready pdf-table-to-excel
 check_mcp https://www.astudio.agency/openai-plugins/pdf-table-to-excel/mcp pdf-table-to-excel convert_pdf_tables_to_excel
+check_resources https://www.astudio.agency/openai-plugins/pdf-table-to-excel/mcp ui://pdf-table-to-excel/result-preview.html
 check_health https://www.astudio.agency/openai-plugins/gcc-arabic-writer/health gcc-arabic-writer
 check_health https://www.astudio.agency/openai-plugins/gcc-arabic-writer/ready gcc-arabic-writer
 check_mcp https://www.astudio.agency/openai-plugins/gcc-arabic-writer/mcp gcc-arabic-writer prepare_gcc_arabic_brief,check_arabic_factual_fidelity,lint_gcc_arabic_copy
+check_resources https://www.astudio.agency/openai-plugins/gcc-arabic-writer/mcp ui://gcc-arabic-writer/brief-builder.html,ui://gcc-arabic-writer/copy-review.html
 check_health https://www.astudio.agency/openai-plugins/ad-creative-lab/health ad-creative-lab
 check_mcp https://www.astudio.agency/openai-plugins/ad-creative-lab/mcp ad-creative-lab prepare_campaign_brief,review_campaign_brief,approve_campaign_brief,present_concept_options,submit_concept_decision,validate_platform_copy,export_creative_package
 curl --fail --silent --show-error \
