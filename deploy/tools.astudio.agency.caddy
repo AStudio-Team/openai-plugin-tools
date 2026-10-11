@@ -33,6 +33,26 @@
         reverse_proxy __ARABIC_PLUGIN_UPSTREAM__:8789
     }
 
+    handle /openai-plugins/ai-crawler-readiness-auditor/mcp {
+        request_body {
+            max_size 128KB
+        }
+        rewrite * /mcp
+        reverse_proxy __CRAWLER_PLUGIN_UPSTREAM__:8790 {
+            header_up X-Plugin-Client-IP {remote_host}
+        }
+    }
+
+    handle_path /openai-plugins/ai-crawler-readiness-auditor/* {
+        reverse_proxy __CRAWLER_PLUGIN_UPSTREAM__:8790
+    }
+
+    redir /tools/ai-crawler-readiness-auditor /tools/ai-crawler-readiness-auditor/ 308
+
+    handle_path /tools/ai-crawler-readiness-auditor/* {
+        reverse_proxy __CRAWLER_PLUGIN_UPSTREAM__:8790
+    }
+
     handle /.well-known/openai-apps-challenge {
         reverse_proxy __PDF_PLUGIN_UPSTREAM__:8788
     }
