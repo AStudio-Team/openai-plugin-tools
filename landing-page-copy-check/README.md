@@ -6,9 +6,11 @@ A human-guided MCP App that reviews a landing page brief, validates two or three
 
 ```bash
 npm ci --ignore-scripts
-npm test
-npm start
+APPROVAL_HMAC_KEY="replace-with-at-least-32-random-characters" npm test
+APPROVAL_HMAC_KEY="replace-with-at-least-32-random-characters" npm start
 ```
+
+`APPROVAL_HMAC_KEY` signs brief approvals and copy selections. Set it explicitly for local runs; production receives it from the deployment environment file.
 
 The local server listens on port 8790 by default. Its MCP endpoint is `/mcp`, health endpoints are `/health` and `/ready`, and public product pages start at `/`.
 
