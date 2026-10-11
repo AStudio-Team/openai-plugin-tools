@@ -58,7 +58,7 @@ export function createPluginServer(options = {}) {
 
   registerAppTool(server, "search_open_data", {
     title: "Search official open-data catalogs",
-    description: "Opens an interactive intake for US Data.gov, UK Data.gov.uk and World Bank open data. The user must submit the search and explicitly choose a dataset. It accepts no URLs or credentials.",
+    description: "Use this when the user asks to find, search or download a public or government dataset or open data on a topic (US Data.gov, UK Data.gov.uk, World Bank Open Data). Opens the interactive search; the user submits it and picks a dataset. Do not use for private data, arbitrary websites or paid data; it accepts no URLs or credentials.",
     inputSchema: z.object({ suggested_query: z.string().max(200).optional(), suggested_source: z.enum(["all", ...SOURCES]).default("all"), suggested_format: z.enum(["csv", "jsonl", "parquet"]).default("csv") }).strict(),
     outputSchema: { form_version: z.literal("1.0"), suggested_query: z.string(), suggested_source: z.string(), suggested_format: z.string(), sources: z.array(z.object({ id: z.string(), label: z.string() })) },
     annotations,
@@ -67,7 +67,7 @@ export function createPluginServer(options = {}) {
 
   registerAppTool(server, "discover_datasets", {
     title: "Discover official datasets",
-    description: "Searches only the approved official catalog adapters after the human submits the widget search. It returns bounded metadata, never raw portal responses.",
+    description: "Use this when the search widget has been submitted, to query only the approved official catalogs. Returns bounded dataset metadata. Do not use for websites outside those catalogs.",
     inputSchema: z.object({ source: z.enum(["all", ...SOURCES]), query: z.string().min(2).max(200), page: z.number().int().min(1).max(20), human_search_submitted: z.literal(true) }).strict(),
     outputSchema: { results: z.array(z.object({ dataset_ref: z.string(), title: z.string(), publisher: z.string(), description: z.string(), updated_at: z.string().nullable(), license_label: z.string(), formats: z.array(z.string()), official_page: z.string() })), page: z.number().int(), has_more: z.boolean(), warnings: z.array(z.string()) },
     annotations,
@@ -82,7 +82,7 @@ export function createPluginServer(options = {}) {
 
   registerAppTool(server, "inspect_open_dataset", {
     title: "Inspect selected open dataset",
-    description: "Inspects the exact dataset selected by the human and opens a blocking license and size checkpoint. Amber opens the publisher by default. Red blocks server preview and export.",
+    description: "Use this when the user has chosen one dataset, to check its publisher, licence, files and size and open the rights checkpoint. Amber rights open the publisher page; red rights block preview and export. Do not use before a dataset is chosen.",
     inputSchema: z.object({ dataset_ref: z.string().min(3).max(600), human_selection_confirmed: z.literal(true) }).strict(),
     outputSchema: { dataset: z.object({ dataset_ref: z.string(), title: z.string(), publisher: z.string(), official_page: z.string(), description: z.string(), updated_at: z.string().nullable(), license_label: z.string() }), rights: z.object({ license_label: z.string(), license_url: z.string().nullable(), commercial_use: z.string(), redistribution: z.string(), attribution_required: z.boolean(), attribution_text: z.string(), verdict: z.enum(["green", "amber", "red"]) }), resources: z.array(z.object({ resource_ref: z.string(), name: z.string(), source_format: z.string(), declared_bytes: z.number().nullable(), estimated_rows: z.number().nullable(), exportable: z.boolean(), blocked_reason: z.string().nullable() })), checkpoint_token: z.string() },
     annotations,
@@ -100,7 +100,7 @@ export function createPluginServer(options = {}) {
 
   registerAppTool(server, "preview_open_dataset", {
     title: "Preview selected open-data resource",
-    description: "Returns at most 200 sample rows and quality metadata after a green-rights checkpoint is explicitly acknowledged. It rejects amber and red rights.",
+    description: "Use this after a green-rights checkpoint is acknowledged, to show up to 200 sample rows with quality notes. Do not use for amber or red rights.",
     inputSchema: z.object({ dataset_ref: z.string().max(600), resource_ref: z.string().max(600), sample_rows: z.number().int().min(10).max(200).default(50), license_acknowledged: z.literal(true), checkpoint_token: z.string().max(4000) }).strict(),
     outputSchema: { dataset_ref: z.string(), resource_ref: z.string(), official_page: z.string(), rights: z.object({ verdict: z.string(), license_label: z.string() }), columns: z.array(z.object({ name: z.string(), inferred_type: z.string(), nullable: z.boolean(), null_count_sample: z.number(), distinct_count_sample: z.number(), min_sample: z.string().nullable(), max_sample: z.string().nullable() })), rows: z.array(z.record(z.string(), z.any())), quality: z.object({ sample_size: z.number(), duplicate_rows_sample: z.number(), empty_columns: z.array(z.string()), mixed_type_columns: z.array(z.string()), encoding: z.string(), delimiter: z.string(), warnings: z.array(z.any()) }), preview_token: z.string() },
     annotations,
@@ -119,7 +119,7 @@ export function createPluginServer(options = {}) {
   const filterSchema = z.object({ column: z.string().max(128), operator: z.enum(["eq", "neq", "lt", "lte", "gt", "gte", "contains", "starts_with", "is_null"]), value: z.union([z.string().max(500), z.number(), z.boolean(), z.null()]) }).strict();
   registerAppTool(server, "prepare_open_data_export", {
     title: "Create confirmed open-data export",
-    description: "Creates a bounded temporary artifact only after green rights, preview, license acknowledgment and explicit export confirmation. It never publishes data and never accepts arbitrary URLs.",
+    description: "Use this when the user confirms an export after preview, to create a temporary CSV, JSON Lines or Parquet download of the chosen columns and filters. Do not use before preview and licence acknowledgment; it never publishes data or accepts arbitrary URLs.",
     inputSchema: z.object({ dataset_ref: z.string().max(600), resource_ref: z.string().max(600), format: z.enum(["csv", "jsonl", "parquet"]), selected_columns: z.array(z.string().max(128)).min(1).max(250), filters: z.array(filterSchema).max(20).default([]), row_limit: z.number().int().min(1).max(5_000_000), license_acknowledged: z.literal(true), export_confirmed: z.literal(true), preview_token: z.string().max(8000) }).strict(),
     outputSchema: { job_ref: z.string(), status: z.literal("ready"), summary: z.object({ rows_written: z.number(), columns_written: z.number(), format: z.string(), bytes: z.number(), sha256: z.string(), expires_at: z.string() }), attribution: z.object({ text: z.string(), license_url: z.string().nullable() }), fallback: z.string() },
     annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true, idempotentHint: false },

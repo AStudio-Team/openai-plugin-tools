@@ -90,13 +90,13 @@ export function createPluginServer(dependencies = {}) {
   registerAppResource(server, "Audit checkpoint", "ui://ai-crawler-readiness/checkpoint-v1.html", { _meta: appResourceMeta() }, async () => ({ contents: [{ uri: "ui://ai-crawler-readiness/checkpoint-v1.html", mimeType: RESOURCE_MIME_TYPE, text: checkpointHtml, _meta: appResourceMeta() }] }));
   registerAppResource(server, "Audit results", "ui://ai-crawler-readiness/results-v1.html", { _meta: appResourceMeta() }, async () => ({ contents: [{ uri: "ui://ai-crawler-readiness/results-v1.html", mimeType: RESOURCE_MIME_TYPE, text: resultsHtml, _meta: appResourceMeta() }] }));
   registerAppTool(server, "validate_audit_target", {
-    title: "Validate crawler audit target", description: "Validate one public HTTPS page for an AI crawler-readiness audit and open an interactive checkpoint. This tool does not perform the final audit. Use it before run_readiness_audit.",
+    title: "Validate crawler audit target", description: "Use this when the user asks whether their website or page is visible, crawlable or readable by AI crawlers or AI search (ChatGPT, GPTBot, OAI-SearchBot, Perplexity, Google AI), or wants a robots.txt, sitemap, llms.txt, meta tag or structured data check. Validates one public HTTPS page and opens the confirmation checkpoint; call it before run_readiness_audit. Do not use for signed-in pages, ranking reports or competitor comparisons.",
     inputSchema: z.object(inputBase).strict(), outputSchema: validationOutput,
     annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: true },
     _meta: toolMeta("ui://ai-crawler-readiness/checkpoint-v1.html", "Validating the public URL...", "URL ready for review."),
   }, async input => { const structuredContent = await validateTarget(input, dependencies.request); return { content: [{ type: "text", text: validationText(structuredContent) }], structuredContent }; });
   registerAppTool(server, "run_readiness_audit", {
-    title: "Run crawler readiness audit", description: "Run a previously validated and human-confirmed audit of one public HTTPS page. Returns evidence, limitations, and selectable remediation items. It does not change the website or predict AI rankings.",
+    title: "Run crawler readiness audit", description: "Use this after the user confirmed the checkpoint, to run the AI crawler readiness audit of that one public HTTPS page. Returns evidence, limitations and fixes ranked by priority. Do not use without the confirmation; it never changes the website or predicts AI rankings.",
     inputSchema: z.object({ ...inputBase, checkpointToken: z.string().min(32).max(4096).describe("Short-lived signed token returned by validate_audit_target.") }).strict(), outputSchema: auditOutput,
     annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: true },
     _meta: toolMeta("ui://ai-crawler-readiness/results-v1.html", "Checking public crawler signals...", "Crawler-readiness evidence is ready."),
