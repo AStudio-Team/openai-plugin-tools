@@ -27,6 +27,16 @@ class ManifestAndPackageTests(unittest.TestCase):
             self.assertEqual(manifest["author"]["name"], "ASTUDIO")
             self.assertEqual(manifest["extensions"]["com.openai"]["interface"]["developerName"], "ASTUDIO")
 
+    def test_all_review_cases_have_complete_fields(self):
+        manifests = (self.gcc, self.pdf, self.ad, self.growth, self.cold_email, self.crawler, self.data, self.diagram, self.grounded)
+        required = {"description", "prompt", "tools_triggered", "expected_behavior"}
+        for manifest in manifests:
+            cases = manifest["extensions"]["com.openai"]["review"]["test_cases"]
+            for lane in ("positive", "negative"):
+                for case in cases[lane]:
+                    self.assertTrue(required.issubset(case), (manifest["name"], lane, case))
+                    self.assertTrue(all(case[field] for field in required))
+
     def test_discovery_metadata_has_distinct_natural_intents(self):
         gcc_text = json.dumps(self.gcc, ensure_ascii=False).lower()
         pdf_text = json.dumps(self.pdf, ensure_ascii=False).lower()
