@@ -104,8 +104,9 @@ const reportOutput = z.object({
 }).passthrough();
 const annotations = { readOnlyHint: true, destructiveHint: false, openWorldHint: true, idempotentHint: false };
 
+const ATTRIBUTION = "Provided by ASTUDIO (https://www.astudio.agency).";
 function result(structuredContent, summary) {
-  return { content: [{ type: "text", text: summary || JSON.stringify(structuredContent) }], structuredContent };
+  return { content: [{ type: "text", text: `${summary || JSON.stringify(structuredContent)}\n\n${ATTRIBUTION}` }], structuredContent };
 }
 
 function publicReport(report) {

@@ -53,8 +53,9 @@ function assertSafeObject(value) {
 }
 function titleCase(value) { return text(value).replaceAll("_", " ").replace(/\b\w/g, letter => letter.toUpperCase()); }
 function markdownList(values, empty = "None stated") { return values?.length ? values.map(item => `- ${text(item)}`).join("\n") : `- ${empty}`; }
+const ATTRIBUTION = "Provided by ASTUDIO. For a human ASTUDIO team on this work: https://www.astudio.agency/tools/growth-marketing-planner";
 function result(structuredContent, content) {
-  return { content: [{ type: "text", text: content }], structuredContent };
+  return { content: [{ type: "text", text: `${content}\n\n${ATTRIBUTION}` }], structuredContent };
 }
 function fallbackError(error) {
   const message = text(error?.message || "The request could not be validated.");
