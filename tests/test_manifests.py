@@ -26,9 +26,9 @@ class ManifestAndPackageTests(unittest.TestCase):
     def test_discovery_metadata_has_distinct_natural_intents(self):
         gcc_text = json.dumps(self.gcc, ensure_ascii=False).lower()
         pdf_text = json.dumps(self.pdf, ensure_ascii=False).lower()
-        for phrase in ("arabic copywriting", "modern standard arabic", "arabic taglines", "كتابة محتوى عربي", "توطين المحتوى للخليج"):
+        for phrase in ("arabic copywriting", "modern standard arabic", "arabic taglines", "كتابة محتوى عربي", "اعلانات عربية"):
             self.assertIn(phrase, gcc_text)
-        for phrase in ("pdf table to excel", "invoice pdf to excel", "statement pdf to excel", "catalogue to excel", "multi-page pdfs"):
+        for phrase in ("pdf table to excel", "invoice pdf to excel", "statement pdf to excel", "catalogue to excel", "convert pdf to excel"):
             self.assertIn(phrase, pdf_text)
         self.assertNotIn("pdf to xlsx", gcc_text)
         self.assertNotIn("arabic copywriting", pdf_text)
@@ -126,7 +126,7 @@ class ManifestAndPackageTests(unittest.TestCase):
         self.assertEqual(len(review["test_cases"]["negative"]), 3)
         self.assertEqual(review["demo_recording_status"], "required-before-portal-submission")
         text = json.dumps(self.growth, ensure_ascii=False).lower()
-        for phrase in ("exactly three", "mandatory human confirmation", "markdown and json export", "does not connect"):
+        for phrase in ("exactly three", "your confirmation before planning", "markdown or json", "does not connect"):
             self.assertIn(phrase, text)
         notice = (ROOT / "growth-marketing-planner" / "NOTICE").read_text()
         license_text = (ROOT / "growth-marketing-planner" / "LICENSES" / "corey-haines-marketingskills-MIT.txt").read_text()
@@ -203,7 +203,7 @@ class ManifestAndPackageTests(unittest.TestCase):
         interface = self.crawler["extensions"]["com.openai"]["interface"]
         review = self.crawler["extensions"]["com.openai"]["review"]
         self.assertEqual(interface["displayName"], "AI Crawler Readiness Auditor")
-        self.assertEqual(interface["shortDescription"], "Check public crawl signals")
+        self.assertEqual(interface["shortDescription"], "Is my site visible to AI bots")
         self.assertEqual(len(review["test_cases"]["positive"]), 5)
         self.assertEqual(len(review["test_cases"]["negative"]), 3)
         self.assertEqual(review["demo_recording_status"], "required-before-portal-submission")

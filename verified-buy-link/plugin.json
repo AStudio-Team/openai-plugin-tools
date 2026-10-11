@@ -2,7 +2,7 @@
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "verified-buy-link",
   "version": "1.0.0",
-  "description": "Compare only exact user-supplied product pages through a human-confirmed, research-only MCP App.",
+  "description": "Check the exact product pages you paste: product and variant match, price, delivery country, returns and retailer identity, with evidence, before you open a buy link. Research only, no purchases. By ASTUDIO.",
   "author": {
     "name": "ASTUDIO",
     "url": "https://www.astudio.agency"
@@ -10,24 +10,45 @@
   "homepage": "https://www.astudio.agency/tools/verified-buy-link",
   "repository": "https://github.com/AStudio-Team/openai-plugin-tools",
   "license": "MIT",
-  "keywords": ["verified buy link", "compare product links", "product page evidence", "retailer evidence", "price verification", "variant verification", "return terms", "human controlled shopping research"],
+  "keywords": [
+    "verified buy link",
+    "compare product links",
+    "product page evidence",
+    "retailer evidence",
+    "price verification",
+    "variant verification",
+    "return terms",
+    "human controlled shopping research",
+    "is this the right product",
+    "verify product page",
+    "compare product pages",
+    "check price and returns",
+    "shopping research",
+    "product link check"
+  ],
   "extensions": {
     "com.openai": {
       "interface": {
         "displayName": "Verified Buy Link",
-        "shortDescription": "Check exact product links",
+        "shortDescription": "Check product links to buy",
         "longDescription": "Compare one to five exact public product pages supplied by the user. An interactive checkpoint confirms product identity, delivery country, currency, budget, permitted conditions and retailer constraints before any retrieval. Sources are fetched only when a current domain access record and robots policy permit it. The comparison separates product match, current purchase control, retailer identity, target-brand authorization, price, delivery and return restrictions. Human selection triggers an immediate recheck before the MCP host may open a normalized product-detail page. The app never discovers retailers, buys, reserves, logs in, adds to cart, starts checkout, submits forms or guarantees authenticity or safety.",
         "developerName": "ASTUDIO",
         "category": "Shopping",
-        "capabilities": ["Confirm product and market constraints", "Compare exact user-supplied product pages", "Validate product and variant identity", "Recheck a selected candidate", "Explain source-level evidence and gaps"],
+        "capabilities": [
+          "Confirm product, variant and delivery country first",
+          "Compare up to five exact product pages you paste",
+          "Check product and variant match",
+          "Check price, delivery and return terms shown",
+          "Recheck a chosen page before opening it"
+        ],
         "websiteURL": "https://www.astudio.agency/tools/verified-buy-link",
         "supportURL": "https://www.astudio.agency/tools/verified-buy-link/support",
         "privacyPolicyURL": "https://www.astudio.agency/tools/verified-buy-link/privacy",
         "termsOfServiceURL": "https://www.astudio.agency/tools/verified-buy-link/terms",
         "defaultPrompt": [
-          "Compare these exact product pages after I confirm the product and delivery market.",
-          "Check whether these supplied links match the exact model and variant.",
-          "Show the evidence and return restrictions for my supplied product links."
+          "Check these product pages and tell me which one matches the exact model.",
+          "Compare price and return terms on these product links for UAE delivery.",
+          "Verify this product page before I buy."
         ],
         "brandColor": "#0B6B57",
         "composerIcon": "./assets/icon.png",

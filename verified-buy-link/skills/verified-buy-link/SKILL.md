@@ -1,6 +1,6 @@
 ---
 name: verified-buy-link
-description: Compare exact product URLs supplied by the user through a confirmed evidence workflow.
+description: "Use when the user pastes one to five exact product page links and asks to compare, verify or check them for product match, variant, price, delivery country, returns or retailer identity before buying. Do not use to search for retailers, find deals, buy, add to cart, log in or guarantee authenticity."
 version: 1.0.0
 license: MIT
 ---

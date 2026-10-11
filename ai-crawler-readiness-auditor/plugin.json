@@ -2,26 +2,56 @@
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "ai-crawler-readiness-auditor",
   "version": "1.0.0",
-  "description": "Audit one public HTTPS page and its origin-level crawler controls with evidence and remediation choices.",
-  "author": { "name": "ASTUDIO", "url": "https://www.astudio.agency" },
+  "description": "Check whether ChatGPT, Perplexity and other AI crawlers can read your website: robots.txt, sitemap, llms.txt, meta tags and structured data for one public page, with fixes ranked by priority. By ASTUDIO.",
+  "author": {
+    "name": "ASTUDIO",
+    "url": "https://www.astudio.agency"
+  },
   "homepage": "https://www.astudio.agency/tools/ai-crawler-readiness-auditor",
   "repository": "https://github.com/AStudio-Team/openai-plugin-tools",
   "license": "MIT",
-  "keywords": ["AI crawler readiness", "robots.txt audit", "llms.txt validation", "sitemap audit", "JSON-LD audit", "crawler access", "public website audit"],
+  "keywords": [
+    "AI crawler readiness",
+    "robots.txt audit",
+    "llms.txt validation",
+    "sitemap audit",
+    "public website audit",
+    "is my website visible to ChatGPT",
+    "AI crawler audit",
+    "robots.txt for AI bots",
+    "GPTBot robots.txt",
+    "llms.txt check",
+    "AI SEO audit",
+    "GEO audit",
+    "generative engine optimization",
+    "structured data check",
+    "sitemap check"
+  ],
   "extensions": {
     "com.openai": {
       "interface": {
         "displayName": "AI Crawler Readiness Auditor",
-        "shortDescription": "Check public crawl signals",
+        "shortDescription": "Is my site visible to AI bots",
         "longDescription": "Check one public HTTPS page and its site-level crawler controls. The app reviews effective robots.txt rules for the requested path, response and page directives, sitemap availability, llms.txt file validity, metadata, and JSON-LD parsing. It returns evidence and prioritized remediation choices. It does not access signed-in pages, modify websites, measure AI-answer rankings, compare competitors, or guarantee inclusion, citations, traffic, or ranking in any AI product.",
         "developerName": "ASTUDIO",
         "category": "Developer Tools",
-        "capabilities": ["Public HTTPS target validation", "Effective robots.txt checks", "Page directive and metadata checks", "Sitemap and llms.txt validation", "JSON-LD parsing", "Evidence-backed remediation choices"],
+        "capabilities": [
+          "Check robots.txt rules for AI crawlers such as GPTBot and OAI-SearchBot",
+          "Check sitemap and llms.txt",
+          "Check page meta tags and directives",
+          "Parse JSON-LD structured data",
+          "Evidence with fixes ranked by priority",
+          "One public page per audit, your confirmation first"
+        ],
         "websiteURL": "https://www.astudio.agency/tools/ai-crawler-readiness-auditor",
         "supportURL": "https://www.astudio.agency/tools/ai-crawler-readiness-auditor/support",
         "privacyPolicyURL": "https://www.astudio.agency/tools/ai-crawler-readiness-auditor/privacy",
         "termsOfServiceURL": "https://www.astudio.agency/tools/ai-crawler-readiness-auditor/terms",
-        "defaultPrompt": ["Audit https://example.com for AI crawler readiness.", "Check whether public crawler rules allow access to https://example.com/docs.", "Review this public page's robots, sitemap, llms.txt, and structured data signals."],
+        "defaultPrompt": [
+          "Is my website visible to ChatGPT? Audit https://example.com.",
+          "Check robots.txt, sitemap and llms.txt for AI crawlers on https://example.com.",
+          "Review the structured data and meta tags on this page for AI search."
+        ],
         "brandColor": "#A6402D",
         "composerIcon": "./assets/composer-icon.png",
         "logo": "./assets/logo.png"
@@ -29,23 +59,59 @@
       "review": {
         "test_cases": {
           "positive": [
-            { "description": "Audit a standard public page and show a checkpoint before evidence.", "prompt": "Audit https://fixtures.astudio.agency/ready/page for AI crawler readiness.", "tools_triggered": "validate_audit_target, then run_readiness_audit after confirmation", "expected_behavior": "Show the exact target and scope checkpoint, then return passing technical evidence without ranking or inclusion claims." },
-            { "description": "Report an effective robots restriction for the requested path.", "prompt": "Can AI-related crawlers access https://fixtures.astudio.agency/robots-blocked/article?", "tools_triggered": "validate_audit_target, then run_readiness_audit after confirmation", "expected_behavior": "Report effective disallow evidence for the requested path and provide a selectable remediation item." },
-            { "description": "Detect a false llms.txt success response.", "prompt": "Check the discovery files for https://fixtures.astudio.agency/llms-html/page.", "tools_triggered": "validate_audit_target, then run_readiness_audit after confirmation", "expected_behavior": "Detect that llms.txt serves HTML or a homepage response instead of a valid text file." },
-            { "description": "Retain completed evidence while warning about malformed structured data.", "prompt": "Review https://fixtures.astudio.agency/invalid-jsonld/product for crawler readiness.", "tools_triggered": "validate_audit_target, then run_readiness_audit after confirmation", "expected_behavior": "Report the malformed JSON-LD block while retaining evidence for checks that completed." },
-            { "description": "Show partial results and continue from an explicit remediation selection.", "prompt": "Audit https://fixtures.astudio.agency/sitemap-timeout/page and help me choose what to fix.", "tools_triggered": "validate_audit_target, then run_readiness_audit after confirmation", "expected_behavior": "Return a clearly labeled incomplete or partial result, show remediation choices, and continue only from selected IDs." }
+            {
+              "description": "Audit a standard public page and show a checkpoint before evidence.",
+              "prompt": "Audit https://fixtures.astudio.agency/ready/page for AI crawler readiness.",
+              "tools_triggered": "validate_audit_target, then run_readiness_audit after confirmation",
+              "expected_behavior": "Show the exact target and scope checkpoint, then return passing technical evidence without ranking or inclusion claims."
+            },
+            {
+              "description": "Report an effective robots restriction for the requested path.",
+              "prompt": "Can AI-related crawlers access https://fixtures.astudio.agency/robots-blocked/article?",
+              "tools_triggered": "validate_audit_target, then run_readiness_audit after confirmation",
+              "expected_behavior": "Report effective disallow evidence for the requested path and provide a selectable remediation item."
+            },
+            {
+              "description": "Detect a false llms.txt success response.",
+              "prompt": "Check the discovery files for https://fixtures.astudio.agency/llms-html/page.",
+              "tools_triggered": "validate_audit_target, then run_readiness_audit after confirmation",
+              "expected_behavior": "Detect that llms.txt serves HTML or a homepage response instead of a valid text file."
+            },
+            {
+              "description": "Retain completed evidence while warning about malformed structured data.",
+              "prompt": "Review https://fixtures.astudio.agency/invalid-jsonld/product for crawler readiness.",
+              "tools_triggered": "validate_audit_target, then run_readiness_audit after confirmation",
+              "expected_behavior": "Report the malformed JSON-LD block while retaining evidence for checks that completed."
+            },
+            {
+              "description": "Show partial results and continue from an explicit remediation selection.",
+              "prompt": "Audit https://fixtures.astudio.agency/sitemap-timeout/page and help me choose what to fix.",
+              "tools_triggered": "validate_audit_target, then run_readiness_audit after confirmation",
+              "expected_behavior": "Return a clearly labeled incomplete or partial result, show remediation choices, and continue only from selected IDs."
+            }
           ],
           "negative": [
-            { "description": "A private-network target should be rejected before any connection.", "prompt": "Audit https://127.0.0.1/admin." },
-            { "description": "A ranking comparison should not activate because rankings and competitor analysis are unsupported.", "prompt": "Compare my AI ranking with three competitors and tell me who wins." },
-            { "description": "An authenticated modification request should not activate or request credentials.", "prompt": "Log into my CMS and update robots.txt based on your audit." }
+            {
+              "description": "A private-network target should be rejected before any connection.",
+              "prompt": "Audit https://127.0.0.1/admin."
+            },
+            {
+              "description": "A ranking comparison should not activate because rankings and competitor analysis are unsupported.",
+              "prompt": "Compare my AI ranking with three competitors and tell me who wins."
+            },
+            {
+              "description": "An authenticated modification request should not activate or request credentials.",
+              "prompt": "Log into my CMS and update robots.txt based on your audit."
+            }
           ]
         },
         "demo_recording_status": "required-before-portal-submission",
         "commerce": false,
         "commerce_description": "This plugin does not sell products, call paid APIs, or process payments."
       },
-      "publication": { "release_notes": "Initial local release with a human-confirmed checkpoint, bounded public-web checks, evidence, selectable remediation guidance, and MCP Apps widgets." }
+      "publication": {
+        "release_notes": "Initial local release with a human-confirmed checkpoint, bounded public-web checks, evidence, selectable remediation guidance, and MCP Apps widgets."
+      }
     }
   }
 }
