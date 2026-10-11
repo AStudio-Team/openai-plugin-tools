@@ -13,10 +13,11 @@ class ManifestAndPackageTests(unittest.TestCase):
         self.ad = json.loads((ROOT / "ad-creative-lab" / "plugin.json").read_text())
         self.growth = json.loads((ROOT / "growth-marketing-planner" / "plugin.json").read_text())
         self.crawler = json.loads((ROOT / "ai-crawler-readiness-auditor" / "plugin.json").read_text())
+        self.data = json.loads((ROOT / "open-data-fetcher" / "plugin.json").read_text())
 
-    def test_astudio_is_publisher_for_both_products(self):
+    def test_astudio_is_publisher_for_all_products(self):
         self.assertEqual(self.gcc["name"], "astudio-gcc-arabic-writer")
-        for manifest in (self.gcc, self.pdf, self.ad, self.growth, self.crawler):
+        for manifest in (self.gcc, self.pdf, self.ad, self.growth, self.crawler, self.data):
             self.assertEqual(manifest["author"]["name"], "ASTUDIO")
             self.assertEqual(manifest["extensions"]["com.openai"]["interface"]["developerName"], "ASTUDIO")
 
@@ -174,6 +175,19 @@ class ManifestAndPackageTests(unittest.TestCase):
         manifest_text = json.dumps(self.crawler).lower()
         self.assertNotIn("readiness score", manifest_text)
         self.assertNotIn("<publisher-domain>", manifest_text)
+    def test_open_data_package_has_human_gates_and_fail_closed_rights(self):
+        self.assertEqual(self.data["name"], "astudio-open-data-fetcher")
+        review = self.data["extensions"]["com.openai"]["review"]["test_cases"]
+        self.assertEqual(len(review["positive"]), 5)
+        self.assertEqual(len(review["negative"]), 3)
+        source = (ROOT / "open-data-fetcher" / "src" / "server.mjs").read_text()
+        self.assertIn("human_search_submitted: z.literal(true)", source)
+        self.assertIn("human_selection_confirmed: z.literal(true)", source)
+        self.assertIn("license_acknowledged: z.literal(true)", source)
+        self.assertIn("export_confirmed: z.literal(true)", source)
+        self.assertIn('rights.verdict !== "green"', source)
+        mcp = json.loads((ROOT / "open-data-fetcher" / "mcp.json").read_text())
+        self.assertEqual(mcp["mcpServers"]["open-data-fetcher"]["url"], "https://www.astudio.agency/openai-plugins/open-data-fetcher/mcp")
 
 
 if __name__ == "__main__":

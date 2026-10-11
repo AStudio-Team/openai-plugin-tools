@@ -84,4 +84,22 @@
         reverse_proxy __CRAWLER_PLUGIN_UPSTREAM__:8790
     }
 
+    handle_path /tools/open-data-fetcher* {
+        reverse_proxy __DATA_PLUGIN_UPSTREAM__:8791
+    }
+
+    handle /openai-plugins/open-data-fetcher/mcp {
+        request_body {
+            max_size 256KB
+        }
+        rewrite * /mcp
+        reverse_proxy __DATA_PLUGIN_UPSTREAM__:8791 {
+            header_up X-Plugin-Client-IP {remote_host}
+        }
+    }
+
+    handle_path /openai-plugins/open-data-fetcher/* {
+        reverse_proxy __DATA_PLUGIN_UPSTREAM__:8791
+    }
+
 # END OPENAI_PLUGIN_TOOLS

@@ -13,6 +13,9 @@ No product contains client data, private corpora, credentials or internal ASTUDI
 - **AI Crawler Readiness Auditor** checks one public HTTPS page and its crawler controls through a human-confirmed MCP Apps flow.
 
 These plugins contain no client data, private corpora, credentials or internal ASTUDIO procedures.
+- **Open Data Fetcher** lets people search approved official catalogs, select a dataset, review rights and size, preview bounded rows and confirm a temporary export.
+
+No plugin contains client data, private corpora, credentials or internal ASTUDIO procedures.
 
 ## Public pages
 
@@ -32,6 +35,7 @@ npm --prefix gcc-arabic-writer test
 npm --prefix ad-creative-lab test
 npm --prefix growth-marketing-planner test
 npm --prefix ai-crawler-readiness-auditor test
+npm --prefix open-data-fetcher test
 ```
 
 ## License

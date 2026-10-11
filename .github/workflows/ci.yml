@@ -27,6 +27,7 @@ jobs:
             ad-creative-lab/package-lock.json
             growth-marketing-planner/package-lock.json
             ai-crawler-readiness-auditor/package-lock.json
+            open-data-fetcher/package-lock.json
       - name: Install Python dependencies
         working-directory: pdf-table-to-excel
         run: |
@@ -39,6 +40,7 @@ jobs:
           npm --prefix ad-creative-lab ci --ignore-scripts
           npm --prefix growth-marketing-planner ci --ignore-scripts
           npm --prefix ai-crawler-readiness-auditor ci --ignore-scripts
+          npm --prefix open-data-fetcher ci --ignore-scripts
       - name: Test PDF MCP service
         working-directory: pdf-table-to-excel
         run: |
@@ -58,6 +60,14 @@ jobs:
         working-directory: growth-marketing-planner
         run: |
           npm test
+        run: |
+          npm test
+          npm audit --audit-level=high
+      - name: Test Open Data MCP App
+        working-directory: open-data-fetcher
+        run: |
+          npm test
+          npm run check
           npm audit --audit-level=high
       - name: Validate public packages
         run: |
@@ -86,6 +96,7 @@ jobs:
           docker build -t openai-plugin-ad-creative-lab:ci ad-creative-lab
           docker build -t openai-plugin-growth:ci growth-marketing-planner
           docker build -t openai-plugin-crawler-auditor:ci ai-crawler-readiness-auditor
+          docker build -t openai-plugin-data:ci open-data-fetcher
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: openai-plugin-submission-zips

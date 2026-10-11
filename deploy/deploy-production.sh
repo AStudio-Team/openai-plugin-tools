@@ -11,6 +11,7 @@ ARABIC_STATE_FILE="${STATE_DIR}/current-arabic-container"
 AD_STATE_FILE="${STATE_DIR}/current-ad-creative-lab-container"
 GROWTH_STATE_FILE="${STATE_DIR}/current-growth-container"
 CRAWLER_STATE_FILE="${STATE_DIR}/current-crawler-container"
+DATA_STATE_FILE="${STATE_DIR}/current-data-container"
 LEGACY_STATE_FILE="${STATE_DIR}/current-container"
 ENV_FILE="${STATE_DIR}/openai.env"
 CADDYFILE="/opt/websites/caddy/Caddyfile"
@@ -23,6 +24,8 @@ ARABIC_CONTAINER="openai-plugin-arabic-${DEPLOY_ID}"
 AD_CONTAINER="openai-plugin-ad-creative-lab-${DEPLOY_ID}"
 CRAWLER_IMAGE="openai-plugin-crawler-auditor:${RELEASE_SHA}"
 CRAWLER_CONTAINER="openai-plugin-crawler-auditor-${DEPLOY_ID}"
+DATA_IMAGE="openai-plugin-data:${RELEASE_SHA}"
+DATA_CONTAINER="openai-plugin-data-${DEPLOY_ID}"
 RENDERED_BLOCK="/tmp/openai-plugin-tools-${DEPLOY_ID}.caddy"
 RENDERED_FIXTURES="/tmp/ai-crawler-fixtures-${DEPLOY_ID}.caddy"
 PREVIOUS_PDF_CONTAINER=""
@@ -32,6 +35,7 @@ GROWTH_IMAGE="openai-plugin-growth:${RELEASE_SHA}"
 GROWTH_CONTAINER="openai-plugin-growth-${DEPLOY_ID}"
 PREVIOUS_GROWTH_CONTAINER=""
 PREVIOUS_CRAWLER_CONTAINER=""
+PREVIOUS_DATA_CONTAINER=""
 CONFIG_MUTATED=0
 SWITCHED=0
 COMMITTED=0
@@ -58,6 +62,9 @@ if [ -s "$GROWTH_STATE_FILE" ]; then
 fi
 if [ -s "$CRAWLER_STATE_FILE" ]; then
   PREVIOUS_CRAWLER_CONTAINER="$(tr -cd 'A-Za-z0-9_.-' < "$CRAWLER_STATE_FILE")"
+fi
+if [ -s "$DATA_STATE_FILE" ]; then
+  PREVIOUS_DATA_CONTAINER="$(tr -cd 'A-Za-z0-9_.-' < "$DATA_STATE_FILE")"
 fi
 
 write_state() {
@@ -90,16 +97,18 @@ rollback() {
     write_state "$AD_STATE_FILE" "$PREVIOUS_AD_CONTAINER"
     write_state "$GROWTH_STATE_FILE" "$PREVIOUS_GROWTH_CONTAINER"
     write_state "$CRAWLER_STATE_FILE" "$PREVIOUS_CRAWLER_CONTAINER"
-    docker rm -f "$PDF_CONTAINER" "$ARABIC_CONTAINER" "$AD_CONTAINER" "$GROWTH_CONTAINER" "$CRAWLER_CONTAINER" >/dev/null 2>&1 || true
+    write_state "$DATA_STATE_FILE" "$PREVIOUS_DATA_CONTAINER"
+    docker rm -f "$PDF_CONTAINER" "$ARABIC_CONTAINER" "$AD_CONTAINER" "$GROWTH_CONTAINER" "$CRAWLER_CONTAINER" "$DATA_CONTAINER" >/dev/null 2>&1 || true
   else
     write_state "$PDF_STATE_FILE" "$PDF_CONTAINER"
     write_state "$ARABIC_STATE_FILE" "$ARABIC_CONTAINER"
     write_state "$AD_STATE_FILE" "$AD_CONTAINER"
     write_state "$GROWTH_STATE_FILE" "$GROWTH_CONTAINER"
     write_state "$CRAWLER_STATE_FILE" "$CRAWLER_CONTAINER"
+    write_state "$DATA_STATE_FILE" "$DATA_CONTAINER"
     echo "rollback failed; candidate containers were kept running for recovery" >&2
   fi
-  rm -f "${PDF_STATE_FILE}.tmp" "${ARABIC_STATE_FILE}.tmp" "${AD_STATE_FILE}.tmp" "${GROWTH_STATE_FILE}.tmp" "${CRAWLER_STATE_FILE}.tmp" "${CADDYFILE}.rollback-${DEPLOY_ID}" "$RENDERED_BLOCK" "$RENDERED_FIXTURES"
+  rm -f "${PDF_STATE_FILE}.tmp" "${ARABIC_STATE_FILE}.tmp" "${AD_STATE_FILE}.tmp" "${GROWTH_STATE_FILE}.tmp" "${CRAWLER_STATE_FILE}.tmp" "${DATA_STATE_FILE}.tmp" "${CADDYFILE}.rollback-${DEPLOY_ID}"
   return $((1 - rollback_ok))
 }
 
@@ -121,6 +130,7 @@ docker build --pull -t "$ARABIC_IMAGE" gcc-arabic-writer
 docker build --pull -t "$AD_IMAGE" ad-creative-lab
 docker build --pull -t "$GROWTH_IMAGE" growth-marketing-planner
 docker build --pull -t "$CRAWLER_IMAGE" ai-crawler-readiness-auditor
+docker build --pull -t "$DATA_IMAGE" open-data-fetcher
 
 ENV_FILE_ARGS=()
 if [ -s "$ENV_FILE" ]; then
@@ -181,6 +191,9 @@ run_container "$GROWTH_CONTAINER" "$GROWTH_IMAGE" 8790 none
 run_container "$CRAWLER_CONTAINER" "$CRAWLER_IMAGE" 8790 local \
   -e MAX_CONCURRENT_AUDITS=4 \
   -e ALLOWED_HOSTS=www.astudio.agency,astudio.agency,127.0.0.1,localhost,fixtures.astudio.agency,ready.fixtures.astudio.agency,robots-blocked.fixtures.astudio.agency,llms-html.fixtures.astudio.agency,invalid-jsonld.fixtures.astudio.agency,sitemap-timeout.fixtures.astudio.agency
+run_container "$DATA_CONTAINER" "$DATA_IMAGE" 8791 local \
+  -e PUBLIC_BASE_URL=https://www.astudio.agency/openai-plugins/open-data-fetcher \
+  -e APP_ORIGIN=https://www.astudio.agency
 
 wait_healthy() {
   local container="$1"
@@ -200,14 +213,15 @@ wait_healthy "$ARABIC_CONTAINER"
 wait_healthy "$AD_CONTAINER"
 wait_healthy "$GROWTH_CONTAINER"
 wait_healthy "$CRAWLER_CONTAINER"
+wait_healthy "$DATA_CONTAINER"
 
-python3 - "$PDF_CONTAINER" "$ARABIC_CONTAINER" "$AD_CONTAINER" "$GROWTH_CONTAINER" "$CRAWLER_CONTAINER" deploy/tools.astudio.agency.caddy "$RENDERED_BLOCK" <<'PY'
+python3 - "$PDF_CONTAINER" "$ARABIC_CONTAINER" "$AD_CONTAINER" "$GROWTH_CONTAINER" "$CRAWLER_CONTAINER" "$DATA_CONTAINER" deploy/tools.astudio.agency.caddy "$RENDERED_BLOCK" <<'PY'
 import sys
 from pathlib import Path
-pdf, arabic, ad, growth, crawler, source, target = sys.argv[1:]
+pdf, arabic, ad, growth, crawler, data, source, target = sys.argv[1:]
 text = Path(source).read_text()
-text = text.replace("__PDF_PLUGIN_UPSTREAM__", pdf).replace("__ARABIC_PLUGIN_UPSTREAM__", arabic).replace("__AD_CREATIVE_LAB_UPSTREAM__", ad).replace("__GROWTH_PLUGIN_UPSTREAM__", growth).replace("__CRAWLER_PLUGIN_UPSTREAM__", crawler)
-if "__PDF_PLUGIN_UPSTREAM__" in text or "__ARABIC_PLUGIN_UPSTREAM__" in text or "__AD_CREATIVE_LAB_UPSTREAM__" in text or "__GROWTH_PLUGIN_UPSTREAM__" in text or "__CRAWLER_PLUGIN_UPSTREAM__" in text:
+text = text.replace("__PDF_PLUGIN_UPSTREAM__", pdf).replace("__ARABIC_PLUGIN_UPSTREAM__", arabic).replace("__AD_CREATIVE_LAB_UPSTREAM__", ad).replace("__GROWTH_PLUGIN_UPSTREAM__", growth).replace("__CRAWLER_PLUGIN_UPSTREAM__", crawler).replace("__DATA_PLUGIN_UPSTREAM__", data)
+if "__PDF_PLUGIN_UPSTREAM__" in text or "__ARABIC_PLUGIN_UPSTREAM__" in text or "__AD_CREATIVE_LAB_UPSTREAM__" in text or "__GROWTH_PLUGIN_UPSTREAM__" in text or "__CRAWLER_PLUGIN_UPSTREAM__" in text or "__DATA_PLUGIN_UPSTREAM__" in text:
     raise SystemExit("unresolved upstream placeholder")
 Path(target).write_text(text)
 PY
@@ -317,6 +331,9 @@ check_health https://www.astudio.agency/openai-plugins/ai-crawler-readiness-audi
 check_health https://www.astudio.agency/openai-plugins/ai-crawler-readiness-auditor/ready ai-crawler-readiness-auditor
 check_mcp https://www.astudio.agency/openai-plugins/ai-crawler-readiness-auditor/mcp ai-crawler-readiness-auditor validate_audit_target,run_readiness_audit
 python3 deploy/check-crawler-public.py https://www.astudio.agency/openai-plugins/ai-crawler-readiness-auditor/mcp
+check_health https://www.astudio.agency/openai-plugins/open-data-fetcher/health open-data-fetcher
+check_health https://www.astudio.agency/openai-plugins/open-data-fetcher/ready open-data-fetcher
+check_mcp https://www.astudio.agency/openai-plugins/open-data-fetcher/mcp open-data-fetcher search_open_data,discover_datasets,inspect_open_dataset,preview_open_dataset,prepare_open_data_export
 curl --fail --silent --show-error \
   -H 'Content-Type: application/json' \
   -H 'Accept: application/json, text/event-stream' \
@@ -341,18 +358,20 @@ printf '%s\n' "$ARABIC_CONTAINER" > "${ARABIC_STATE_FILE}.tmp"
 printf '%s\n' "$AD_CONTAINER" > "${AD_STATE_FILE}.tmp"
 printf '%s\n' "$GROWTH_CONTAINER" > "${GROWTH_STATE_FILE}.tmp"
 printf '%s\n' "$CRAWLER_CONTAINER" > "${CRAWLER_STATE_FILE}.tmp"
+printf '%s\n' "$DATA_CONTAINER" > "${DATA_STATE_FILE}.tmp"
 mv "${PDF_STATE_FILE}.tmp" "$PDF_STATE_FILE"
 mv "${ARABIC_STATE_FILE}.tmp" "$ARABIC_STATE_FILE"
 mv "${AD_STATE_FILE}.tmp" "$AD_STATE_FILE"
 mv "${GROWTH_STATE_FILE}.tmp" "$GROWTH_STATE_FILE"
 mv "${CRAWLER_STATE_FILE}.tmp" "$CRAWLER_STATE_FILE"
+mv "${DATA_STATE_FILE}.tmp" "$DATA_STATE_FILE"
 COMMITTED=1
 rm -f "$LEGACY_STATE_FILE"
-for previous in "$PREVIOUS_PDF_CONTAINER" "$PREVIOUS_ARABIC_CONTAINER" "$PREVIOUS_AD_CONTAINER" "$PREVIOUS_GROWTH_CONTAINER" "$PREVIOUS_CRAWLER_CONTAINER"; do
-  if [ -n "$previous" ] && [ "$previous" != "$PDF_CONTAINER" ] && [ "$previous" != "$ARABIC_CONTAINER" ] && [ "$previous" != "$AD_CONTAINER" ] && [ "$previous" != "$GROWTH_CONTAINER" ] && [ "$previous" != "$CRAWLER_CONTAINER" ]; then
+for previous in "$PREVIOUS_PDF_CONTAINER" "$PREVIOUS_ARABIC_CONTAINER" "$PREVIOUS_AD_CONTAINER" "$PREVIOUS_GROWTH_CONTAINER" "$PREVIOUS_CRAWLER_CONTAINER" "$PREVIOUS_DATA_CONTAINER"; do
+  if [ -n "$previous" ] && [ "$previous" != "$PDF_CONTAINER" ] && [ "$previous" != "$ARABIC_CONTAINER" ] && [ "$previous" != "$AD_CONTAINER" ] && [ "$previous" != "$GROWTH_CONTAINER" ] && [ "$previous" != "$CRAWLER_CONTAINER" ] && [ "$previous" != "$DATA_CONTAINER" ]; then
     docker rm -f "$previous" >/dev/null 2>&1 || true
   fi
 done
 rm -f "$BACKUP" "$RENDERED_BLOCK" "$RENDERED_FIXTURES"
 
-echo "deployed ${RELEASE_SHA} as ${PDF_CONTAINER}, ${ARABIC_CONTAINER}, ${AD_CONTAINER}, ${GROWTH_CONTAINER} and ${CRAWLER_CONTAINER}"
+echo "deployed ${RELEASE_SHA} as ${PDF_CONTAINER}, ${ARABIC_CONTAINER}, ${AD_CONTAINER}, ${GROWTH_CONTAINER}, ${CRAWLER_CONTAINER} and ${DATA_CONTAINER}"
