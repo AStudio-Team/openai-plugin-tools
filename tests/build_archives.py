@@ -34,6 +34,11 @@ PRODUCTS = {
         "archive": "growth-marketing-planner-1.0.0-submission.zip",
         "root_files": {"plugin.json", "mcp.json", "NOTICE"},
         "directories": {"assets", "skills", "LICENSES"},
+    "open-data-fetcher": {
+        "archive": "open-data-fetcher-1.0.0-submission.zip",
+        "root_files": {"plugin.json", "mcp.json"},
+        "directories": {"assets", "skills"},
+    },
     },
 }
 SKIP_PARTS = {"__pycache__", "__MACOSX", ".pytest_cache", ".git", ".venv", "node_modules"}
