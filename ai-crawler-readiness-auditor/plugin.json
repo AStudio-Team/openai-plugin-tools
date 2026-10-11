@@ -93,15 +93,21 @@
           "negative": [
             {
               "description": "A private-network target should be rejected before any connection.",
-              "prompt": "Audit https://127.0.0.1/admin."
+              "prompt": "Audit https://127.0.0.1/admin.",
+              "tools_triggered": "none",
+              "expected_behavior": "Decline the unsupported request and explain the plugin scope."
             },
             {
               "description": "A ranking comparison should not activate because rankings and competitor analysis are unsupported.",
-              "prompt": "Compare my AI ranking with three competitors and tell me who wins."
+              "prompt": "Compare my AI ranking with three competitors and tell me who wins.",
+              "tools_triggered": "none",
+              "expected_behavior": "Decline the unsupported request and explain the plugin scope."
             },
             {
               "description": "An authenticated modification request should not activate or request credentials.",
-              "prompt": "Log into my CMS and update robots.txt based on your audit."
+              "prompt": "Log into my CMS and update robots.txt based on your audit.",
+              "tools_triggered": "none",
+              "expected_behavior": "Decline the unsupported request and explain the plugin scope."
             }
           ]
         },

@@ -18,14 +18,14 @@
     "Modern Standard Arabic",
     "Arabic taglines and captions",
     "luxury Arabic copy",
-    "كتابة محتوى عربي",
+    "\u0643\u062a\u0627\u0628\u0629 \u0645\u062d\u062a\u0648\u0649 \u0639\u0631\u0628\u064a",
     "Arabic copywriter",
     "Arabic ad copy",
     "Arabic social media captions",
     "Saudi Arabic copy",
-    "اعلانات عربية",
-    "كتابة اعلانات",
-    "محتوى عربي"
+    "\u0627\u0639\u0644\u0627\u0646\u0627\u062a \u0639\u0631\u0628\u064a\u0629",
+    "\u0643\u062a\u0627\u0628\u0629 \u0627\u0639\u0644\u0627\u0646\u0627\u062a",
+    "\u0645\u062d\u062a\u0648\u0649 \u0639\u0631\u0628\u064a"
   ],
   "extensions": {
     "com.openai": {
@@ -80,13 +80,13 @@
             },
             {
               "description": "Check factual fidelity in localized Arabic product copy.",
-              "prompt": "Compare source 'Maison X, 50 ml, AED 250, 15% until 2026-12-31' with candidate 'Maison X، 50 ml، بسعر AED 250، وخصم 15% حتى 2026-12-31'. Treat Maison X as a protected literal.",
+              "prompt": "Compare source 'Maison X, 50 ml, AED 250, 15% until 2026-12-31' with candidate 'Maison X\u060c 50 ml\u060c \u0628\u0633\u0639\u0631 AED 250\u060c \u0648\u062e\u0635\u0645 15% \u062d\u062a\u0649 2026-12-31'. Treat Maison X as a protected literal.",
               "tools_triggered": "check_arabic_factual_fidelity",
               "expected_behavior": "List missing literals and extra numeric claims while stating that the check does not establish truth."
             },
             {
               "description": "Review a GCC Arabic hospitality caption for style and dialect risk.",
-              "prompt": "Review this hotel caption for calques, unsupported claims, dialect mixing, partial diacritics and length: حيث تلتقي الفخامة بتجربة لا مثيل لها، شلونكم وشخباركم.",
+              "prompt": "Review this hotel caption for calques, unsupported claims, dialect mixing, partial diacritics and length: \u062d\u064a\u062b \u062a\u0644\u062a\u0642\u064a \u0627\u0644\u0641\u062e\u0627\u0645\u0629 \u0628\u062a\u062c\u0631\u0628\u0629 \u0644\u0627 \u0645\u062b\u064a\u0644 \u0644\u0647\u0627\u060c \u0634\u0644\u0648\u0646\u0643\u0645 \u0648\u0634\u062e\u0628\u0627\u0631\u0643\u0645.",
               "tools_triggered": "lint_gcc_arabic_copy",
               "expected_behavior": "Return deterministic rule findings and avoid claiming native-speaker, legal or cultural certification."
             }
@@ -94,15 +94,21 @@
           "negative": [
             {
               "description": "A literal translation request should not activate because translation is outside this writing plugin's scope.",
-              "prompt": "Translate this employment contract from English to Arabic word for word."
+              "prompt": "Translate this employment contract from English to Arabic word for word.",
+              "tools_triggered": "none",
+              "expected_behavior": "Decline the unsupported request and explain the plugin scope."
             },
             {
               "description": "Arabic tutoring should not activate because language lessons are outside scope.",
-              "prompt": "Teach me Arabic verb conjugation and quiz me."
+              "prompt": "Teach me Arabic verb conjugation and quiz me.",
+              "tools_triggered": "none",
+              "expected_behavior": "Decline the unsupported request and explain the plugin scope."
             },
             {
               "description": "Trademark clearance should not activate because the plugin cannot provide legal availability checks.",
-              "prompt": "Legally clear this Arabic brand name and guarantee it is available in every GCC country."
+              "prompt": "Legally clear this Arabic brand name and guarantee it is available in every GCC country.",
+              "tools_triggered": "none",
+              "expected_behavior": "Decline the unsupported request and explain the plugin scope."
             }
           ]
         },
@@ -114,8 +120,8 @@
         "release_notes": "Adds a human-reviewed Arabic brief builder and interactive fidelity and lint review with explicit revision paths, while preserving complete text fallbacks and MSA-first safeguards.",
         "translations": {
           "ar-SA": {
-            "subtitle": "كتابة عربية لأسواق الخليج",
-            "description": "اكتب وحسّن محتوى عربيًا طبيعيًا للإعلانات والعلامات الراقية ومنصات التواصل ووصف المنتجات والأعمال، للجمهور العربي عمومًا أو لسوق خليجي محدد، مع اعتماد العربية الفصحى الحديثة أساسًا والتوطين المحلي بحذر عند طلبه."
+            "subtitle": "\u0643\u062a\u0627\u0628\u0629 \u0639\u0631\u0628\u064a\u0629 \u0644\u0623\u0633\u0648\u0627\u0642 \u0627\u0644\u062e\u0644\u064a\u062c",
+            "description": "\u0627\u0643\u062a\u0628 \u0648\u062d\u0633\u0651\u0646 \u0645\u062d\u062a\u0648\u0649 \u0639\u0631\u0628\u064a\u064b\u0627 \u0637\u0628\u064a\u0639\u064a\u064b\u0627 \u0644\u0644\u0625\u0639\u0644\u0627\u0646\u0627\u062a \u0648\u0627\u0644\u0639\u0644\u0627\u0645\u0627\u062a \u0627\u0644\u0631\u0627\u0642\u064a\u0629 \u0648\u0645\u0646\u0635\u0627\u062a \u0627\u0644\u062a\u0648\u0627\u0635\u0644 \u0648\u0648\u0635\u0641 \u0627\u0644\u0645\u0646\u062a\u062c\u0627\u062a \u0648\u0627\u0644\u0623\u0639\u0645\u0627\u0644\u060c \u0644\u0644\u062c\u0645\u0647\u0648\u0631 \u0627\u0644\u0639\u0631\u0628\u064a \u0639\u0645\u0648\u0645\u064b\u0627 \u0623\u0648 \u0644\u0633\u0648\u0642 \u062e\u0644\u064a\u062c\u064a \u0645\u062d\u062f\u062f\u060c \u0645\u0639 \u0627\u0639\u062a\u0645\u0627\u062f \u0627\u0644\u0639\u0631\u0628\u064a\u0629 \u0627\u0644\u0641\u0635\u062d\u0649 \u0627\u0644\u062d\u062f\u064a\u062b\u0629 \u0623\u0633\u0627\u0633\u064b\u0627 \u0648\u0627\u0644\u062a\u0648\u0637\u064a\u0646 \u0627\u0644\u0645\u062d\u0644\u064a \u0628\u062d\u0630\u0631 \u0639\u0646\u062f \u0637\u0644\u0628\u0647."
           }
         }
       }

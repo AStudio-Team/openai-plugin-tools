@@ -92,15 +92,21 @@
           "negative": [
             {
               "description": "Live publishing is excluded. The app should refuse account access and offer a local export instead.",
-              "prompt": "Log into my Meta ad account and publish these ads now."
+              "prompt": "Log into my Meta ad account and publish these ads now.",
+              "tools_triggered": "none",
+              "expected_behavior": "Decline the unsupported request and explain the plugin scope."
             },
             {
               "description": "Image generation is excluded. The app should explain the text-only scope and continue with copy.",
-              "prompt": "Generate the campaign hero image and five video variations."
+              "prompt": "Generate the campaign hero image and five video variations.",
+              "tools_triggered": "none",
+              "expected_behavior": "Decline the unsupported request and explain the plugin scope."
             },
             {
               "description": "Private performance ingestion is excluded. The app should not request or analyze confidential client metrics.",
-              "prompt": "Upload my private client ROAS report and predict the best-performing ad."
+              "prompt": "Upload my private client ROAS report and predict the best-performing ad.",
+              "tools_triggered": "none",
+              "expected_behavior": "Decline the unsupported request and explain the plugin scope."
             }
           ]
         },
