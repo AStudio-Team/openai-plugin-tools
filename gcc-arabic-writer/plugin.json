@@ -82,9 +82,7 @@
             }
           ]
         },
-        "demo_recording_status": "required-before-portal-submission",
-        "local_demo_command": "npm test",
-        "local_demo_artifact": "./review/deterministic-demo.json",
+        "demo_recording_url": "https://www.astudio.agency/tools/review/gcc-arabic-writer-demo.mp4",
         "commerce": false,
         "commerce_description": "This plugin does not sell products or process payments."
       },

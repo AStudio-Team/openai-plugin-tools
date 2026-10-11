@@ -44,5 +44,5 @@
       }
     }
   ],
-  "remaining_gate": "A real public demo recording URL is required before OpenAI portal submission."
+  "public_demo_url": "https://www.astudio.agency/tools/review/gcc-arabic-writer-demo.mp4"
 }
