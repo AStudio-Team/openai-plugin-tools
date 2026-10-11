@@ -5,7 +5,9 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
+import { registerAppResource, registerAppTool, RESOURCE_MIME_TYPE } from "@modelcontextprotocol/ext-apps/server";
 import { z } from "zod";
+import { closedUiMeta, loadWidget } from "./widget-support.mjs";
 
 const PORT = Number(process.env.PORT || 8789);
 const MAX_BODY_BYTES = Number(process.env.MAX_BODY_BYTES || 128 * 1024);
@@ -38,6 +40,10 @@ const DIALECT_MARKERS = {
   oman: ["موه"],
 };
 const SHARED_GULF_MARKERS = ["وايد", "واجد", "شلون"];
+const BRIEF_WIDGET_URI = "ui://gcc-arabic-writer/brief-builder.html";
+const REVIEW_WIDGET_URI = "ui://gcc-arabic-writer/copy-review.html";
+const briefWidgetHtml = loadWidget("../widgets/brief-builder.html");
+const reviewWidgetHtml = loadWidget("../widgets/copy-review.html");
 
 function utf8Bytes(value) {
   return Buffer.byteLength(String(value || ""), "utf8");
@@ -91,7 +97,7 @@ function includesLiteral(text, literal) {
 }
 
 export function prepareBrief(input) {
-  const sourceText = normalizeText(input.source_text || "");
+  const sourceText = String(input.source_text || "");
   const facts = unique((input.mandatory_facts || []).map(normalizeText).filter(Boolean));
   const protectedLiterals = unique((input.protected_literals || []).map(normalizeLiteral).filter(Boolean));
   const market = input.market || "pan-arab";
@@ -103,7 +109,9 @@ export function prepareBrief(input) {
     audience: normalizeText(input.audience || "general audience"),
     surface: normalizeText(input.surface || "unspecified surface"),
     register,
+    dialect_requested: dialectRequested,
     language_policy: dialectRequested ? "dialect-sensitive, MSA-led" : "Modern Standard Arabic",
+    key_message: normalizeText(input.key_message || ""),
     source_text: sourceText,
     mandatory_facts: facts,
     protected_literals: protectedLiterals,
@@ -203,7 +211,9 @@ const briefOutputSchema = {
   audience: z.string(),
   surface: z.string(),
   register: z.enum(REGISTERS),
+  dialect_requested: z.boolean(),
   language_policy: z.string(),
+  key_message: z.string(),
   source_text: z.string(),
   mandatory_facts: z.array(z.string()),
   protected_literals: z.array(z.string()),
@@ -242,10 +252,10 @@ const lintOutputSchema = {
 };
 
 export function createPluginServer() {
-  const server = new McpServer({ name: "gcc-arabic-writer", version: "1.0.0" });
-  server.registerTool("prepare_gcc_arabic_brief", {
+  const server = new McpServer({ name: "gcc-arabic-writer", version: "1.1.0" });
+  registerAppTool(server, "prepare_gcc_arabic_brief", {
     title: "Prepare a GCC Arabic writing brief",
-    description: "Use this when preparing Arabic copywriting, rewriting or GCC localization. It normalizes only the supplied brief, defaults to MSA, protects literals and returns a deterministic fingerprint. It does not generate copy or research facts.",
+    description: "Use this when preparing Arabic copywriting, rewriting or GCC localization. It normalizes only the supplied brief, defaults to MSA, protects literals and opens a focused review form when widgets are supported. The user must explicitly send the reviewed brief before ChatGPT writes. It does not generate copy or research facts.",
     inputSchema: z.object({
       task: z.enum(TASKS).describe("Requested Arabic writing deliverable."),
       market: z.enum(MARKETS).default("pan-arab").describe("Target GCC market or pan-Arab audience."),
@@ -253,6 +263,7 @@ export function createPluginServer() {
       surface: shortText.optional().describe("Where the copy will appear, such as a caption or product page."),
       register: z.enum(REGISTERS).default("msa").describe("Requested register. MSA is the default."),
       dialect_requested: z.boolean().default(false).describe("True only when the user explicitly requested dialect."),
+      key_message: z.string().max(2000).optional().describe("The single main message the copy should communicate."),
       source_text: z.string().max(12000).optional().describe("Optional source copy to rewrite or localize."),
       mandatory_facts: stringList.describe("User-provided or verified facts that must be retained."),
       protected_literals: stringList.describe("Names, URLs, prices or exact strings that must remain unchanged."),
@@ -260,9 +271,10 @@ export function createPluginServer() {
     }).strict(),
     outputSchema: briefOutputSchema,
     annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false, idempotentHint: true },
-  }, async input => result(prepareBrief(input)));
+    _meta: { ui: { resourceUri: BRIEF_WIDGET_URI } },
+  }, async input => briefResult(prepareBrief(input)));
 
-  server.registerTool("check_arabic_factual_fidelity", {
+  registerAppTool(server, "check_arabic_factual_fidelity", {
     title: "Check Arabic factual fidelity",
     description: "Use this when checking whether rewritten or localized Arabic copy preserved source numbers, dates, percentages, currency or quantity literals, URLs and protected literals. It flags missing facts and extra numeric claims but does not verify truth.",
     inputSchema: z.object({
@@ -273,9 +285,10 @@ export function createPluginServer() {
     }).strict(),
     outputSchema: fidelityOutputSchema,
     annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false, idempotentHint: true },
-  }, async input => result(checkFidelity(input)));
+    _meta: { ui: { resourceUri: REVIEW_WIDGET_URI } },
+  }, async input => fidelityResult(checkFidelity(input)));
 
-  server.registerTool("lint_gcc_arabic_copy", {
+  registerAppTool(server, "lint_gcc_arabic_copy", {
     title: "Lint GCC Arabic copy",
     description: "Use this when reviewing Arabic marketing or business copy for transparent style and safety rules. It checks punctuation, stock calques, unsupported superlatives, religious sales risk, dialect-marker heuristics, partial diacritics, length and Arabic-script ratio. It never certifies native, legal or cultural quality.",
     inputSchema: z.object({
@@ -289,12 +302,54 @@ export function createPluginServer() {
     }).strict(),
     outputSchema: lintOutputSchema,
     annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false, idempotentHint: true },
-  }, async input => result(lintCopy(input)));
+    _meta: { ui: { resourceUri: REVIEW_WIDGET_URI } },
+  }, async input => lintResult(lintCopy(input)));
+
+  registerWidgetResource(server, "GCC Arabic brief builder", BRIEF_WIDGET_URI, briefWidgetHtml);
+  registerWidgetResource(server, "GCC Arabic copy review", REVIEW_WIDGET_URI, reviewWidgetHtml);
   return server;
 }
 
-function result(structuredContent) {
-  return { content: [{ type: "text", text: JSON.stringify(structuredContent) }], structuredContent };
+function registerWidgetResource(server, name, uri, html) {
+  registerAppResource(server, name, uri, {
+    description: `${name} interactive MCP App`,
+    _meta: { ui: closedUiMeta },
+  }, async () => ({
+    contents: [{ uri, mimeType: RESOURCE_MIME_TYPE, text: html, _meta: { ui: closedUiMeta } }],
+  }));
+}
+
+function toolResult(text, structuredContent) {
+  return { content: [{ type: "text", text }], structuredContent };
+}
+
+function briefResult(brief) {
+  const review = brief.native_review_required ? " Native-market review is required before publication because dialect-sensitive writing was requested." : " MSA remains the default.";
+  const text = [
+    `Brief prepared for ${brief.task} in ${brief.market}.`,
+    `Audience: ${brief.audience}.`,
+    `Surface: ${brief.surface}. Register: ${brief.register}.`,
+    `Key message: ${brief.key_message || "Not supplied"}.`,
+    `Source text (immutable at approval): ${brief.source_text || "Not supplied"}.`,
+    `Mandatory facts: ${brief.mandatory_facts.length ? brief.mandatory_facts.join(" | ") : "None supplied"}.`,
+    `Protected literals: ${brief.protected_literals.length ? brief.protected_literals.join(" | ") : "None supplied"}.`,
+    `Constraints: ${brief.constraints.length ? brief.constraints.join(" | ") : "None supplied"}.`,
+    `Review or edit this brief, then explicitly send the reviewed brief into chat before copy is generated.${review}`,
+  ].join("\n");
+  return toolResult(text, brief);
+}
+
+function fidelityResult(checked) {
+  const text = checked.preservation_passed
+    ? "Factual fidelity check passed for the deterministic literals and numeric claims tested. Ask for a revision if the copy still needs changes. This check does not verify whether statements are true."
+    : `Factual fidelity check requires revision. Missing items: ${checked.missing_facts.map(item => `${item.category}: ${item.literal}`).join(" | ") || "none"}. Extra numeric claims: ${checked.extra_numeric_claims.join(" | ") || "none"}. Ask ChatGPT to revise before treating the copy as final.`;
+  return toolResult(text, checked);
+}
+
+function lintResult(checked) {
+  const findings = checked.issues.map(issue => `${issue.severity}: ${issue.message}${issue.matches.length ? ` (${issue.matches.join(", ")})` : ""}`);
+  const text = `${checked.passed ? "Arabic copy lint found no blocking errors." : "Arabic copy lint found blocking errors."} ${findings.length ? findings.join(" | ") : "No deterministic issues were reported."} Ask for a revision or confirm the current option. Automated lint does not replace native-market, legal or cultural review.`;
+  return toolResult(text, checked);
 }
 
 function logRequest(tool, status, startedAt, inputBytes = 0, ruleCount = 0) {
@@ -348,7 +403,7 @@ export function createHttpServer() {
     if (!req.url || !hostAllowed(req)) return res.writeHead(421).end("Misdirected Request");
     const url = new URL(req.url, `http://127.0.0.1:${PORT}`);
     if (req.method === "GET" && ["/health", "/ready"].includes(url.pathname)) {
-      res.writeHead(200, { "content-type": "application/json", "cache-control": "no-store" }).end(JSON.stringify({ status: "ok", service: "gcc-arabic-writer", version: "1.0.0", persistence: false, outbound_network: false }));
+      res.writeHead(200, { "content-type": "application/json", "cache-control": "no-store" }).end(JSON.stringify({ status: "ok", service: "gcc-arabic-writer", version: "1.1.0", persistence: false, outbound_network: false }));
       return;
     }
     if (req.method === "OPTIONS" && url.pathname === "/mcp") {
