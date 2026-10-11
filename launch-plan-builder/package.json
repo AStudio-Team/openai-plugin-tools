@@ -1,0 +1,21 @@
+{
+  "name": "launch-plan-builder",
+  "version": "1.0.0",
+  "private": false,
+  "type": "module",
+  "description": "Human-guided MCP App for comparing and exporting practical growth marketing plans.",
+  "scripts": {
+    "start": "node src/server.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "check": "node --check src/server.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/ext-apps": "1.7.5",
+    "@modelcontextprotocol/sdk": "1.32.1",
+    "zod": "4.6.5"
+  },
+  "license": "MIT"
+}
