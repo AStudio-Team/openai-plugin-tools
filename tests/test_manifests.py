@@ -9,10 +9,11 @@ class ManifestAndPackageTests(unittest.TestCase):
     def setUp(self):
         self.gcc = json.loads((ROOT / "gcc-arabic-writer" / "plugin.json").read_text())
         self.pdf = json.loads((ROOT / "pdf-table-to-excel" / "plugin.json").read_text())
+        self.crawler = json.loads((ROOT / "ai-crawler-readiness-auditor" / "plugin.json").read_text())
 
     def test_astudio_is_publisher_for_both_products(self):
         self.assertEqual(self.gcc["name"], "astudio-gcc-arabic-writer")
-        for manifest in (self.gcc, self.pdf):
+        for manifest in (self.gcc, self.pdf, self.crawler):
             self.assertEqual(manifest["author"]["name"], "ASTUDIO")
             self.assertEqual(manifest["extensions"]["com.openai"]["interface"]["developerName"], "ASTUDIO")
 
@@ -71,6 +72,22 @@ class ManifestAndPackageTests(unittest.TestCase):
             mcp["mcpServers"]["gcc-arabic-writer"]["url"],
             "https://www.astudio.agency/openai-plugins/gcc-arabic-writer/mcp",
         )
+
+    def test_crawler_auditor_review_contract_is_complete(self):
+        interface = self.crawler["extensions"]["com.openai"]["interface"]
+        review = self.crawler["extensions"]["com.openai"]["review"]
+        self.assertEqual(interface["displayName"], "AI Crawler Readiness Auditor")
+        self.assertEqual(interface["shortDescription"], "Check public crawl signals")
+        self.assertEqual(len(review["test_cases"]["positive"]), 5)
+        self.assertEqual(len(review["test_cases"]["negative"]), 3)
+        self.assertEqual(review["demo_recording_status"], "required-before-portal-submission")
+        for case in review["test_cases"]["positive"]:
+            self.assertIn("https://fixtures.astudio.agency/", case["prompt"])
+            self.assertIn("validate_audit_target", case["tools_triggered"])
+            self.assertIn("run_readiness_audit", case["tools_triggered"])
+        manifest_text = json.dumps(self.crawler).lower()
+        self.assertNotIn("readiness score", manifest_text)
+        self.assertNotIn("<publisher-domain>", manifest_text)
 
 
 if __name__ == "__main__":

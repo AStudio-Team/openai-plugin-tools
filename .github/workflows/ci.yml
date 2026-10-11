@@ -24,6 +24,7 @@ jobs:
           cache-dependency-path: |
             pdf-table-to-excel/package-lock.json
             gcc-arabic-writer/package-lock.json
+            ai-crawler-readiness-auditor/package-lock.json
       - name: Install Python dependencies
         working-directory: pdf-table-to-excel
         run: |
@@ -33,6 +34,7 @@ jobs:
         run: |
           npm --prefix pdf-table-to-excel ci --ignore-scripts
           npm --prefix gcc-arabic-writer ci --ignore-scripts
+          npm --prefix ai-crawler-readiness-auditor ci --ignore-scripts
       - name: Test PDF MCP service
         working-directory: pdf-table-to-excel
         run: |
@@ -49,6 +51,14 @@ jobs:
           python tests/validate_packages.py
           python tests/audit_public_content.py
           python tests/build_archives.py
+      - name: Test AI crawler readiness MCP App
+        working-directory: ai-crawler-readiness-auditor
+        run: |
+          npm test
+          npm run check
+          npm audit --audit-level=high
+          npm run licenses
+          npm run sbom
       - name: Check forbidden punctuation
         run: |
           if git grep -n $'\u2014' -- '*.md' '*.json' '*.py' '*.mjs' '*.html' '*.css' '*.sh'; then
@@ -59,6 +69,7 @@ jobs:
         run: |
           docker build -t openai-plugin-pdf:ci pdf-table-to-excel
           docker build -t openai-plugin-arabic:ci gcc-arabic-writer
+          docker build -t openai-plugin-crawler-auditor:ci ai-crawler-readiness-auditor
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: openai-plugin-submission-zips
