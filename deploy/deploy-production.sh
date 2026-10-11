@@ -380,7 +380,7 @@ check_health https://www.astudio.agency/openai-plugins/growth-marketing-planner/
 check_mcp https://www.astudio.agency/openai-plugins/growth-marketing-planner/mcp growth-marketing-planner open_growth_brief,review_growth_brief,compare_growth_strategies,finalize_growth_plan,export_growth_plan
 check_health https://www.astudio.agency/openai-plugins/launch-plan-builder/health launch-plan-builder
 check_health https://www.astudio.agency/openai-plugins/launch-plan-builder/ready launch-plan-builder
-check_mcp https://www.astudio.agency/openai-plugins/launch-plan-builder/mcp launch-plan-builder open_launch_brief,review_launch_brief,draft_launch_plan,request_plan_revision,export_launch_plan
+check_mcp https://www.astudio.agency/openai-plugins/launch-plan-builder/mcp launch-plan-builder open_launch_brief,review_launch_brief,approve_launch_brief,draft_launch_plan,request_plan_revision,export_launch_plan
 ACTUAL_OPENAI_CHALLENGE="$(curl --fail --silent --show-error https://www.astudio.agency/.well-known/openai-apps-challenge)"
 if [ "$ACTUAL_OPENAI_CHALLENGE" != "$EXPECTED_OPENAI_CHALLENGE" ]; then
   echo "OpenAI Apps challenge response mismatch" >&2
