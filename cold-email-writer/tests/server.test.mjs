@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import http from "node:http";
 import net from "node:net";
-import { approveColdEmailBrief, createHttpServer, draftColdEmailSequence, exportColdEmailSequence, submitVariantSelection } from "../src/server.mjs";
+import { approveColdEmailBrief, countCtas, createHttpServer, draftColdEmailSequence, exportColdEmailSequence, submitVariantSelection } from "../src/server.mjs";
 
 const brief={offer:"A managed design service",targetRole:"Marketing director",companyType:"B2B SaaS",painPoint:"Slow campaign production",proof:"Used by three B2B teams",callToAction:"Book a 15-minute call",senderName:"Ava",signature:"Ava, ASTUDIO",tone:"consultative",followUpCount:1};
 const email=id=>({id,subject:"A thought for {{company}}",body:"Hi {{company}}, would you be open to a short call?",personalisationTokens:["{{company}}"]});
@@ -18,6 +18,18 @@ test("every served widget script parses",async()=>withServer(async base=>{for(co
 test("a signed brief receipt is required and verified",()=>{assert.throws(()=>draftColdEmailSequence({brief,sequence}));assert.equal(draftColdEmailSequence({brief,sequence,approvalReceipt:approval()}).valid,true);const receipt=approval();receipt.signature="0".repeat(64);assert.throws(()=>draftColdEmailSequence({brief,sequence,approvalReceipt:receipt}),/valid brief receipt/);});
 test("selection receipt is required for export",()=>{assert.throws(()=>exportColdEmailSequence({sequence,format:"csv"}));const selection=submitVariantSelection({brief,sequence,selectedVariantId:"one"});const exported=exportColdEmailSequence({sequence,selectionReceipt:selection.selectionReceipt,format:"csv"});assert.equal(exported.mimeType,"text/csv");assert.match(exported.content,/variant,step,subject,body/);});
 test("validation rejects no CTA and malformed or undeclared tokens",()=>{const noCta=structuredClone(sequence);noCta.variants[0].firstEmail.body="Hi {{company}}, I wanted to mention an idea.";assert.equal(draftColdEmailSequence({brief,sequence:noCta,approvalReceipt:approval()}).valid,false);for(const token of ["{{first-name}}","{{first_name}}"]){const candidate=structuredClone(sequence);candidate.variants[0].firstEmail.body=`Hi {{company}} and ${token}, would you be open to a short call?`;if(token.includes("-"))candidate.variants[0].firstEmail.personalisationTokens.push(token);assert.match(draftColdEmailSequence({brief,sequence:candidate,approvalReceipt:approval()}).issues.join("\n"),/undeclared or malformed personalisation token/)}});
+test("countCtas implements the final sentence algorithm",()=>{for(const [body,expected] of [
+  ["We send weekly reports.",0],
+  ["Could you review the outline?",1],
+  ["Could you review the outline or share feedback?",2],
+  ["Could you book a call or reply with a time?",2],
+  ["Could you book a call and send me your budget?",2],
+  ["Would Tuesday work? Should I send details?",2],
+  ["Ever wondered why your inbox is quiet?",0],
+  ["Would a 15 minute call next week work?",1],
+  ["Please grab a slot here.",1],
+  ["Our team ships in two weeks and your inbox stays clean.",0],
+])assert.equal(countCtas(body),expected,body)});
 test("CTA counting follows body sentence and conjunction rules",()=>{for(const [body,subject,valid] of [
   ["Could you book a call or reply with a time?","A thought for {{company}}",false],
   ["Could you book a call and send me your budget?","A thought for {{company}}",false],
