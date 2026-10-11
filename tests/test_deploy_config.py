@@ -37,6 +37,7 @@ astudio.agency, www.astudio.agency {
         self.assertIn("trap rollback ERR", script)
         self.assertIn("--memory 512m", script)
         self.assertIn("--pids-limit 64", script)
+        self.assertIn("--log-opt max-file=2", script)
         self.assertIn("--read-only", script)
         self.assertLess(script.index("https://www.astudio.agency/tools/health"), script.index('docker rm -f "$PREVIOUS_CONTAINER"'))
         block = BLOCK.read_text()
