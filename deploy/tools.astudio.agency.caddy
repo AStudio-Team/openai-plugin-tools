@@ -1,4 +1,8 @@
 # BEGIN OPENAI_PLUGIN_TOOLS
+    handle_path /tools/verified-buy-link* {
+        reverse_proxy __VERIFIED_BUY_LINK_UPSTREAM__:8790
+    }
+
     redir /tools /tools/ 308
 
     handle_path /tools/* {
@@ -114,6 +118,21 @@
 
     handle_path /openai-plugins/editable-diagram-builder/* {
         reverse_proxy __DIAGRAM_PLUGIN_UPSTREAM__:8790
+    }
+
+
+    handle /openai-plugins/verified-buy-link/mcp {
+        request_body {
+            max_size 256KB
+        }
+        rewrite * /mcp
+        reverse_proxy __VERIFIED_BUY_LINK_UPSTREAM__:8790 {
+            header_up X-Plugin-Client-IP {remote_host}
+        }
+    }
+
+    handle_path /openai-plugins/verified-buy-link/* {
+        reverse_proxy __VERIFIED_BUY_LINK_UPSTREAM__:8790
     }
 
 # END OPENAI_PLUGIN_TOOLS

@@ -19,6 +19,11 @@ PRODUCTS = {
         "root_files": {"plugin.json", "mcp.json"},
         "directories": {"assets", "skills"},
     },
+    "verified-buy-link": {
+        "archive": "verified-buy-link-1.0.0-submission.zip",
+        "root_files": {"plugin.json", "mcp.json", "THIRD-PARTY-NOTICES.md", "sbom.cdx.json"},
+        "directories": {"assets", "skills", "review"},
+    },
     },
     "gcc-arabic-writer": {
         "archive": "gcc-arabic-writer-1.1.0-submission.zip",

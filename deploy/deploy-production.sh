@@ -13,6 +13,7 @@ GROWTH_STATE_FILE="${STATE_DIR}/current-growth-container"
 CRAWLER_STATE_FILE="${STATE_DIR}/current-crawler-container"
 DATA_STATE_FILE="${STATE_DIR}/current-data-container"
 DIAGRAM_STATE_FILE="${STATE_DIR}/current-diagram-container"
+BUY_LINK_STATE_FILE="${STATE_DIR}/current-verified-buy-link-container"
 LEGACY_STATE_FILE="${STATE_DIR}/current-container"
 ENV_FILE="${STATE_DIR}/openai.env"
 CADDYFILE="/opt/websites/caddy/Caddyfile"
@@ -29,6 +30,8 @@ DATA_IMAGE="openai-plugin-data:${RELEASE_SHA}"
 DATA_CONTAINER="openai-plugin-data-${DEPLOY_ID}"
 DIAGRAM_IMAGE="openai-plugin-diagram:${RELEASE_SHA}"
 DIAGRAM_CONTAINER="openai-plugin-diagram-${DEPLOY_ID}"
+BUY_LINK_IMAGE="openai-plugin-verified-buy-link:${RELEASE_SHA}"
+BUY_LINK_CONTAINER="openai-plugin-verified-buy-link-${DEPLOY_ID}"
 RENDERED_BLOCK="/tmp/openai-plugin-tools-${DEPLOY_ID}.caddy"
 RENDERED_FIXTURES="/tmp/ai-crawler-fixtures-${DEPLOY_ID}.caddy"
 PREVIOUS_PDF_CONTAINER=""
@@ -40,6 +43,7 @@ PREVIOUS_GROWTH_CONTAINER=""
 PREVIOUS_CRAWLER_CONTAINER=""
 PREVIOUS_DATA_CONTAINER=""
 PREVIOUS_DIAGRAM_CONTAINER=""
+PREVIOUS_BUY_LINK_CONTAINER=""
 CONFIG_MUTATED=0
 SWITCHED=0
 COMMITTED=0
@@ -72,6 +76,9 @@ if [ -s "$DATA_STATE_FILE" ]; then
 fi
 if [ -s "$DIAGRAM_STATE_FILE" ]; then
   PREVIOUS_DIAGRAM_CONTAINER="$(tr -cd 'A-Za-z0-9_.-' < "$DIAGRAM_STATE_FILE")"
+fi
+if [ -s "$BUY_LINK_STATE_FILE" ]; then
+  PREVIOUS_BUY_LINK_CONTAINER="$(tr -cd 'A-Za-z0-9_.-' < "$BUY_LINK_STATE_FILE")"
 fi
 
 write_state() {
@@ -106,7 +113,8 @@ rollback() {
     write_state "$CRAWLER_STATE_FILE" "$PREVIOUS_CRAWLER_CONTAINER"
     write_state "$DATA_STATE_FILE" "$PREVIOUS_DATA_CONTAINER"
     write_state "$DIAGRAM_STATE_FILE" "$PREVIOUS_DIAGRAM_CONTAINER"
-    docker rm -f "$PDF_CONTAINER" "$ARABIC_CONTAINER" "$AD_CONTAINER" "$GROWTH_CONTAINER" "$CRAWLER_CONTAINER" "$DATA_CONTAINER" "$DIAGRAM_CONTAINER" >/dev/null 2>&1 || true
+    write_state "$BUY_LINK_STATE_FILE" "$PREVIOUS_BUY_LINK_CONTAINER"
+    docker rm -f "$PDF_CONTAINER" "$ARABIC_CONTAINER" "$AD_CONTAINER" "$GROWTH_CONTAINER" "$CRAWLER_CONTAINER" "$DATA_CONTAINER" "$DIAGRAM_CONTAINER" "$BUY_LINK_CONTAINER" >/dev/null 2>&1 || true
   else
     write_state "$PDF_STATE_FILE" "$PDF_CONTAINER"
     write_state "$ARABIC_STATE_FILE" "$ARABIC_CONTAINER"
@@ -115,9 +123,10 @@ rollback() {
     write_state "$CRAWLER_STATE_FILE" "$CRAWLER_CONTAINER"
     write_state "$DATA_STATE_FILE" "$DATA_CONTAINER"
     write_state "$DIAGRAM_STATE_FILE" "$DIAGRAM_CONTAINER"
+    write_state "$BUY_LINK_STATE_FILE" "$BUY_LINK_CONTAINER"
     echo "rollback failed; candidate containers were kept running for recovery" >&2
   fi
-  rm -f "${PDF_STATE_FILE}.tmp" "${ARABIC_STATE_FILE}.tmp" "${AD_STATE_FILE}.tmp" "${GROWTH_STATE_FILE}.tmp" "${CRAWLER_STATE_FILE}.tmp" "${DATA_STATE_FILE}.tmp" "${DIAGRAM_STATE_FILE}.tmp" "${CADDYFILE}.rollback-${DEPLOY_ID}"
+  rm -f "${PDF_STATE_FILE}.tmp" "${ARABIC_STATE_FILE}.tmp" "${AD_STATE_FILE}.tmp" "${GROWTH_STATE_FILE}.tmp" "${CRAWLER_STATE_FILE}.tmp" "${DATA_STATE_FILE}.tmp" "${DIAGRAM_STATE_FILE}.tmp" "${BUY_LINK_STATE_FILE}.tmp" "${CADDYFILE}.rollback-${DEPLOY_ID}"
   return $((1 - rollback_ok))
 }
 
@@ -141,6 +150,7 @@ docker build --pull -t "$GROWTH_IMAGE" growth-marketing-planner
 docker build --pull -t "$CRAWLER_IMAGE" ai-crawler-readiness-auditor
 docker build --pull -t "$DATA_IMAGE" open-data-fetcher
 docker build --pull -t "$DIAGRAM_IMAGE" editable-diagram-builder
+docker build --pull -t "$BUY_LINK_IMAGE" verified-buy-link
 
 ENV_FILE_ARGS=()
 if [ -s "$ENV_FILE" ]; then
@@ -164,6 +174,10 @@ PY
 if ! grep -Eq '^CHECKPOINT_SECRET=.{32,}$' "$ENV_FILE" 2>/dev/null; then
   echo "CHECKPOINT_SECRET with at least 32 bytes is required in ${ENV_FILE}" >&2
   exit 78
+fi
+BUY_LINK_ARGS=()
+if [ -s "${STATE_DIR}/verified-buy-link-source-rights.json" ]; then
+  BUY_LINK_ARGS=(-v "${STATE_DIR}/verified-buy-link-source-rights.json:/run/config/source-rights.json:ro" -e SOURCE_RIGHTS_FILE=/run/config/source-rights.json)
 fi
 
 run_container() {
@@ -210,6 +224,7 @@ run_container "$DATA_CONTAINER" "$DATA_IMAGE" 8791 local \
   -e APP_ORIGIN=https://www.astudio.agency
 run_container "$DIAGRAM_CONTAINER" "$DIAGRAM_IMAGE" 8790 local \
   -e TRUST_PROXY_HEADER=true
+run_container "$BUY_LINK_CONTAINER" "$BUY_LINK_IMAGE" 8790 local "${BUY_LINK_ARGS[@]}"
 
 wait_healthy() {
   local container="$1"
@@ -231,14 +246,15 @@ wait_healthy "$GROWTH_CONTAINER"
 wait_healthy "$CRAWLER_CONTAINER"
 wait_healthy "$DATA_CONTAINER"
 wait_healthy "$DIAGRAM_CONTAINER"
+wait_healthy "$BUY_LINK_CONTAINER"
 
-python3 - "$PDF_CONTAINER" "$ARABIC_CONTAINER" "$AD_CONTAINER" "$GROWTH_CONTAINER" "$CRAWLER_CONTAINER" "$DATA_CONTAINER" "$DIAGRAM_CONTAINER" deploy/tools.astudio.agency.caddy "$RENDERED_BLOCK" <<'PY'
+python3 - "$PDF_CONTAINER" "$ARABIC_CONTAINER" "$AD_CONTAINER" "$GROWTH_CONTAINER" "$CRAWLER_CONTAINER" "$DATA_CONTAINER" "$DIAGRAM_CONTAINER" "$BUY_LINK_CONTAINER" deploy/tools.astudio.agency.caddy "$RENDERED_BLOCK" <<'PY'
 import sys
 from pathlib import Path
-pdf, arabic, ad, growth, crawler, data, diagram, source, target = sys.argv[1:]
+pdf, arabic, ad, growth, crawler, data, diagram, buy_link, source, target = sys.argv[1:]
 text = Path(source).read_text()
-text = text.replace("__PDF_PLUGIN_UPSTREAM__", pdf).replace("__ARABIC_PLUGIN_UPSTREAM__", arabic).replace("__AD_CREATIVE_LAB_UPSTREAM__", ad).replace("__GROWTH_PLUGIN_UPSTREAM__", growth).replace("__CRAWLER_PLUGIN_UPSTREAM__", crawler).replace("__DATA_PLUGIN_UPSTREAM__", data).replace("__DIAGRAM_PLUGIN_UPSTREAM__", diagram)
-if "__PDF_PLUGIN_UPSTREAM__" in text or "__ARABIC_PLUGIN_UPSTREAM__" in text or "__AD_CREATIVE_LAB_UPSTREAM__" in text or "__GROWTH_PLUGIN_UPSTREAM__" in text or "__CRAWLER_PLUGIN_UPSTREAM__" in text or "__DATA_PLUGIN_UPSTREAM__" in text or "__DIAGRAM_PLUGIN_UPSTREAM__" in text:
+text = text.replace("__PDF_PLUGIN_UPSTREAM__", pdf).replace("__ARABIC_PLUGIN_UPSTREAM__", arabic).replace("__AD_CREATIVE_LAB_UPSTREAM__", ad).replace("__GROWTH_PLUGIN_UPSTREAM__", growth).replace("__CRAWLER_PLUGIN_UPSTREAM__", crawler).replace("__DATA_PLUGIN_UPSTREAM__", data).replace("__DIAGRAM_PLUGIN_UPSTREAM__", diagram).replace("__VERIFIED_BUY_LINK_UPSTREAM__", buy_link)
+if "__PDF_PLUGIN_UPSTREAM__" in text or "__ARABIC_PLUGIN_UPSTREAM__" in text or "__AD_CREATIVE_LAB_UPSTREAM__" in text or "__GROWTH_PLUGIN_UPSTREAM__" in text or "__CRAWLER_PLUGIN_UPSTREAM__" in text or "__DATA_PLUGIN_UPSTREAM__" in text or "__DIAGRAM_PLUGIN_UPSTREAM__" in text or "__VERIFIED_BUY_LINK_UPSTREAM__" in text:
     raise SystemExit("unresolved upstream placeholder")
 Path(target).write_text(text)
 PY
@@ -354,6 +370,9 @@ check_mcp https://www.astudio.agency/openai-plugins/open-data-fetcher/mcp open-d
 check_health https://www.astudio.agency/openai-plugins/editable-diagram-builder/health editable-diagram-builder
 check_health https://www.astudio.agency/openai-plugins/editable-diagram-builder/ready editable-diagram-builder
 check_mcp https://www.astudio.agency/openai-plugins/editable-diagram-builder/mcp editable-diagram-builder open_diagram_brief,confirm_diagram_brief,render_diagram_preview,apply_diagram_edits,export_excalidraw
+check_health https://www.astudio.agency/openai-plugins/verified-buy-link/health verified-buy-link
+check_health https://www.astudio.agency/openai-plugins/verified-buy-link/ready verified-buy-link
+check_mcp https://www.astudio.agency/openai-plugins/verified-buy-link/mcp verified-buy-link open_verified_buy_link,verify_buy_options,render_buy_comparison,inspect_buy_option,refresh_buy_options
 curl --fail --silent --show-error \
   -H 'Content-Type: application/json' \
   -H 'Accept: application/json, text/event-stream' \
@@ -380,6 +399,7 @@ printf '%s\n' "$GROWTH_CONTAINER" > "${GROWTH_STATE_FILE}.tmp"
 printf '%s\n' "$CRAWLER_CONTAINER" > "${CRAWLER_STATE_FILE}.tmp"
 printf '%s\n' "$DATA_CONTAINER" > "${DATA_STATE_FILE}.tmp"
 printf '%s\n' "$DIAGRAM_CONTAINER" > "${DIAGRAM_STATE_FILE}.tmp"
+printf '%s\n' "$BUY_LINK_CONTAINER" > "${BUY_LINK_STATE_FILE}.tmp"
 mv "${PDF_STATE_FILE}.tmp" "$PDF_STATE_FILE"
 mv "${ARABIC_STATE_FILE}.tmp" "$ARABIC_STATE_FILE"
 mv "${AD_STATE_FILE}.tmp" "$AD_STATE_FILE"
@@ -387,13 +407,14 @@ mv "${GROWTH_STATE_FILE}.tmp" "$GROWTH_STATE_FILE"
 mv "${CRAWLER_STATE_FILE}.tmp" "$CRAWLER_STATE_FILE"
 mv "${DATA_STATE_FILE}.tmp" "$DATA_STATE_FILE"
 mv "${DIAGRAM_STATE_FILE}.tmp" "$DIAGRAM_STATE_FILE"
+mv "${BUY_LINK_STATE_FILE}.tmp" "$BUY_LINK_STATE_FILE"
 COMMITTED=1
 rm -f "$LEGACY_STATE_FILE"
-for previous in "$PREVIOUS_PDF_CONTAINER" "$PREVIOUS_ARABIC_CONTAINER" "$PREVIOUS_AD_CONTAINER" "$PREVIOUS_GROWTH_CONTAINER" "$PREVIOUS_CRAWLER_CONTAINER" "$PREVIOUS_DATA_CONTAINER" "$PREVIOUS_DIAGRAM_CONTAINER"; do
-  if [ -n "$previous" ] && [ "$previous" != "$PDF_CONTAINER" ] && [ "$previous" != "$ARABIC_CONTAINER" ] && [ "$previous" != "$AD_CONTAINER" ] && [ "$previous" != "$GROWTH_CONTAINER" ] && [ "$previous" != "$CRAWLER_CONTAINER" ] && [ "$previous" != "$DATA_CONTAINER" ] && [ "$previous" != "$DIAGRAM_CONTAINER" ]; then
+for previous in "$PREVIOUS_PDF_CONTAINER" "$PREVIOUS_ARABIC_CONTAINER" "$PREVIOUS_AD_CONTAINER" "$PREVIOUS_GROWTH_CONTAINER" "$PREVIOUS_CRAWLER_CONTAINER" "$PREVIOUS_DATA_CONTAINER" "$PREVIOUS_DIAGRAM_CONTAINER" "$PREVIOUS_BUY_LINK_CONTAINER"; do
+  if [ -n "$previous" ] && [ "$previous" != "$PDF_CONTAINER" ] && [ "$previous" != "$ARABIC_CONTAINER" ] && [ "$previous" != "$AD_CONTAINER" ] && [ "$previous" != "$GROWTH_CONTAINER" ] && [ "$previous" != "$CRAWLER_CONTAINER" ] && [ "$previous" != "$DATA_CONTAINER" ] && [ "$previous" != "$DIAGRAM_CONTAINER" ] && [ "$previous" != "$BUY_LINK_CONTAINER" ]; then
     docker rm -f "$previous" >/dev/null 2>&1 || true
   fi
 done
 rm -f "$BACKUP" "$RENDERED_BLOCK" "$RENDERED_FIXTURES"
 
-echo "deployed ${RELEASE_SHA} as ${PDF_CONTAINER}, ${ARABIC_CONTAINER}, ${AD_CONTAINER}, ${GROWTH_CONTAINER}, ${CRAWLER_CONTAINER}, ${DATA_CONTAINER} and ${DIAGRAM_CONTAINER}"
+echo "deployed ${RELEASE_SHA} as ${PDF_CONTAINER}, ${ARABIC_CONTAINER}, ${AD_CONTAINER}, ${GROWTH_CONTAINER}, ${CRAWLER_CONTAINER}, ${DATA_CONTAINER}, ${DIAGRAM_CONTAINER} and ${BUY_LINK_CONTAINER}"

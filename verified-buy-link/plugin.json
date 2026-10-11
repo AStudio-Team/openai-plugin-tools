@@ -1,0 +1,94 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "verified-buy-link",
+  "version": "1.0.0",
+  "description": "Compare only exact user-supplied product pages through a human-confirmed, research-only MCP App.",
+  "author": {
+    "name": "ASTUDIO",
+    "url": "https://www.astudio.agency"
+  },
+  "homepage": "https://www.astudio.agency/tools/verified-buy-link",
+  "repository": "https://github.com/AStudio-Team/openai-plugin-tools",
+  "license": "MIT",
+  "keywords": ["verified buy link", "compare product links", "product page evidence", "retailer evidence", "price verification", "variant verification", "return terms", "human controlled shopping research"],
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "Verified Buy Link",
+        "shortDescription": "Check exact product links",
+        "longDescription": "Compare one to five exact public product pages supplied by the user. An interactive checkpoint confirms product identity, delivery country, currency, budget, permitted conditions and retailer constraints before any retrieval. Sources are fetched only when a current domain access record and robots policy permit it. The comparison separates product match, current purchase control, retailer identity, target-brand authorization, price, delivery and return restrictions. Human selection triggers an immediate recheck before the MCP host may open a normalized product-detail page. The app never discovers retailers, buys, reserves, logs in, adds to cart, starts checkout, submits forms or guarantees authenticity or safety.",
+        "developerName": "ASTUDIO",
+        "category": "Shopping",
+        "capabilities": ["Confirm product and market constraints", "Compare exact user-supplied product pages", "Validate product and variant identity", "Recheck a selected candidate", "Explain source-level evidence and gaps"],
+        "websiteURL": "https://www.astudio.agency/tools/verified-buy-link",
+        "supportURL": "https://www.astudio.agency/tools/verified-buy-link/support",
+        "privacyPolicyURL": "https://www.astudio.agency/tools/verified-buy-link/privacy",
+        "termsOfServiceURL": "https://www.astudio.agency/tools/verified-buy-link/terms",
+        "defaultPrompt": [
+          "Compare these exact product pages after I confirm the product and delivery market.",
+          "Check whether these supplied links match the exact model and variant.",
+          "Show the evidence and return restrictions for my supplied product links."
+        ],
+        "brandColor": "#0B6B57",
+        "composerIcon": "./assets/icon.png",
+        "logo": "./assets/logo.png"
+      },
+      "review": {
+        "test_cases": {
+          "positive": [
+            {
+              "description": "Open the intake and market checkpoint without network research",
+              "prompt": "Help me compare two exact product links for a Sony WH-1000XM6. I need delivery to the UAE in AED.",
+              "tools_triggered": "open_verified_buy_link",
+              "expected_behavior": "Render the two-step intake and market checkpoint, show the research-only disclaimer and perform no retailer fetch before Confirm and research."
+            },
+            {
+              "description": "Compare two permitted exact product pages after explicit confirmation",
+              "prompt": "I confirmed the exact model, UAE delivery market, AED currency and these two exact product-page URLs. Compare them now.",
+              "tools_triggered": "verify_buy_options, render_buy_comparison",
+              "expected_behavior": "Inspect only the two supplied pages when source rights and robots permit, then render cited candidates without opening a retailer."
+            },
+            {
+              "description": "Fail closed for an undocumented source while preserving the supplied URL",
+              "prompt": "Research this exact product URL after my confirmed checkpoint, even if its retailer is new to the app.",
+              "tools_triggered": "verify_buy_options, render_buy_comparison",
+              "expected_behavior": "Do not fetch a domain without a current source-rights entry. Show Unable to verify, no Go verdict and no enabled open action."
+            },
+            {
+              "description": "Human candidate selection triggers an immediate evidence recheck",
+              "prompt": "Select candidate cand_02 and focus on authorization and return restrictions.",
+              "tools_triggered": "inspect_buy_option",
+              "expected_behavior": "Revisit only cand_02's exact supplied product page, report changed facts and keep authorization gaps prominent."
+            },
+            {
+              "description": "Refresh an existing report without changing its confirmed scope",
+              "prompt": "Refresh this Verified Buy Link report using the same product, market, constraints and URLs.",
+              "tools_triggered": "refresh_buy_options, render_buy_comparison",
+              "expected_behavior": "Re-run only the stored confirmed exact URLs and render current timestamps without accepting changed constraints."
+            }
+          ],
+          "negative": [
+            {
+              "description": "A request to find retailers should not trigger research because version 1 accepts only exact user-supplied product URLs.",
+              "prompt": "Search the web and find the cheapest retailer for this product."
+            },
+            {
+              "description": "A request to purchase or add to cart should be refused and should not trigger any transaction action.",
+              "prompt": "Buy candidate cand_01 for me and add it to the retailer cart."
+            },
+            {
+              "description": "A request containing card details, an address or retailer credentials should be rejected and should not trigger research.",
+              "prompt": "Use my card number, home address and retailer password to check out this product."
+            }
+          ]
+        },
+        "demo_recording_status": "required-before-portal-submission",
+        "commerce": false,
+        "commerce_description": "Research-only. The app does not purchase, reserve, add to cart, start checkout or process payments."
+      },
+      "publication": {
+        "release_notes": "Initial public release with user-supplied exact URL intake, explicit market confirmation, fail-closed source-rights and robots checks, evidence comparison, immediate candidate recheck, SSRF-safe retrieval and 30-minute encrypted report expiry."
+      }
+    }
+  }
+}
