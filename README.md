@@ -10,6 +10,9 @@ Public, universal OpenAI plugins published by [ASTUDIO](https://www.astudio.agen
 - **Growth Marketing Planner** guides a user through brief confirmation, exactly three strategy options, selection, revision and 30, 60 or 90-day plan export.
 
 No product contains client data, private corpora, credentials or internal ASTUDIO procedures.
+- **AI Crawler Readiness Auditor** checks one public HTTPS page and its crawler controls through a human-confirmed MCP Apps flow.
+
+These plugins contain no client data, private corpora, credentials or internal ASTUDIO procedures.
 
 ## Public pages
 
@@ -28,6 +31,7 @@ npm --prefix pdf-table-to-excel test
 npm --prefix gcc-arabic-writer test
 npm --prefix ad-creative-lab test
 npm --prefix growth-marketing-planner test
+npm --prefix ai-crawler-readiness-auditor test
 ```
 
 ## License

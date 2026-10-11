@@ -1,0 +1,7 @@
+node_modules
+npm-debug.log
+.env*
+coverage
+*.zip
+sbom.cdx.json
+THIRD_PARTY_LICENSES.json
