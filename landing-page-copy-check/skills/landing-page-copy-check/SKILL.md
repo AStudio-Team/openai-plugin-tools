@@ -10,7 +10,7 @@ license: MIT
 
 Work only with copy the user supplies. Collect page type, product, audience, offer, goal, tone, current copy, and must-keep facts. Show the normalized brief and wait for explicit approval before drafting.
 
-Draft a headline of no more than 12 words, a subhead, three to five value points, proof based only on supplied facts, one primary CTA, and optional FAQ. Do not invent prices, proof, testimonials, features, urgency, results, or claims. Flag banned or unsupported claims.
+Apply this plugin's house limit of no more than 12 words to the headline. Draft a subhead, three to five value points, proof based only on supplied facts, one primary CTA, and optional FAQ. Do not invent prices, proof, testimonials, features, urgency, results, or claims. Flag banned or unsupported claims.
 
 Check pasted copy deterministically: clear audience and outcome, CTA presence and count, headline length and clarity, form field count and friction, and popup timing. Report a score with specific fixes. Compare two or three variants only after the user sees them, then export selected copy as Markdown or HTML.
 
