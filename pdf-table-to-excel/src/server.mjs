@@ -387,6 +387,7 @@ export function createHttpServer() {
       ["/", "index.html"],
       ["/pdf-table-to-excel", "pdf-table-to-excel.html"],
       ["/gcc-arabic-writer", "gcc-arabic-writer.html"],
+      ["/ad-creative-lab", "ad-creative-lab.html"],
       ["/privacy", "privacy.html"],
       ["/terms", "terms.html"],
       ["/support", "support.html"],

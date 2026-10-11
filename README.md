@@ -6,9 +6,10 @@ Public, universal OpenAI plugins published by [ASTUDIO](https://www.astudio.agen
 
 - **PDF Table to Excel** converts selectable PDF tables into clean XLSX workbooks through a remote MCP server.
 - **GCC Arabic Writer** provides market-aware Arabic writing guidance for the UAE, Saudi Arabia, Kuwait, Qatar, Bahrain, Oman and pan-Arab audiences.
+- **Ad Creative Lab** guides a human-approved, text-only ad brief, concept comparison, deterministic validation and local export workflow.
 - **Growth Marketing Planner** guides a user through brief confirmation, exactly three strategy options, selection, revision and 30, 60 or 90-day plan export.
 
-Neither plugin contains client data, private corpora, credentials or internal ASTUDIO procedures.
+No product contains client data, private corpora, credentials or internal ASTUDIO procedures.
 
 ## Public pages
 
@@ -25,6 +26,7 @@ python3 tests/audit_public_content.py
 python3 tests/build_archives.py
 npm --prefix pdf-table-to-excel test
 npm --prefix gcc-arabic-writer test
+npm --prefix ad-creative-lab test
 npm --prefix growth-marketing-planner test
 ```
 
