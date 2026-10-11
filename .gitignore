@@ -8,3 +8,12 @@ PROJECT.md
 PLAN.md
 reports/
 gcc-arabic-writer/evals/
+coverage/
+dist/
+.env*
+*.log
+__MACOSX/
+*.tmp
+.cache/
+test-results/
+playwright-report/

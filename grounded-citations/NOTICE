@@ -1,0 +1,6 @@
+Grounded Citations
+Copyright (c) Hermes Agent + Teknium
+
+The citation ledger and verification design is adapted from Grounded Citations by Hermes Agent + Teknium under the MIT License. The service implementation in this directory was rewritten for remote, session-scoped MCP operation. No original local filesystem implementation was copied.
+
+Third-party components and their license identifiers are recorded in server/THIRD_PARTY_LICENSES.json, generated from the exact installed dependency tree. Their license texts remain available in the installed packages and upstream distributions.
