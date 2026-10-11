@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "open-data-fetcher": {
+      "type": "streamable-http",
+      "url": "https://www.astudio.agency/openai-plugins/open-data-fetcher/mcp"
+    }
+  }
+}

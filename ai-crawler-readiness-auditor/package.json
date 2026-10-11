@@ -1,0 +1,29 @@
+{
+  "name": "ai-crawler-readiness-auditor",
+  "version": "1.0.0",
+  "private": false,
+  "type": "module",
+  "description": "Evidence-based audit of public crawler controls and machine-readable discovery signals.",
+  "scripts": {
+    "start": "node src/server.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "check": "node --check src/server.mjs && node --check src/audit.mjs && node --check src/network.mjs",
+    "licenses": "license-checker --production --json --out THIRD_PARTY_LICENSES.json && node scripts/sanitize-license-inventory.mjs",
+    "sbom": "cyclonedx-npm --output-file sbom.cdx.json --omit dev && node scripts/sanitize-sbom.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/ext-apps": "2.0.3",
+    "@modelcontextprotocol/sdk": "1.32.1",
+    "ipaddr.js": "2.5.0",
+    "saxes": "6.0.0",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@cyclonedx/cyclonedx-npm": "6.0.1",
+    "license-checker": "25.0.1"
+  },
+  "license": "MIT"
+}

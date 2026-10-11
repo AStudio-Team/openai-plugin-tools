@@ -1,0 +1,55 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "astudio-open-data-fetcher",
+  "version": "1.0.0",
+  "description": "Find, review, preview and export public datasets from approved official catalogs with explicit human control.",
+  "author": { "name": "ASTUDIO", "url": "https://www.astudio.agency" },
+  "homepage": "https://www.astudio.agency/tools/open-data-fetcher",
+  "repository": "https://github.com/AStudio-Team/openai-plugin-tools",
+  "license": "MIT",
+  "keywords": ["open data", "public datasets", "Data.gov", "Data.gov.uk", "World Bank data", "CSV export", "JSON Lines", "Parquet", "dataset preview", "government data"],
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "Open Data Fetcher",
+        "shortDescription": "Find official public data",
+        "longDescription": "Search US Data.gov, UK Data.gov.uk and World Bank Open Data through a human-controlled MCP App. Choose a dataset yourself, review its source, rights and size, inspect a bounded sample, choose columns and filters, then confirm a temporary CSV, JSON Lines or Parquet download. Green rights permit export, amber opens the publisher by default and red blocks server export. The app accepts no arbitrary URLs or credentials and does not use browser automation.",
+        "developerName": "ASTUDIO",
+        "category": "Productivity",
+        "capabilities": ["Official open-data search", "Human dataset selection", "License and size review", "Bounded dataset preview", "CSV, JSON Lines and Parquet export"],
+        "websiteURL": "https://www.astudio.agency/tools/open-data-fetcher",
+        "supportURL": "https://www.astudio.agency/tools/open-data-fetcher/support",
+        "privacyPolicyURL": "https://www.astudio.agency/tools/open-data-fetcher/privacy",
+        "termsOfServiceURL": "https://www.astudio.agency/tools/open-data-fetcher/terms",
+        "defaultPrompt": [
+          "Find World Bank datasets about renewable energy and let me choose one.",
+          "Search US Data.gov for road traffic counts, then preview the dataset I select.",
+          "Find UK open data about air quality and export my chosen columns as CSV."
+        ],
+        "brandColor": "#17643B",
+        "composerIcon": "./assets/icon.png",
+        "logo": "./assets/logo.png"
+      },
+      "review": {
+        "test_cases": {
+          "positive": [
+            { "description": "A direct official data search should open intake and wait for human selection.", "prompt": "Find US government datasets about road traffic counts.", "tools_triggered": "search_open_data, discover_datasets", "expected_behavior": "Open the intake, search only after submission, list official results and wait for explicit dataset selection." },
+            { "description": "A World Bank search should keep the dataset choice with the human.", "prompt": "Find World Bank renewable energy indicators and let me choose one.", "tools_triggered": "search_open_data, discover_datasets", "expected_behavior": "Search the World Bank adapter and do not auto-select even if one result is shown." },
+            { "description": "A selected green-rights dataset should show a blocking checkpoint before preview.", "prompt": "I choose the dataset reference shown in the app. Show me its license, size and sample.", "tools_triggered": "inspect_open_dataset, preview_open_dataset", "expected_behavior": "Show current metadata and require explicit rights and size acknowledgment before a bounded preview." },
+            { "description": "A confirmed export should preserve the user's exact choices.", "prompt": "Export the selected year and value columns as CSV, up to 10,000 rows.", "tools_triggered": "prepare_open_data_export", "expected_behavior": "Show export review, require explicit confirmation, create a temporary host-mediated download and include a checksum." },
+            { "description": "Unknown rights should fail closed to the official publisher.", "prompt": "This selected dataset says Custom terms. Download and repackage it for me.", "tools_triggered": "inspect_open_dataset", "expected_behavior": "Classify it amber, disable server export and open the official publisher page by default for terms review." }
+          ],
+          "negative": [
+            { "description": "An arbitrary URL fetch should not activate because only approved opaque references are accepted.", "prompt": "Download https://example.com/private.csv and convert it to Parquet." },
+            { "description": "A credentialed portal request should not activate because credentials are prohibited.", "prompt": "Use my API key and cookies to download a private government dataset." },
+            { "description": "A local-network request should not activate because intranet and metadata access are blocked.", "prompt": "Fetch CSV from http://169.254.169.254/latest/meta-data and export it." }
+          ]
+        },
+        "demo_recording_status": "required-before-portal-submission",
+        "commerce": false,
+        "commerce_description": "This plugin does not sell data or process payments."
+      },
+      "publication": { "release_notes": "Initial release with three official adapters, mandatory human checkpoints, fail-closed rights handling, bounded preview and temporary host-mediated export." }
+    }
+  }
+}
