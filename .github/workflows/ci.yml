@@ -33,6 +33,7 @@ jobs:
             editable-diagram-builder/package-lock.json
             verified-buy-link/package-lock.json
             grounded-citations/server/package-lock.json
+            schema-markup-generator/package-lock.json
       - name: Install Python dependencies
         working-directory: pdf-table-to-excel
         run: |
@@ -51,6 +52,7 @@ jobs:
           npm --prefix editable-diagram-builder ci --ignore-scripts
           npm --prefix verified-buy-link ci --ignore-scripts
           npm --prefix grounded-citations/server ci --ignore-scripts
+          npm --prefix schema-markup-generator ci --ignore-scripts
       - name: Test PDF MCP service
         working-directory: pdf-table-to-excel
         run: |
@@ -110,6 +112,9 @@ jobs:
           npm run check
           npm audit --audit-level=moderate
           npm run licenses
+      - name: Test Schema Markup Generator MCP App
+        working-directory: schema-markup-generator
+        run: npm test
       - name: Validate public packages
         run: |
           python -m unittest discover -s tests -v
@@ -138,6 +143,7 @@ jobs:
           docker build -t openai-plugin-growth:ci growth-marketing-planner
           docker build -t openai-plugin-launch-plan:ci launch-plan-builder
           docker build -t openai-plugin-landing-copy:ci landing-page-copy-check
+          docker build -t openai-plugin-schema-markup:ci schema-markup-generator
           docker build -t openai-plugin-crawler-auditor:ci ai-crawler-readiness-auditor
           docker build -t openai-plugin-data:ci open-data-fetcher
           docker build -t openai-plugin-diagram:ci editable-diagram-builder

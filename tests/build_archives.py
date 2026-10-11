@@ -66,6 +66,11 @@ PRODUCTS = {
         "root_files": {"plugin.json", "mcp.json", "README.md", "LICENSE", "THIRD_PARTY_NOTICES.md"},
         "directories": {"assets", "skills", "review"},
     },
+    "schema-markup-generator": {
+        "archive": "schema-markup-generator-1.0.0-submission.zip",
+        "root_files": {"plugin.json", "mcp.json", "NOTICE"},
+        "directories": {"assets", "skills", "LICENSES"},
+    },
 }
 SKIP_PARTS = {"__pycache__", "__MACOSX", ".pytest_cache", ".git", ".venv", "node_modules"}
 
@@ -119,6 +124,11 @@ def main() -> int:
                 missing = required.difference(names)
                 if missing:
                     raise SystemExit(f"landing copy archive missing required attribution or package files: {sorted(missing)}")
+            if product == "schema-markup-generator":
+                required = {"NOTICE", "LICENSES/corey-haines-marketingskills-MIT.txt", "skills/schema-markup-generator/SKILL.md", "assets/icon.png", "assets/logo.png"}
+                missing = required.difference(names)
+                if missing:
+                    raise SystemExit(f"schema markup archive missing required attribution or package files: {sorted(missing)}")
             if any("__MACOSX" in name or "/._" in name or "__pycache__" in name for name in names):
                 raise SystemExit(f"unclean archive: {target}")
             for name in names:

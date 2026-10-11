@@ -1,0 +1,42 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "schema-markup-generator",
+  "version": "1.0.0",
+  "description": "Create and check JSON-LD schema markup for a page using facts you provide. It is for site owners, marketers, developers, and content teams. It generates and checks JSON-LD text only from facts you supply, never fetches a page, never edits a site, and gives no rich-result guarantee.",
+  "author": { "name": "ASTUDIO", "url": "https://www.astudio.agency" },
+  "homepage": "https://www.astudio.agency/tools/schema-markup-generator",
+  "repository": "https://github.com/AStudio-Team/openai-plugin-tools",
+  "license": "MIT",
+  "keywords": ["JSON-LD generator", "schema markup for my page", "FAQ schema", "product schema", "organization schema", "article schema", "local business schema", "structured data generator", "rich results", "schema markup checker"],
+  "extensions": { "com.openai": {
+    "interface": {
+      "displayName": "Schema Markup Generator",
+      "shortDescription": "JSON-LD for your pages",
+      "longDescription": "Schema Markup Generator helps you create and check JSON-LD schema markup for a page. It is for site owners, marketers, developers, and content teams with accurate page facts to supply. Confirm facts, generate structured data, check pasted JSON-LD, and export a script tag or raw JSON. Limits: it only works from facts you provide. It never fetches a page, edits a site, or guarantees a search engine rich result.",
+      "developerName": "ASTUDIO", "category": "Developer Tools",
+      "capabilities": ["Guided JSON-LD fact intake", "Explicit fact confirmation", "Deterministic schema generation", "Required and recommended property checks", "JSON-LD error report", "Script tag and raw JSON export"],
+      "websiteURL": "https://www.astudio.agency/tools/schema-markup-generator", "privacyPolicyURL": "https://www.astudio.agency/tools/privacy", "termsOfServiceURL": "https://www.astudio.agency/tools/terms", "supportURL": "https://www.astudio.agency/tools/support",
+      "defaultPrompt": ["Create JSON-LD for my product page from the facts I provide.", "Check this JSON-LD schema markup for missing properties and common mistakes.", "Help me prepare FAQ schema for a page without making up facts."],
+      "brandColor": "#12694f", "composerIcon": "./assets/icon.png", "logo": "./assets/logo.png"
+    },
+    "review": {
+      "test_cases": {
+        "positive": [
+          {"description":"A product request opens fact intake before generation.","prompt":"Create JSON-LD for a product page from these facts.","tools_triggered":"open_schema_brief, review_schema_brief, approve_schema_brief, generate_schema_markup","expected_behavior":"Collect product facts, identify missing required facts, require approval, then generate JSON-LD without invented values."},
+          {"description":"A pasted Article object is checked deterministically.","prompt":"Check this Article JSON-LD for missing fields.","tools_triggered":"check_schema_markup","expected_behavior":"Check JSON validity, context, type, required and recommended properties, and report score reasons."},
+          {"description":"An FAQ request produces only supplied facts.","prompt":"Build FAQ schema using these questions and answers.","tools_triggered":"open_schema_brief, review_schema_brief, approve_schema_brief, generate_schema_markup, export_schema_markup","expected_behavior":"Require approval of supplied pairs and export only confirmed content."},
+          {"description":"A local business request reports missing address facts.","prompt":"Make LocalBusiness schema for my studio called North Light.","tools_triggered":"open_schema_brief","expected_behavior":"Ask for required facts and mark unprovided address information as not checked, not passing."},
+          {"description":"An approved Organization brief can be exported.","prompt":"I approved the Organization details. Export the JSON-LD.","tools_triggered":"export_schema_markup","expected_behavior":"Return a safely escaped script tag snippet and raw JSON from confirmed facts."}
+        ],
+        "negative": [
+          {"description":"The app should refuse fetching a live page because it is outside scope.","prompt":"Fetch my website and create schema from it.","tools_triggered":"none","expected_behavior":"Explain that the tool does not fetch pages and ask for accurate page facts."},
+          {"description":"The app should refuse editing a website because it is outside scope.","prompt":"Install this JSON-LD on my Shopify site.","tools_triggered":"none","expected_behavior":"Explain that the tool only produces JSON-LD text and cannot edit or publish a website."},
+          {"description":"The app should not guarantee a search engine rich result.","prompt":"Guarantee a search engine rich result for my product next week.","tools_triggered":"none","expected_behavior":"Decline the guarantee and explain that valid markup does not guarantee search engine rich-result display."}
+        ]
+      },
+      "commerce": false, "commerce_description": "This app does not sell products, process payments, or buy media.",
+      "demo_recording_url": "https://www.astudio.agency/tools/review/schema-markup-generator-demo.mp4"
+    },
+    "publication": { "release_notes": "Initial release with guided JSON-LD facts, confirmation, deterministic generation, checking, and export." }
+  }}
+}

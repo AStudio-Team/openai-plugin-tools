@@ -17,6 +17,7 @@ BUY_LINK_STATE_FILE="${STATE_DIR}/current-verified-buy-link-container"
 GROUNDED_STATE_FILE="${STATE_DIR}/current-grounded-container"
 LAUNCH_PLAN_STATE_FILE="${STATE_DIR}/current-launch-plan-container"
 LANDING_COPY_STATE_FILE="${STATE_DIR}/current-landing-copy-container"
+SCHEMA_MARKUP_STATE_FILE="${STATE_DIR}/current-schema-markup-container"
 LEGACY_STATE_FILE="${STATE_DIR}/current-container"
 ENV_FILE="${STATE_DIR}/openai.env"
 CADDYFILE="/opt/websites/caddy/Caddyfile"
@@ -41,6 +42,8 @@ LAUNCH_PLAN_IMAGE="openai-plugin-launch-plan:${RELEASE_SHA}"
 LAUNCH_PLAN_CONTAINER="openai-plugin-launch-plan-${DEPLOY_ID}"
 LANDING_COPY_IMAGE="openai-plugin-landing-copy:${RELEASE_SHA}"
 LANDING_COPY_CONTAINER="openai-plugin-landing-copy-${DEPLOY_ID}"
+SCHEMA_MARKUP_IMAGE="openai-plugin-schema-markup:${RELEASE_SHA}"
+SCHEMA_MARKUP_CONTAINER="openai-plugin-schema-markup-${DEPLOY_ID}"
 RENDERED_BLOCK="/tmp/openai-plugin-tools-${DEPLOY_ID}.caddy"
 RENDERED_FIXTURES="/tmp/ai-crawler-fixtures-${DEPLOY_ID}.caddy"
 PREVIOUS_PDF_CONTAINER=""
@@ -56,6 +59,7 @@ PREVIOUS_BUY_LINK_CONTAINER=""
 PREVIOUS_GROUNDED_CONTAINER=""
 PREVIOUS_LAUNCH_PLAN_CONTAINER=""
 PREVIOUS_LANDING_COPY_CONTAINER=""
+PREVIOUS_SCHEMA_MARKUP_CONTAINER=""
 CONFIG_MUTATED=0
 SWITCHED=0
 COMMITTED=0
@@ -101,6 +105,9 @@ fi
 if [ -s "$LANDING_COPY_STATE_FILE" ]; then
   PREVIOUS_LANDING_COPY_CONTAINER="$(tr -cd 'A-Za-z0-9_.-' < "$LANDING_COPY_STATE_FILE")"
 fi
+if [ -s "$SCHEMA_MARKUP_STATE_FILE" ]; then
+  PREVIOUS_SCHEMA_MARKUP_CONTAINER="$(tr -cd 'A-Za-z0-9_.-' < "$SCHEMA_MARKUP_STATE_FILE")"
+fi
 
 write_state() {
   local path="$1"
@@ -136,8 +143,8 @@ rollback() {
     write_state "$DIAGRAM_STATE_FILE" "$PREVIOUS_DIAGRAM_CONTAINER"
     write_state "$BUY_LINK_STATE_FILE" "$PREVIOUS_BUY_LINK_CONTAINER"
     write_state "$GROUNDED_STATE_FILE" "$PREVIOUS_GROUNDED_CONTAINER"
-    write_state "$LAUNCH_PLAN_STATE_FILE" "$PREVIOUS_LAUNCH_PLAN_CONTAINER"; write_state "$LANDING_COPY_STATE_FILE" "$PREVIOUS_LANDING_COPY_CONTAINER"
-    docker rm -f "$PDF_CONTAINER" "$ARABIC_CONTAINER" "$AD_CONTAINER" "$GROWTH_CONTAINER" "$CRAWLER_CONTAINER" "$DATA_CONTAINER" "$DIAGRAM_CONTAINER" "$BUY_LINK_CONTAINER" "$GROUNDED_CONTAINER" "$LAUNCH_PLAN_CONTAINER" "$LANDING_COPY_CONTAINER" >/dev/null 2>&1 || true
+    write_state "$LAUNCH_PLAN_STATE_FILE" "$PREVIOUS_LAUNCH_PLAN_CONTAINER"; write_state "$LANDING_COPY_STATE_FILE" "$PREVIOUS_LANDING_COPY_CONTAINER"; write_state "$SCHEMA_MARKUP_STATE_FILE" "$PREVIOUS_SCHEMA_MARKUP_CONTAINER"
+    docker rm -f "$PDF_CONTAINER" "$ARABIC_CONTAINER" "$AD_CONTAINER" "$GROWTH_CONTAINER" "$CRAWLER_CONTAINER" "$DATA_CONTAINER" "$DIAGRAM_CONTAINER" "$BUY_LINK_CONTAINER" "$GROUNDED_CONTAINER" "$LAUNCH_PLAN_CONTAINER" "$LANDING_COPY_CONTAINER" "$SCHEMA_MARKUP_CONTAINER" >/dev/null 2>&1 || true
   else
     write_state "$PDF_STATE_FILE" "$PDF_CONTAINER"
     write_state "$ARABIC_STATE_FILE" "$ARABIC_CONTAINER"
@@ -150,9 +157,10 @@ rollback() {
     write_state "$GROUNDED_STATE_FILE" "$GROUNDED_CONTAINER"
     write_state "$LAUNCH_PLAN_STATE_FILE" "$LAUNCH_PLAN_CONTAINER"
     write_state "$LANDING_COPY_STATE_FILE" "$LANDING_COPY_CONTAINER"
+    write_state "$SCHEMA_MARKUP_STATE_FILE" "$SCHEMA_MARKUP_CONTAINER"
     echo "rollback failed; candidate containers were kept running for recovery" >&2
   fi
-  rm -f "${PDF_STATE_FILE}.tmp" "${ARABIC_STATE_FILE}.tmp" "${AD_STATE_FILE}.tmp" "${GROWTH_STATE_FILE}.tmp" "${CRAWLER_STATE_FILE}.tmp" "${DATA_STATE_FILE}.tmp" "${DIAGRAM_STATE_FILE}.tmp" "${BUY_LINK_STATE_FILE}.tmp" "${GROUNDED_STATE_FILE}.tmp" "${LAUNCH_PLAN_STATE_FILE}.tmp" "${LANDING_COPY_STATE_FILE}.tmp" "${CADDYFILE}.rollback-${DEPLOY_ID}"
+  rm -f "${PDF_STATE_FILE}.tmp" "${ARABIC_STATE_FILE}.tmp" "${AD_STATE_FILE}.tmp" "${GROWTH_STATE_FILE}.tmp" "${CRAWLER_STATE_FILE}.tmp" "${DATA_STATE_FILE}.tmp" "${DIAGRAM_STATE_FILE}.tmp" "${BUY_LINK_STATE_FILE}.tmp" "${GROUNDED_STATE_FILE}.tmp" "${LAUNCH_PLAN_STATE_FILE}.tmp" "${LANDING_COPY_STATE_FILE}.tmp" "${SCHEMA_MARKUP_STATE_FILE}.tmp" "${CADDYFILE}.rollback-${DEPLOY_ID}"
   return $((1 - rollback_ok))
 }
 
@@ -180,6 +188,7 @@ docker build --pull -t "$BUY_LINK_IMAGE" verified-buy-link
 docker build --pull -t "$GROUNDED_IMAGE" grounded-citations
 docker build --pull -t "$LAUNCH_PLAN_IMAGE" launch-plan-builder
 docker build --pull -t "$LANDING_COPY_IMAGE" landing-page-copy-check
+docker build --pull -t "$SCHEMA_MARKUP_IMAGE" schema-markup-generator
 
 ENV_FILE_ARGS=()
 if [ -s "$ENV_FILE" ]; then
@@ -262,6 +271,7 @@ run_container "$GROUNDED_CONTAINER" "$GROUNDED_IMAGE" 8790 local \
   -e PERSISTENCE_BACKEND=memory
 run_container "$LAUNCH_PLAN_CONTAINER" "$LAUNCH_PLAN_IMAGE" 8790 local
 run_container "$LANDING_COPY_CONTAINER" "$LANDING_COPY_IMAGE" 8790 local
+run_container "$SCHEMA_MARKUP_CONTAINER" "$SCHEMA_MARKUP_IMAGE" 8790 local
 
 wait_healthy() {
   local container="$1"
@@ -287,14 +297,15 @@ wait_healthy "$BUY_LINK_CONTAINER"
 wait_healthy "$GROUNDED_CONTAINER"
 wait_healthy "$LAUNCH_PLAN_CONTAINER"
 wait_healthy "$LANDING_COPY_CONTAINER"
+wait_healthy "$SCHEMA_MARKUP_CONTAINER"
 
-python3 - "$PDF_CONTAINER" "$ARABIC_CONTAINER" "$AD_CONTAINER" "$GROWTH_CONTAINER" "$CRAWLER_CONTAINER" "$DATA_CONTAINER" "$DIAGRAM_CONTAINER" "$BUY_LINK_CONTAINER" "$GROUNDED_CONTAINER" "$LAUNCH_PLAN_CONTAINER" "$LANDING_COPY_CONTAINER" deploy/tools.astudio.agency.caddy "$RENDERED_BLOCK" <<'PY'
+python3 - "$PDF_CONTAINER" "$ARABIC_CONTAINER" "$AD_CONTAINER" "$GROWTH_CONTAINER" "$CRAWLER_CONTAINER" "$DATA_CONTAINER" "$DIAGRAM_CONTAINER" "$BUY_LINK_CONTAINER" "$GROUNDED_CONTAINER" "$LAUNCH_PLAN_CONTAINER" "$LANDING_COPY_CONTAINER" "$SCHEMA_MARKUP_CONTAINER" deploy/tools.astudio.agency.caddy "$RENDERED_BLOCK" <<'PY'
 import sys
 from pathlib import Path
-pdf, arabic, ad, growth, crawler, data, diagram, buy_link, grounded, launch_plan, landing_copy, source, target = sys.argv[1:]
+pdf, arabic, ad, growth, crawler, data, diagram, buy_link, grounded, launch_plan, landing_copy, schema_markup, source, target = sys.argv[1:]
 text = Path(source).read_text()
-text = text.replace("__PDF_PLUGIN_UPSTREAM__", pdf).replace("__ARABIC_PLUGIN_UPSTREAM__", arabic).replace("__AD_CREATIVE_LAB_UPSTREAM__", ad).replace("__GROWTH_PLUGIN_UPSTREAM__", growth).replace("__CRAWLER_PLUGIN_UPSTREAM__", crawler).replace("__DATA_PLUGIN_UPSTREAM__", data).replace("__DIAGRAM_PLUGIN_UPSTREAM__", diagram).replace("__VERIFIED_BUY_LINK_UPSTREAM__", buy_link).replace("__GROUNDED_PLUGIN_UPSTREAM__", grounded).replace("__LAUNCH_PLAN_UPSTREAM__", launch_plan).replace("__LANDING_COPY_UPSTREAM__", landing_copy)
-if "__PDF_PLUGIN_UPSTREAM__" in text or "__ARABIC_PLUGIN_UPSTREAM__" in text or "__AD_CREATIVE_LAB_UPSTREAM__" in text or "__GROWTH_PLUGIN_UPSTREAM__" in text or "__CRAWLER_PLUGIN_UPSTREAM__" in text or "__DATA_PLUGIN_UPSTREAM__" in text or "__DIAGRAM_PLUGIN_UPSTREAM__" in text or "__VERIFIED_BUY_LINK_UPSTREAM__" in text or "__GROUNDED_PLUGIN_UPSTREAM__" in text or "__LAUNCH_PLAN_UPSTREAM__" in text or "__LANDING_COPY_UPSTREAM__" in text:
+text = text.replace("__PDF_PLUGIN_UPSTREAM__", pdf).replace("__ARABIC_PLUGIN_UPSTREAM__", arabic).replace("__AD_CREATIVE_LAB_UPSTREAM__", ad).replace("__GROWTH_PLUGIN_UPSTREAM__", growth).replace("__CRAWLER_PLUGIN_UPSTREAM__", crawler).replace("__DATA_PLUGIN_UPSTREAM__", data).replace("__DIAGRAM_PLUGIN_UPSTREAM__", diagram).replace("__VERIFIED_BUY_LINK_UPSTREAM__", buy_link).replace("__GROUNDED_PLUGIN_UPSTREAM__", grounded).replace("__LAUNCH_PLAN_UPSTREAM__", launch_plan).replace("__LANDING_COPY_UPSTREAM__", landing_copy).replace("__SCHEMA_MARKUP_UPSTREAM__", schema_markup)
+if "__" in text:
     raise SystemExit("unresolved upstream placeholder")
 Path(target).write_text(text)
 PY
@@ -419,6 +430,9 @@ check_mcp https://www.astudio.agency/openai-plugins/grounded-citations/mcp groun
 check_health https://www.astudio.agency/openai-plugins/launch-plan-builder/health launch-plan-builder
 check_health https://www.astudio.agency/openai-plugins/launch-plan-builder/ready launch-plan-builder
 check_mcp https://www.astudio.agency/openai-plugins/launch-plan-builder/mcp launch-plan-builder open_launch_brief,review_launch_brief,approve_launch_brief,draft_launch_plan,request_plan_revision,export_launch_plan
+check_health https://www.astudio.agency/openai-plugins/schema-markup-generator/health schema-markup-generator
+check_health https://www.astudio.agency/openai-plugins/schema-markup-generator/ready schema-markup-generator
+check_mcp https://www.astudio.agency/openai-plugins/schema-markup-generator/mcp schema-markup-generator open_schema_brief,review_schema_brief,approve_schema_brief,generate_schema_markup,check_schema_markup,export_schema_markup
 check_health https://www.astudio.agency/openai-plugins/landing-page-copy-check/health landing-page-copy-check
 check_health https://www.astudio.agency/openai-plugins/landing-page-copy-check/ready landing-page-copy-check
 check_mcp https://www.astudio.agency/openai-plugins/landing-page-copy-check/mcp landing-page-copy-check open_page_brief,review_page_brief,approve_page_brief,draft_page_copy,check_page_conversion,select_page_copy_variant,export_page_copy
@@ -452,6 +466,7 @@ printf '%s\n' "$BUY_LINK_CONTAINER" > "${BUY_LINK_STATE_FILE}.tmp"
 printf '%s\n' "$GROUNDED_CONTAINER" > "${GROUNDED_STATE_FILE}.tmp"
 printf '%s\n' "$LAUNCH_PLAN_CONTAINER" > "${LAUNCH_PLAN_STATE_FILE}.tmp"
 printf '%s\n' "$LANDING_COPY_CONTAINER" > "${LANDING_COPY_STATE_FILE}.tmp"
+printf '%s\n' "$SCHEMA_MARKUP_CONTAINER" > "${SCHEMA_MARKUP_STATE_FILE}.tmp"
 mv "${PDF_STATE_FILE}.tmp" "$PDF_STATE_FILE"
 mv "${ARABIC_STATE_FILE}.tmp" "$ARABIC_STATE_FILE"
 mv "${AD_STATE_FILE}.tmp" "$AD_STATE_FILE"
@@ -463,13 +478,14 @@ mv "${BUY_LINK_STATE_FILE}.tmp" "$BUY_LINK_STATE_FILE"
 mv "${GROUNDED_STATE_FILE}.tmp" "$GROUNDED_STATE_FILE"
 mv "${LAUNCH_PLAN_STATE_FILE}.tmp" "$LAUNCH_PLAN_STATE_FILE"
 mv "${LANDING_COPY_STATE_FILE}.tmp" "$LANDING_COPY_STATE_FILE"
+mv "${SCHEMA_MARKUP_STATE_FILE}.tmp" "$SCHEMA_MARKUP_STATE_FILE"
 COMMITTED=1
 rm -f "$LEGACY_STATE_FILE"
-for previous in "$PREVIOUS_PDF_CONTAINER" "$PREVIOUS_ARABIC_CONTAINER" "$PREVIOUS_AD_CONTAINER" "$PREVIOUS_GROWTH_CONTAINER" "$PREVIOUS_CRAWLER_CONTAINER" "$PREVIOUS_DATA_CONTAINER" "$PREVIOUS_DIAGRAM_CONTAINER" "$PREVIOUS_BUY_LINK_CONTAINER" "$PREVIOUS_GROUNDED_CONTAINER" "$PREVIOUS_LAUNCH_PLAN_CONTAINER" "$PREVIOUS_LANDING_COPY_CONTAINER"; do
-  if [ -n "$previous" ] && [ "$previous" != "$PDF_CONTAINER" ] && [ "$previous" != "$ARABIC_CONTAINER" ] && [ "$previous" != "$AD_CONTAINER" ] && [ "$previous" != "$GROWTH_CONTAINER" ] && [ "$previous" != "$CRAWLER_CONTAINER" ] && [ "$previous" != "$DATA_CONTAINER" ] && [ "$previous" != "$DIAGRAM_CONTAINER" ] && [ "$previous" != "$BUY_LINK_CONTAINER" ] && [ "$previous" != "$GROUNDED_CONTAINER" ] && [ "$previous" != "$LAUNCH_PLAN_CONTAINER" ] && [ "$previous" != "$LANDING_COPY_CONTAINER" ]; then
+for previous in "$PREVIOUS_PDF_CONTAINER" "$PREVIOUS_ARABIC_CONTAINER" "$PREVIOUS_AD_CONTAINER" "$PREVIOUS_GROWTH_CONTAINER" "$PREVIOUS_CRAWLER_CONTAINER" "$PREVIOUS_DATA_CONTAINER" "$PREVIOUS_DIAGRAM_CONTAINER" "$PREVIOUS_BUY_LINK_CONTAINER" "$PREVIOUS_GROUNDED_CONTAINER" "$PREVIOUS_LAUNCH_PLAN_CONTAINER" "$PREVIOUS_LANDING_COPY_CONTAINER" "$PREVIOUS_SCHEMA_MARKUP_CONTAINER"; do
+  if [ -n "$previous" ] && [ "$previous" != "$PDF_CONTAINER" ] && [ "$previous" != "$ARABIC_CONTAINER" ] && [ "$previous" != "$AD_CONTAINER" ] && [ "$previous" != "$GROWTH_CONTAINER" ] && [ "$previous" != "$CRAWLER_CONTAINER" ] && [ "$previous" != "$DATA_CONTAINER" ] && [ "$previous" != "$DIAGRAM_CONTAINER" ] && [ "$previous" != "$BUY_LINK_CONTAINER" ] && [ "$previous" != "$GROUNDED_CONTAINER" ] && [ "$previous" != "$LAUNCH_PLAN_CONTAINER" ] && [ "$previous" != "$LANDING_COPY_CONTAINER" ] && [ "$previous" != "$SCHEMA_MARKUP_CONTAINER" ]; then
     docker rm -f "$previous" >/dev/null 2>&1 || true
   fi
 done
 rm -f "$BACKUP" "$RENDERED_BLOCK" "$RENDERED_FIXTURES"
 
-echo "deployed ${RELEASE_SHA} as ${PDF_CONTAINER}, ${ARABIC_CONTAINER}, ${AD_CONTAINER}, ${GROWTH_CONTAINER}, ${CRAWLER_CONTAINER}, ${DATA_CONTAINER}, ${DIAGRAM_CONTAINER}, ${BUY_LINK_CONTAINER}, ${GROUNDED_CONTAINER}, ${LAUNCH_PLAN_CONTAINER} and ${LANDING_COPY_CONTAINER}"
+echo "deployed ${RELEASE_SHA} as ${PDF_CONTAINER}, ${ARABIC_CONTAINER}, ${AD_CONTAINER}, ${GROWTH_CONTAINER}, ${CRAWLER_CONTAINER}, ${DATA_CONTAINER}, ${DIAGRAM_CONTAINER}, ${BUY_LINK_CONTAINER}, ${GROUNDED_CONTAINER}, ${LAUNCH_PLAN_CONTAINER}, ${LANDING_COPY_CONTAINER} and ${SCHEMA_MARKUP_CONTAINER}"
