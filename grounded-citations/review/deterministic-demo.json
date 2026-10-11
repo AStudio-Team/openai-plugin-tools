@@ -1,0 +1,26 @@
+{
+  "fixture_version": "1.0.0",
+  "synthetic_sources": [
+    { "title": "City Garden Annual Note", "text": "The city garden recorded 120 volunteer visits in 2025. Native plants covered 40 percent of the restored plot." },
+    { "title": "Library Program Note", "text": "The library hosted 18 public workshops during 2025. Registration was free for every workshop." }
+  ],
+  "positive_cases": [
+    { "id": "positive-1-direct-url-ledger", "expected_tools": ["prepare_scope", "confirm_scope", "preview_evidence", "render_citations"] },
+    { "id": "positive-2-indirect-draft-review", "expected_tools": ["prepare_scope", "confirm_scope", "verify_draft"] },
+    { "id": "positive-3-file-evidence", "expected_tools": ["prepare_scope", "confirm_scope", "verify_quote", "preview_evidence"] },
+    { "id": "positive-4-revision-follow-up", "expected_tools": ["confirm_scope", "verify_quote", "preview_evidence"] },
+    { "id": "positive-5-fallback-cancellation", "expected_tools": ["prepare_scope", "end_session"] }
+  ],
+  "negative_cases": [
+    { "id": "negative-1-private-network", "expected": "https_required or private_destination" },
+    { "id": "negative-2-fabricated-quote", "expected": "not_found" },
+    { "id": "negative-3-adjacent-task", "expected": "safe refusal" }
+  ],
+  "additional_cases": {
+    "incomplete": "Ask for at least one source before calling prepare_scope.",
+    "revision": "A new confirmation creates a visible ledger revision and stale calls fail.",
+    "cancellation": "end_session deletes source content immediately and is idempotent.",
+    "security": "Private, mixed-DNS, redirected-private, oversized, compressed, and MIME-mismatched inputs fail closed.",
+    "fallback": "Every widget tool returns a complete plain-text checkpoint or result."
+  }
+}

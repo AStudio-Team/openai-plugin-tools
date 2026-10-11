@@ -1,6 +1,15 @@
 # BEGIN OPENAI_PLUGIN_TOOLS
     redir /tools /tools/ 308
 
+    handle /tools/grounded-citations {
+        rewrite * /
+        reverse_proxy __GROUNDED_PLUGIN_UPSTREAM__:8790
+    }
+
+    handle_path /tools/grounded-citations/* {
+        reverse_proxy __GROUNDED_PLUGIN_UPSTREAM__:8790
+    }
+
     handle_path /tools/* {
         reverse_proxy __PDF_PLUGIN_UPSTREAM__:8788
     }
@@ -31,6 +40,20 @@
 
     handle_path /openai-plugins/gcc-arabic-writer/* {
         reverse_proxy __ARABIC_PLUGIN_UPSTREAM__:8789
+    }
+
+    handle /openai-plugins/grounded-citations/mcp {
+        request_body {
+            max_size 512KB
+        }
+        rewrite * /mcp
+        reverse_proxy __GROUNDED_PLUGIN_UPSTREAM__:8790 {
+            header_up X-Plugin-Client-IP {remote_host}
+        }
+    }
+
+    handle_path /openai-plugins/grounded-citations/* {
+        reverse_proxy __GROUNDED_PLUGIN_UPSTREAM__:8790
     }
 
     handle /.well-known/openai-apps-challenge {
