@@ -47,7 +47,8 @@ function headlineIsSpecific(headline, sourceBrief) {
 const ctaVerb = /^(?:get|start|try|book|buy|join|see|learn|discover|request|download|contact|sign\s*up|subscribe|register|apply|claim|order|shop|schedule|talk|call|compare|choose|create|build|explore)\b/iu;
 const explicitAsk = /^(?:(?:ready|want|need)\s+(?:to\s+)?(?:get|start|try|book|buy|join|see|learn|discover|request|download|contact|sign\s*up|subscribe|register|apply|claim|order|shop|schedule|talk|call|compare|choose|create|build|explore)|(?:want|need)\s+(?:a|an|the)?\s*(?:demo|trial|quote|consultation|call))\b/iu;
 function countCtas(value) { return String(value).split(/[.!?\n]+/u).map(part => clean(part).replace(/^(?:(?:primary\s+)?cta\s*:\s*)/iu, "")).filter(part => ctaVerb.test(part) || explicitAsk.test(part)).length; }
-const claimPattern = /(?:\d|%|[$€£¥₹]|د\.إ|\b(?:AED|USD|EUR|GBP|SAR|JPY|CAD|AUD|CHF|QAR|KWD|BHD|OMR)\b|\b(?:trusted\s+by|testimonial|testimonials|award|award-winning|rated|five-star|five\s+star|star\s+rating|recommended\s+by|recommend\s+us|satisfaction\s+rate|case\s+study)\b)/iu;
+const claimPattern = /(?:\d|%|\p{Sc}|\b(?:AED|USD|EUR|GBP|SAR|JPY|CAD|AUD|CHF|QAR|KWD|BHD|OMR)\b|\b(?:hundreds|thousands|millions|billions|dozens)\b|\b(?:trusted\s+by|testimonials?|award(?:-winning)?|rated|five-star|five\s+star|star\s+rating|recommended\s+by|recommend\s+us|satisfaction\s+rate|case\s+study)\b)/iu;
+export function isProofLikeClaim(sentence) { return claimPattern.test(String(sentence)); }
 function proofSources(sourceBrief) { return [...new Set([...(sourceBrief.mustKeepFacts || []), sourceBrief.offer, sourceBrief.product].map(clean).filter(Boolean))]; }
 function wholeSourceMatch(item, source) { const allowed = normalizeSource(source); return allowed ? new RegExp(`(^|[^\\p{L}\\p{N}])${escapeRegex(allowed)}(?=$|[^\\p{L}\\p{N}])`, "iu").test(normalizeSource(item)) : false; }
 function sourceMatch(item, source) {
@@ -63,7 +64,7 @@ function sourceMatch(item, source) {
   return (remainder.match(/[\p{L}\p{M}]+/gu) || []).length <= 3;
 }
 function containsAllowedSource(value, allowed) { return allowed.some(source => sourceMatch(value, source)); }
-function validateOutsideProof(values, sourceBrief) { const allowed = proofSources(sourceBrief); for (const value of values) for (const sentence of String(value).split(/[.!?\n]+/u).map(clean).filter(Boolean)) if (claimPattern.test(sentence) && !allowed.some(source => wholeSourceMatch(sentence, source))) throw Error(`Unsupported claim outside proof: ${sentence}`); }
+function validateOutsideProof(values, sourceBrief) { const allowed = proofSources(sourceBrief); for (const value of values) for (const sentence of String(value).split(/[.!?\n]+/u).map(clean).filter(Boolean)) if (isProofLikeClaim(sentence) && !allowed.some(source => wholeSourceMatch(sentence, source))) throw Error(`Unsupported claim outside proof: ${sentence}`); }
 function validateProof(items, sourceBrief, otherCopyText = []) { const allowed = proofSources(sourceBrief), unsupported = items.filter(item => !containsAllowedSource(item, allowed)); if (unsupported.length) throw Error(`Remove unsupported proof: ${unsupported.join(", ")}. Proof lines must quote a must-keep fact, the offer or the product statement: ${allowed.join(", ")}.`); validateOutsideProof([...items, ...otherCopyText], sourceBrief); }
 function validateCopy(value, sourceBrief = { mustKeepFacts: [] }) {
   const parsed = copy.parse(value);
