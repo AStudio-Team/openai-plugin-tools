@@ -14,6 +14,7 @@ PRODUCTS = {
         "archive": "ad-creative-lab-1.0.0-submission.zip",
         "root_files": {"plugin.json", "mcp.json", "LICENSE", "THIRD_PARTY_NOTICES.md", "PRIVACY.md", "TERMS.md"},
         "directories": {"assets", "skills", "review"},
+    },
     "ai-crawler-readiness-auditor": {
         "archive": "ai-crawler-readiness-auditor-1.0.0-submission.zip",
         "root_files": {"plugin.json", "mcp.json"},
@@ -23,7 +24,6 @@ PRODUCTS = {
         "archive": "verified-buy-link-1.0.0-submission.zip",
         "root_files": {"plugin.json", "mcp.json", "THIRD-PARTY-NOTICES.md", "sbom.cdx.json"},
         "directories": {"assets", "skills", "review"},
-    },
     },
     "gcc-arabic-writer": {
         "archive": "gcc-arabic-writer-1.1.0-submission.zip",
@@ -45,6 +45,7 @@ PRODUCTS = {
         "archive": "growth-marketing-planner-1.0.0-submission.zip",
         "root_files": {"plugin.json", "mcp.json", "NOTICE"},
         "directories": {"assets", "skills", "LICENSES"},
+    },
     "open-data-fetcher": {
         "archive": "open-data-fetcher-1.0.0-submission.zip",
         "root_files": {"plugin.json", "mcp.json"},
@@ -54,7 +55,6 @@ PRODUCTS = {
         "archive": "editable-diagram-builder-1.0.0-submission.zip",
         "root_files": {"plugin.json", "mcp.json", "README.md", "LICENSE", "THIRD_PARTY_NOTICES.md"},
         "directories": {"assets", "skills", "review"},
-    },
     },
 }
 SKIP_PARTS = {"__pycache__", "__MACOSX", ".pytest_cache", ".git", ".venv", "node_modules"}
