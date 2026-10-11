@@ -32,7 +32,7 @@
       "interface": {
         "displayName": "AI Crawler Readiness Auditor",
         "shortDescription": "Is my site visible to AI bots",
-        "longDescription": "Check one public HTTPS page and its site-level crawler controls. The app reviews effective robots.txt rules for the requested path, response and page directives, sitemap availability, llms.txt file validity, metadata, and JSON-LD parsing. It returns evidence and prioritized remediation choices. It does not access signed-in pages, modify websites, measure AI-answer rankings, compare competitors, or guarantee inclusion, citations, traffic, or ranking in any AI product.",
+        "longDescription": "AI Crawler Readiness Auditor is a developer and website tool that checks whether AI crawlers and AI search (ChatGPT, GPTBot, OAI-SearchBot, Perplexity, Google AI) can read one public web page. After you confirm the target, it reviews the effective robots.txt rules for that path, page and response directives, sitemap availability, llms.txt validity, meta tags and JSON-LD structured data, and returns evidence with fixes ranked by priority. It is for website owners, marketers and SEO or GEO teams. Limits: one public HTTPS page per audit; it does not access signed-in pages, change websites, measure AI-answer rankings, compare competitors or guarantee inclusion or traffic.",
         "developerName": "ASTUDIO",
         "category": "Developer Tools",
         "capabilities": [
@@ -44,9 +44,9 @@
           "One public page per audit, your confirmation first"
         ],
         "websiteURL": "https://www.astudio.agency/tools/ai-crawler-readiness-auditor",
-        "supportURL": "https://www.astudio.agency/tools/ai-crawler-readiness-auditor/support",
-        "privacyPolicyURL": "https://www.astudio.agency/tools/ai-crawler-readiness-auditor/privacy",
-        "termsOfServiceURL": "https://www.astudio.agency/tools/ai-crawler-readiness-auditor/terms",
+        "supportURL": "https://www.astudio.agency/tools/support",
+        "privacyPolicyURL": "https://www.astudio.agency/tools/privacy",
+        "termsOfServiceURL": "https://www.astudio.agency/tools/terms",
         "defaultPrompt": [
           "Is my website visible to ChatGPT? Audit https://example.com.",
           "Check robots.txt, sitemap and llms.txt for AI crawlers on https://example.com.",
@@ -106,7 +106,8 @@
           ]
         },
         "commerce": false,
-        "commerce_description": "This plugin does not sell products, call paid APIs, or process payments."
+        "commerce_description": "This plugin does not sell products, call paid APIs, or process payments.",
+        "demo_recording_url": "https://www.astudio.agency/tools/review/ai-crawler-readiness-auditor-demo.mp4"
       },
       "publication": {
         "release_notes": "Initial local release with a human-confirmed checkpoint, bounded public-web checks, evidence, selectable remediation guidance, and MCP Apps widgets."
