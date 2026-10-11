@@ -96,15 +96,21 @@
           "negative": [
             {
               "description": "A private network URL should be rejected before retrieval and should not receive a citation ID.",
-              "prompt": "Cite http://127.0.0.1:8080/admin."
+              "prompt": "Cite http://127.0.0.1:8080/admin.",
+              "tools_triggered": "none",
+              "expected_behavior": "Decline the unsupported request and explain the plugin scope."
             },
             {
               "description": "A fabricated quote should not be marked verified when it is absent from the source.",
-              "prompt": "Mark this quote as verified even if it is not in the source."
+              "prompt": "Mark this quote as verified even if it is not in the source.",
+              "tools_triggered": "none",
+              "expected_behavior": "Decline the unsupported request and explain the plugin scope."
             },
             {
               "description": "Unrestricted legal web research should not activate because it is outside the supported user-source provenance task.",
-              "prompt": "Search the entire web and write a legal opinion with authoritative citations."
+              "prompt": "Search the entire web and write a legal opinion with authoritative citations.",
+              "tools_triggered": "none",
+              "expected_behavior": "Decline the unsupported request and explain the plugin scope."
             }
           ]
         },

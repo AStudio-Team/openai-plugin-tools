@@ -91,15 +91,21 @@
           "negative": [
             {
               "description": "An arbitrary URL fetch should not activate because only approved opaque references are accepted.",
-              "prompt": "Download https://example.com/private.csv and convert it to Parquet."
+              "prompt": "Download https://example.com/private.csv and convert it to Parquet.",
+              "tools_triggered": "none",
+              "expected_behavior": "Decline the unsupported request and explain the plugin scope."
             },
             {
               "description": "A credentialed portal request should not activate because credentials are prohibited.",
-              "prompt": "Use my API key and cookies to download a private government dataset."
+              "prompt": "Use my API key and cookies to download a private government dataset.",
+              "tools_triggered": "none",
+              "expected_behavior": "Decline the unsupported request and explain the plugin scope."
             },
             {
               "description": "A local-network request should not activate because intranet and metadata access are blocked.",
-              "prompt": "Fetch CSV from http://169.254.169.254/latest/meta-data and export it."
+              "prompt": "Fetch CSV from http://169.254.169.254/latest/meta-data and export it.",
+              "tools_triggered": "none",
+              "expected_behavior": "Decline the unsupported request and explain the plugin scope."
             }
           ]
         },

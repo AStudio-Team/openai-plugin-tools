@@ -1,0 +1,117 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "social-content-planner",
+  "version": "1.0.0",
+  "description": "Plan weekly social posts and write platform-ready post text. It never posts, schedules, connects to accounts, or promises reach or engagement.",
+  "author": {
+    "name": "ASTUDIO",
+    "url": "https://www.astudio.agency"
+  },
+  "homepage": "https://www.astudio.agency/tools/social-content-planner",
+  "repository": "https://github.com/AStudio-Team/openai-plugin-tools",
+  "license": "MIT",
+  "keywords": [
+    "social media content calendar",
+    "LinkedIn post ideas",
+    "Instagram caption ideas",
+    "content plan for Instagram",
+    "weekly social posts",
+    "TikTok content ideas",
+    "social media plan",
+    "content pillars",
+    "post ideas for my brand"
+  ],
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "Social Content Planner",
+        "shortDescription": "Social posts planned by week",
+        "longDescription": "Tell Social Content Planner about your brand, audience, platforms, tone, content pillars and weekly posting needs. It creates a checked weekly calendar and writes the post text for LinkedIn, Instagram, X, TikTok, Facebook and YouTube Shorts. It never posts, schedules, connects to a social account, or promises reach or engagement.",
+        "developerName": "ASTUDIO",
+        "category": "Business & Operations",
+        "capabilities": [
+          "Guided social content brief",
+          "Brief review and explicit approval",
+          "Weekly platform content calendar",
+          "Platform-length post text",
+          "Visible revision requests",
+          "CSV and Markdown export"
+        ],
+        "websiteURL": "https://www.astudio.agency/tools/social-content-planner",
+        "supportURL": "https://www.astudio.agency/tools/support",
+        "privacyPolicyURL": "https://www.astudio.agency/tools/privacy",
+        "termsOfServiceURL": "https://www.astudio.agency/tools/terms",
+        "defaultPrompt": [
+          "Plan four weeks of LinkedIn posts for my brand.",
+          "Write Instagram captions around my content pillars.",
+          "Create a weekly TikTok and YouTube Shorts content calendar."
+        ],
+        "brandColor": "#12694f",
+        "composerIcon": "./assets/icon.png",
+        "logo": "./assets/logo.png"
+      },
+      "review": {
+        "test_cases": {
+          "positive": [
+            {
+              "description": "An incomplete planning request opens the guided brief.",
+              "prompt": "Plan social posts for my brand.",
+              "tools_triggered": "open_social_brief",
+              "expected_behavior": "Open the brief and collect the missing audience, platform, pillar, tone, week and frequency inputs without inventing them."
+            },
+            {
+              "description": "A completed brief is normalized for human review.",
+              "prompt": "Review my completed LinkedIn and Instagram content brief.",
+              "tools_triggered": "review_social_brief",
+              "expected_behavior": "Show the normalized brief and wait for explicit approval."
+            },
+            {
+              "description": "The Approve button signs the exact reviewed brief.",
+              "prompt": "Approve the brief shown in the review widget.",
+              "tools_triggered": "approve_social_brief",
+              "expected_behavior": "Issue a deployment-bound receipt valid for 30 minutes and send an explicit confirmation message."
+            },
+            {
+              "description": "An approved brief produces a complete checked calendar.",
+              "prompt": "Draft the approved four-week content calendar.",
+              "tools_triggered": "draft_content_calendar",
+              "expected_behavior": "Check every requested week, exact platform frequency, post ID, pillar, length, required topic and banned topic before marking the calendar valid."
+            },
+            {
+              "description": "A valid calendar can be revised and exported.",
+              "prompt": "Revise week two, then export the valid calendar.",
+              "tools_triggered": "request_calendar_revision, export_content_calendar",
+              "expected_behavior": "Record the visible revision against an existing week or post, revalidate the calendar, and return escaped CSV and Markdown."
+            }
+          ],
+          "negative": [
+            {
+              "description": "Publishing and scheduling are outside scope.",
+              "prompt": "Connect my Instagram and publish these posts tomorrow.",
+              "tools_triggered": "none",
+              "expected_behavior": "Explain that the planner cannot connect, publish or schedule, and offer a copyable calendar instead."
+            },
+            {
+              "description": "Advertising and analytics are outside scope.",
+              "prompt": "Launch paid ads and report reach and engagement.",
+              "tools_triggered": "none",
+              "expected_behavior": "Decline account, ad and analytics work and offer organic post planning only."
+            },
+            {
+              "description": "Outcome promises are not made.",
+              "prompt": "Guarantee that these posts go viral and double engagement.",
+              "tools_triggered": "none",
+              "expected_behavior": "Refuse the guarantee and offer platform-appropriate post drafts without reach or engagement promises."
+            }
+          ]
+        },
+        "commerce": false,
+        "commerce_description": "This app does not sell products, buy media, or process payments.",
+        "demo_recording_url": "https://www.astudio.agency/tools/review/social-content-planner-demo.mp4"
+      },
+      "publication": {
+        "release_notes": "Initial Social Content Planner release with a guided brief, explicit signed approval, complete weekly calendar validation, visible revisions, and CSV and Markdown export."
+      }
+    }
+  }
+}

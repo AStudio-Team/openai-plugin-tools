@@ -28,6 +28,7 @@ jobs:
             growth-marketing-planner/package-lock.json
             launch-plan-builder/package-lock.json
             landing-page-copy-check/package-lock.json
+            social-content-planner/package-lock.json
             ai-crawler-readiness-auditor/package-lock.json
             open-data-fetcher/package-lock.json
             editable-diagram-builder/package-lock.json
@@ -47,6 +48,7 @@ jobs:
           npm --prefix growth-marketing-planner ci --ignore-scripts
           npm --prefix launch-plan-builder ci --ignore-scripts
           npm --prefix landing-page-copy-check ci --ignore-scripts
+          npm --prefix social-content-planner ci --ignore-scripts
           npm --prefix ai-crawler-readiness-auditor ci --ignore-scripts
           npm --prefix open-data-fetcher ci --ignore-scripts
           npm --prefix editable-diagram-builder ci --ignore-scripts
@@ -83,6 +85,11 @@ jobs:
           npm audit --audit-level=high
       - name: Test Landing Page Copy Check MCP App
         working-directory: landing-page-copy-check
+        run: |
+          npm test
+          npm audit --audit-level=high
+      - name: Test Social Content Planner MCP App
+        working-directory: social-content-planner
         run: |
           npm test
           npm audit --audit-level=high
@@ -144,6 +151,7 @@ jobs:
           docker build -t openai-plugin-launch-plan:ci launch-plan-builder
           docker build -t openai-plugin-landing-copy:ci landing-page-copy-check
           docker build -t openai-plugin-schema-markup:ci schema-markup-generator
+          docker build -t openai-plugin-social-planner:ci social-content-planner
           docker build -t openai-plugin-crawler-auditor:ci ai-crawler-readiness-auditor
           docker build -t openai-plugin-data:ci open-data-fetcher
           docker build -t openai-plugin-diagram:ci editable-diagram-builder

@@ -91,15 +91,21 @@
           "negative": [
             {
               "description": "A request to find retailers should not trigger research because version 1 accepts only exact user-supplied product URLs.",
-              "prompt": "Search the web and find the cheapest retailer for this product."
+              "prompt": "Search the web and find the cheapest retailer for this product.",
+              "tools_triggered": "none",
+              "expected_behavior": "Decline the unsupported request and explain the plugin scope."
             },
             {
               "description": "A request to purchase or add to cart should be refused and should not trigger any transaction action.",
-              "prompt": "Buy candidate cand_01 for me and add it to the retailer cart."
+              "prompt": "Buy candidate cand_01 for me and add it to the retailer cart.",
+              "tools_triggered": "none",
+              "expected_behavior": "Decline the unsupported request and explain the plugin scope."
             },
             {
               "description": "A request containing card details, an address or retailer credentials should be rejected and should not trigger research.",
-              "prompt": "Use my card number, home address and retailer password to check out this product."
+              "prompt": "Use my card number, home address and retailer password to check out this product.",
+              "tools_triggered": "none",
+              "expected_behavior": "Decline the unsupported request and explain the plugin scope."
             }
           ]
         },
