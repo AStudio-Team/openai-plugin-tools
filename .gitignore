@@ -8,3 +8,7 @@ PROJECT.md
 PLAN.md
 reports/
 gcc-arabic-writer/evals/
+FACTS.md
+FACTS.md.bak
+.FACTS.lock
+CHANGES-BY-CLAUDE.md

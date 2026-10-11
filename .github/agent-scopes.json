@@ -8,7 +8,7 @@
     },
     "architecture": {
       "description": "Plans, project records and reports.",
-      "paths": ["PROJECT.md", "PLAN.md", "README.md", "LICENSE", "AGENTS.md", "reports/**", ".planning/**"]
+      "paths": ["PROJECT.md", "PLAN.md", "README.md", "LICENSE", "AGENTS.md", "docs/**", "reports/**", ".planning/**"]
     },
     "infrastructure": {
       "description": "Container, deployment and CI configuration.",

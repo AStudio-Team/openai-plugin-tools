@@ -1,6 +1,7 @@
 ---
 name: pdf-table-to-excel
 description: "Use when the user explicitly asks to convert or extract selectable tables from an attached PDF into an Excel XLSX workbook."
+version: 1.1.0
 ---
 
 # PDF Table to Excel
@@ -11,8 +12,9 @@ Use the `convert_pdf_tables_to_excel` tool when the user explicitly asks to conv
 
 1. Confirm that the user supplied or selected a PDF.
 2. Invoke the tool with that file.
-3. Return the workbook download link and state how many tables and pages were processed.
-4. Remind the user that the link expires after 15 minutes.
+3. Return the result preview and plain-text fallback with the filename, pages, table count, worksheets, sample rows and verified temporary download URL.
+4. Use the widget's host-mediated download when available. Otherwise provide the URL in chat.
+5. Remind the user that the link expires after 15 minutes and offer to rename, inspect a worksheet or convert another uploaded PDF. Do not present the preview as an editable spreadsheet.
 
 ## Limits
 

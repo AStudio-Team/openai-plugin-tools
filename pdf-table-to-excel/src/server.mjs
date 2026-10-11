@@ -10,13 +10,35 @@ import path from "node:path";
 import ipaddr from "ipaddr.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
+import { registerAppResource, registerAppTool, RESOURCE_MIME_TYPE } from "@modelcontextprotocol/ext-apps/server";
 import { z } from "zod";
+import { closedUiMeta, loadWidget } from "./widget-support.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const PUBLIC_DIR = path.join(ROOT, "public");
 const CONVERTER = path.join(ROOT, "src", "convert_pdf.py");
 const PORT = Number(process.env.PORT || 8788);
-const PUBLIC_BASE_URL = (process.env.PUBLIC_BASE_URL || `http://127.0.0.1:${PORT}`).replace(/\/$/, "");
+const EXPECTED_PUBLIC_ORIGIN = "https://www.astudio.agency";
+const EXPECTED_PUBLIC_PATH = "/openai-plugins/pdf-table-to-excel";
+
+export function validatePublicBaseUrl(value, production = process.env.NODE_ENV === "production") {
+  let parsed;
+  try {
+    parsed = new URL(value);
+  } catch {
+    throw new Error("PUBLIC_BASE_URL must be an absolute URL.");
+  }
+  if (parsed.username || parsed.password || parsed.search || parsed.hash) throw new Error("PUBLIC_BASE_URL must not contain credentials, a query or a fragment.");
+  const pathValue = parsed.pathname.replace(/\/$/, "") || "/";
+  if (production && (parsed.protocol !== "https:" || parsed.origin !== EXPECTED_PUBLIC_ORIGIN || pathValue !== EXPECTED_PUBLIC_PATH)) {
+    throw new Error(`Production PUBLIC_BASE_URL must be ${EXPECTED_PUBLIC_ORIGIN}${EXPECTED_PUBLIC_PATH}.`);
+  }
+  if (!production && !["http:", "https:"].includes(parsed.protocol)) throw new Error("PUBLIC_BASE_URL must use HTTP or HTTPS.");
+  parsed.pathname = pathValue;
+  return parsed.toString().replace(/\/$/, "");
+}
+
+const PUBLIC_BASE_URL = validatePublicBaseUrl(process.env.PUBLIC_BASE_URL || `http://127.0.0.1:${PORT}`);
 const MAX_PDF_BYTES = 20 * 1024 * 1024;
 const MAX_DOWNLOAD_BYTES = 20 * 1024 * 1024;
 const MAX_CONCURRENT = Number(process.env.MAX_CONCURRENT_CONVERSIONS || 2);
@@ -38,6 +60,8 @@ const rateCleanup = setInterval(() => {
 rateCleanup.unref();
 let storedBytes = 0;
 let activeConversions = 0;
+const RESULT_WIDGET_URI = "ui://pdf-table-to-excel/result-preview.html";
+const resultWidgetHtml = loadWidget("../widgets/result-preview.html");
 
 function logEvent(event, details = {}) {
   console.log(JSON.stringify({ timestamp: new Date().toISOString(), event, ...details }));
@@ -73,6 +97,7 @@ const outputSchema = {
     worksheet: z.string(),
     rows: z.number().int().positive(),
     columns: z.number().int().nonnegative(),
+    preview: z.array(z.array(z.union([z.string(), z.number(), z.boolean(), z.null()]))),
   })),
 };
 
@@ -221,20 +246,54 @@ export function storeDownload(buffer, filename) {
   storedBytes += buffer.length;
   pruneDownloads();
   if (!downloads.has(token)) throw new Error("Temporary download capacity is full. Try again shortly.");
-  return `${PUBLIC_BASE_URL}/downloads/${token}/${encodeURIComponent(filename)}`;
+  return validateFinalDownloadUrl(`${PUBLIC_BASE_URL}/downloads/${token}/${encodeURIComponent(filename)}`);
+}
+
+export function validateFinalDownloadUrl(value, production = process.env.NODE_ENV === "production") {
+  const parsed = new URL(value);
+  const base = new URL(PUBLIC_BASE_URL);
+  if (parsed.origin !== base.origin || !parsed.pathname.startsWith(`${base.pathname.replace(/\/$/, "")}/downloads/`)) {
+    throw new Error("Generated download URL is outside the configured public service origin.");
+  }
+  if (production && (parsed.protocol !== "https:" || parsed.origin !== EXPECTED_PUBLIC_ORIGIN)) {
+    throw new Error("Generated download URL must use the expected production HTTPS origin.");
+  }
+  return parsed.toString();
 }
 
 export function temporaryDownloadCount() {
   return downloads.size;
 }
 
+export function buildConversionToolResult(result, filename, downloadUrl) {
+  const verifiedDownloadUrl = validateFinalDownloadUrl(downloadUrl);
+  const structuredContent = {
+    filename,
+    pages: result.pages,
+    tables: result.tables,
+    download_url: verifiedDownloadUrl,
+    expires_in_seconds: Math.floor(DOWNLOAD_TTL_MS / 1000),
+    previews: result.previews.map(({ page, table, worksheet, rows, columns, preview }) => ({ page, table, worksheet, rows, columns, preview })),
+  };
+  const worksheetSummary = structuredContent.previews.map(preview => `${preview.worksheet} (page ${preview.page}, ${preview.rows} rows x ${preview.columns} columns)`).join("; ");
+  const sampleRows = structuredContent.previews.map(preview => {
+    const rows = (preview.preview || []).slice(0, 3).map(row => (row || []).slice(0, 6).map(value => String(value ?? "").replace(/\s+/gu, " ").slice(0, 80)).join(" | "));
+    return `${preview.worksheet}: ${rows.length ? rows.join(" / ") : "No sample rows"}`;
+  }).join("; ");
+  return {
+    content: [{ type: "text", text: `Converted ${result.tables} table${result.tables === 1 ? "" : "s"} from ${result.pages} page${result.pages === 1 ? "" : "s"} into ${filename}. Worksheets: ${worksheetSummary}. Sample rows (up to 3 rows and 6 columns per worksheet): ${sampleRows}. Download: ${verifiedDownloadUrl} The verified temporary link expires in 15 minutes. You can ask to rename the workbook, inspect a worksheet preview or convert another uploaded PDF.` }],
+    structuredContent,
+  };
+}
+
 export function createPluginServer() {
-  const server = new McpServer({ name: "pdf-table-to-excel", version: "1.0.0" });
-  server.registerTool(
+  const server = new McpServer({ name: "pdf-table-to-excel", version: "1.1.0" });
+  registerAppTool(
+    server,
     "convert_pdf_tables_to_excel",
     {
       title: "Convert PDF tables to Excel",
-      description: "Use this when the user asks to extract selectable tables from one PDF into an XLSX workbook. It handles invoices, reports, statements, schedules, rate cards, media plans, catalogues and price lists, including multiple detected tables. It does not perform OCR on scanned image-only PDFs. The generated download expires after 15 minutes.",
+      description: "Use this when the user asks to extract selectable tables from one uploaded PDF into an XLSX workbook. It handles invoices, reports, statements, schedules, rate cards, media plans, catalogues and price lists, including multiple detected tables. It returns a text fallback plus an interactive result preview with a host-mediated download when widgets are supported. It does not perform OCR on scanned image-only PDFs. The generated download expires after 15 minutes.",
       inputSchema: {
         file: openAiFileSchema.describe("The PDF selected or uploaded by the user."),
         output_filename: z.string().max(90).optional().describe("Optional output filename of up to 90 characters. The service removes unsafe characters and adds .xlsx."),
@@ -250,6 +309,7 @@ export function createPluginServer() {
         "openai/fileParams": ["file"],
         "openai/toolInvocation/invoking": "Converting PDF tables",
         "openai/toolInvocation/invoked": "Excel workbook ready",
+        ui: { resourceUri: RESULT_WIDGET_URI },
       },
     },
     async ({ file, output_filename }) => {
@@ -263,24 +323,19 @@ export function createPluginServer() {
         const filename = safeFilename(output_filename || file.file_name?.replace(/\.pdf$/i, "") || "converted-tables");
         const downloadUrl = storeDownload(workbook, filename);
         logEvent("conversion_completed", { duration_ms: Date.now() - startedAt, pages: result.pages, tables: result.tables, output_bytes: workbook.length });
-        const structuredContent = {
-          filename,
-          pages: result.pages,
-          tables: result.tables,
-          download_url: downloadUrl,
-          expires_in_seconds: Math.floor(DOWNLOAD_TTL_MS / 1000),
-          previews: result.previews.map(({ page, table, worksheet, rows, columns }) => ({ page, table, worksheet, rows, columns })),
-        };
-        return {
-          content: [{ type: "text", text: `Converted ${result.tables} table${result.tables === 1 ? "" : "s"} from ${result.pages} page${result.pages === 1 ? "" : "s"}. Download ${filename}: ${downloadUrl} The link expires in 15 minutes.` }],
-          structuredContent,
-        };
+        return buildConversionToolResult(result, filename, downloadUrl);
       } catch (error) {
         logEvent("conversion_rejected", { duration_ms: Date.now() - startedAt, category: errorCategory(error.message) });
         return { content: [{ type: "text", text: error.message }], isError: true };
       }
     }
   );
+  registerAppResource(server, "PDF Table to Excel result preview", RESULT_WIDGET_URI, {
+    description: "Read-only workbook and worksheet preview with host-mediated download and follow-up actions",
+    _meta: { ui: closedUiMeta },
+  }, async () => ({
+    contents: [{ uri: RESULT_WIDGET_URI, mimeType: RESOURCE_MIME_TYPE, text: resultWidgetHtml, _meta: { ui: closedUiMeta } }],
+  }));
   return server;
 }
 
@@ -325,7 +380,7 @@ export function createHttpServer() {
     if (!req.url || !hostAllowed(req)) return res.writeHead(421).end("Misdirected Request");
     const url = new URL(req.url, PUBLIC_BASE_URL);
     if (req.method === "GET" && ["/health", "/ready"].includes(url.pathname)) {
-      res.writeHead(200, { "content-type": "application/json", "cache-control": "no-store" }).end(JSON.stringify({ status: "ok", service: "pdf-table-to-excel", version: "1.0.0" }));
+      res.writeHead(200, { "content-type": "application/json", "cache-control": "no-store" }).end(JSON.stringify({ status: "ok", service: "pdf-table-to-excel", version: "1.1.0" }));
       return;
     }
     const staticRoutes = new Map([
@@ -410,5 +465,5 @@ export function createHttpServer() {
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const httpServer = createHttpServer();
-  httpServer.listen(PORT, "0.0.0.0", () => logEvent("service_started", { port: PORT, version: "1.0.0" }));
+  httpServer.listen(PORT, "0.0.0.0", () => logEvent("service_started", { port: PORT, version: "1.1.0" }));
 }
