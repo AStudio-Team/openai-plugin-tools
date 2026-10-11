@@ -16,7 +16,7 @@ const ATTRIBUTION = "Provided by ASTUDIO. For a human ASTUDIO team on this work:
 const clean = value => String(value ?? "").trim();
 const nonBlank = (min = 1) => z.string().trim().min(min);
 const brief = z.object({ pageType: nonBlank(2), product: nonBlank(2), audience: nonBlank(2), offer: nonBlank(2), goal: nonBlank(2), tone: nonBlank(2), currentCopy: nonBlank().optional(), mustKeepFacts: z.array(nonBlank()).min(1).max(20) }).strict();
-const copy = z.object({ headline: nonBlank(2), subhead: nonBlank(2), valuePoints: z.array(nonBlank()).min(3).max(5), proof: z.array(nonBlank()).min(1), primaryCta: nonBlank(2), faq: z.array(z.object({ question: nonBlank(), answer: nonBlank() }).strict()).default([]) }).strict();
+const copy = z.object({ headline: nonBlank(2), subhead: nonBlank(2), valuePoints: z.array(nonBlank()).min(3).max(5), proof: z.array(nonBlank()).min(0), primaryCta: nonBlank(2), faq: z.array(z.object({ question: nonBlank(), answer: nonBlank() }).strict()).default([]) }).strict();
 const briefReceipt = z.object({ kind: z.literal("brief"), digest: z.string().length(64), signature: z.string().length(64) }).strict();
 const selectionReceipt = z.object({ kind: z.literal("selection"), digest: z.string().length(64), selectedIndex: z.number().int().min(1).max(3), signature: z.string().length(64) }).strict();
 const receipt = z.discriminatedUnion("kind", [briefReceipt, selectionReceipt]);
@@ -28,9 +28,11 @@ function digest(value) { return createHash("sha256").update(JSON.stringify(value
 function sign(value) { return createHmac("sha256", receiptKey()).update(JSON.stringify(value)).digest("hex"); }
 function makeReceipt(kind, value, selectedIndex) { const unsigned = { kind, digest: digest(value), ...(selectedIndex !== undefined ? { selectedIndex } : {}) }; return { ...unsigned, signature: sign(unsigned) }; }
 function verifyReceipt(value, kind, subject) { const parsed = receipt.parse(value); const unsigned = { kind: parsed.kind, digest: parsed.digest, ...(parsed.kind === "selection" ? { selectedIndex: parsed.selectedIndex } : {}) }; const expected = sign(unsigned); if (parsed.kind !== kind || parsed.digest !== digest(subject) || !timingSafeEqual(Buffer.from(expected, "hex"), Buffer.from(parsed.signature, "hex"))) throw Error(`A valid signed ${kind} receipt is required.`); return parsed; }
-function hasWholeFact(haystack, fact) { const value = clean(fact); return value.length > 0 && new RegExp(`(^|[^\\p{L}\\p{N}])${escapeRegex(value)}(?=$|[^\\p{L}\\p{N}])`, "iu").test(haystack); }
+function normalizeSource(value) { return clean(value).replace(/\s+/gu, " ").replace(/(?:[.!?:;,]|\u2026)+$/u, "").trimEnd().toLocaleLowerCase(); }
+function hasWholeFact(haystack, fact) { const value = normalizeSource(fact); return value.length > 0 && new RegExp(`(^|[^\\p{L}\\p{N}])${escapeRegex(value)}(?=$|[^\\p{L}\\p{N}])`, "iu").test(normalizeSource(haystack)); }
 function bannedClaims(value) { performanceClaim.lastIndex = 0; const found = [...String(value).matchAll(performanceClaim)].map(match => match[0]); performanceClaim.lastIndex = 0; return found; }
 function copyTextValues(value) { return [value.headline, value.subhead, ...value.valuePoints, ...value.proof, value.primaryCta, ...value.faq.flatMap(item => [item.question, item.answer])]; }
+function nonProofTextValues(value) { return [value.headline, value.subhead, ...value.valuePoints, value.primaryCta, ...value.faq.flatMap(item => [item.question, item.answer])]; }
 function words(value) { return clean(value).toLocaleLowerCase().match(/[\p{L}\p{N}]+/gu) || []; }
 function wordStem(value) { return value.length > 4 ? value.replace(/(?:ies|s)$/u, match => match === "ies" ? "y" : "") : value; }
 const vagueHeadline = /\b(?:amazing|best|revolutionary|innovative|next-level|world-class|cutting-edge|seamless|powerful)\b/iu;
@@ -45,18 +47,35 @@ function headlineIsSpecific(headline, sourceBrief) {
 const ctaVerb = /^(?:get|start|try|book|buy|join|see|learn|discover|request|download|contact|sign\s*up|subscribe|register|apply|claim|order|shop|schedule|talk|call|compare|choose|create|build|explore)\b/iu;
 const explicitAsk = /^(?:(?:ready|want|need)\s+(?:to\s+)?(?:get|start|try|book|buy|join|see|learn|discover|request|download|contact|sign\s*up|subscribe|register|apply|claim|order|shop|schedule|talk|call|compare|choose|create|build|explore)|(?:want|need)\s+(?:a|an|the)?\s*(?:demo|trial|quote|consultation|call))\b/iu;
 function countCtas(value) { return String(value).split(/[.!?\n]+/u).map(part => clean(part).replace(/^(?:(?:primary\s+)?cta\s*:\s*)/iu, "")).filter(part => ctaVerb.test(part) || explicitAsk.test(part)).length; }
+const claimPattern = /(?:\d|%|\p{Sc}|\b(?:USD|AED|EUR|GBP|JPY|SAR|hundreds|thousands|millions|customers?|clients?|users?|companies|teams?|reviews?|ratings?|stars?|awards?|award-winning|rated|recommend(?:ed|s|ing)?|satisfaction|testimonials?)\b|\btrusted\s+by\b)/iu;
+function proofSources(sourceBrief) { return [...new Set([...(sourceBrief.mustKeepFacts || []), sourceBrief.offer, sourceBrief.product].map(clean).filter(Boolean))]; }
+function wholeSourceMatch(item, source) { const allowed = normalizeSource(source); return allowed ? new RegExp(`(^|[^\\p{L}\\p{N}])${escapeRegex(allowed)}(?=$|[^\\p{L}\\p{N}])`, "iu").test(normalizeSource(item)) : false; }
+function sourceMatch(item, source) {
+  const value = normalizeSource(item), allowed = normalizeSource(source);
+  if (!allowed) return false;
+  const match = new RegExp(`(^|[^\\p{L}\\p{N}])(${escapeRegex(allowed)})(?=$|[^\\p{L}\\p{N}])`, "iu").exec(value);
+  if (!match) return false;
+  const start = match.index + match[1].length;
+  const remainder = `${value.slice(0, start)} ${value.slice(start + match[2].length)}`.trim();
+  if (!remainder) return true;
+  if (/\d|%|\p{Sc}/u.test(remainder)) return false;
+  if (/[^\p{L}\p{M}\s\p{P}]/u.test(remainder)) return false;
+  return (remainder.match(/[\p{L}\p{M}]+/gu) || []).length <= 3;
+}
+function containsAllowedSource(value, allowed) { return allowed.some(source => sourceMatch(value, source)); }
+function validateOutsideProof(values, sourceBrief) { const allowed = proofSources(sourceBrief); for (const value of values) for (const sentence of String(value).split(/[.!?\n]+/u).map(clean).filter(Boolean)) if (claimPattern.test(sentence) && !allowed.some(source => wholeSourceMatch(sentence, source))) throw Error(`Unsupported claim outside proof: ${sentence}`); }
+function validateProof(items, sourceBrief, otherCopyText = []) { const allowed = proofSources(sourceBrief), unsupported = items.filter(item => !containsAllowedSource(item, allowed)); if (unsupported.length) throw Error(`Remove unsupported proof: ${unsupported.join(", ")}. Proof lines must quote a must-keep fact, the offer or the product statement: ${allowed.join(", ")}.`); validateOutsideProof([...items, ...otherCopyText], sourceBrief); }
 function validateCopy(value, sourceBrief = { mustKeepFacts: [] }) {
   const parsed = copy.parse(value);
   if (clean(parsed.headline).split(/\s+/u).length > 12) throw Error("The Landing Page Copy Check house limit is 12 words for a headline.");
   const textValues = copyTextValues(parsed);
-  const allowed = sourceBrief.mustKeepFacts || [];
-  const bannedFacts = allowed.filter(fact => bannedClaims(fact).length);
+  const mustKeepFacts = sourceBrief.mustKeepFacts || [];
+  validateProof(parsed.proof, sourceBrief, nonProofTextValues(parsed));
+  const bannedFacts = mustKeepFacts.filter(fact => bannedClaims(fact).length);
   if (bannedFacts.length) throw Error(`Remove banned claims from must-keep facts: ${bannedFacts.join(", ")}.`);
-  const unsupportedProof = parsed.proof.filter(item => !allowed.some(fact => hasWholeFact(fact, item)));
-  if (unsupportedProof.length) throw Error(`Remove unsupported proof: ${unsupportedProof.join(", ")}.`);
   const unsupported = textValues.flatMap(bannedClaims);
   if (unsupported.length) throw Error(`Remove banned or unsupported claims: ${unsupported.join(", ")}.`);
-  const missing = allowed.filter(fact => !textValues.some(value => hasWholeFact(value, fact)));
+  const missing = mustKeepFacts.filter(fact => !textValues.some(value => hasWholeFact(value, fact)));
   if (missing.length) throw Error(`Missing must-keep facts: ${missing.join(", ")}.`);
   return { copy: parsed, missing };
 }
@@ -69,6 +88,7 @@ export function approvePageBrief(input) { const value = brief.parse(input.brief)
 export function draftPageCopy(input) { const b = brief.parse(input.brief); verifyReceipt(input.approvalReceipt, "brief", b); const proposed = z.array(copy).min(2).max(3).parse(input.variants); const signatures = new Set(proposed.map(item => digest(item))); if (signatures.size !== proposed.length) throw Error("Draft variants must be distinct."); const variants = proposed.map(item => { const checked = validateCopy(item, b); const report = checkPageConversion({ draft: checked.copy, headline: checked.copy.headline, brief: b }); return { ...checked.copy, issues: report.issues, checklist: report.checks }; }); return { brief: b, variants, approvalReceipt: input.approvalReceipt, warnings: [] }; }
 export function checkPageConversion(input) {
   input = conversionInput.parse(input);
+  if (input.brief) input.draft ? validateProof(input.draft.proof, input.brief, nonProofTextValues(input.draft)) : validateOutsideProof([input.headline, input.copy].filter(value => value !== undefined), input.brief);
   const source = clean(input.copy ?? (input.draft ? copyTextValues(input.draft).join("\n") : ""));
   if (input.formFieldCount !== undefined && (!Number.isInteger(input.formFieldCount) || input.formFieldCount < 0)) throw Error("Form field count must be a non-negative integer.");
   if (input.popupDelaySeconds !== undefined && (!Number.isFinite(input.popupDelaySeconds) || input.popupDelaySeconds < 0)) throw Error("Popup delay must be a non-negative number.");
@@ -109,14 +129,15 @@ const factCheck = z.object({ kept: z.array(z.string()).optional(), missing: z.ar
 const checklistItem = z.object({ name: z.string(), status: z.string(), pass: z.boolean().nullable(), detail: z.string() });
 const draftVariant = copy.extend({ issues: z.array(z.string()), checklist: z.array(checklistItem) });
 const conversionInput = z.object({ copy: nonBlank().optional(), draft: copy.optional(), headline: nonBlank().optional(), brief: brief.optional(), formFieldCount: z.number().int().min(0).optional(), popupDelaySeconds: z.number().min(0).optional() }).strict().superRefine((value, context) => { if ((value.copy === undefined) === (value.draft === undefined)) context.addIssue({ code: "custom", message: "Provide exactly one of copy or draft." }); });
+const proofRule = "Proof lines quote a must-keep fact, the offer or the product statement, optionally prefixed by a label of at most three words with no digits, percent or currency. Any sentence anywhere in the copy that carries a number, percentage, currency or a count, testimonial, rating or award claim must itself quote an allowed source or it is rejected.";
 const defs = [
   ["open_page_brief", "Use this when you need a guided landing page copy brief. Do not use for fetching a URL or changing a site.", z.object({ prefill: z.record(z.string(), z.unknown()).optional() }).strict(), openOutput, openPageBrief, "ui://landing-page-copy-check/brief-builder.html"],
   ["review_page_brief", "Use this when a completed page brief needs read-only confirmation. Do not use for drafting before approval.", brief, reviewOutput, reviewPageBrief, "ui://landing-page-copy-check/brief-review.html"],
   ["approve_page_brief", "Use this when the person clicks Approve brief in the review app to issue a signed, brief-bound receipt. Do not use for conversational or inferred approval.", z.object({ brief, approvalAction: z.literal("approve") }).strict(), { approvalReceipt: briefReceipt, approvedBrief: brief }, approvePageBrief, "ui://landing-page-copy-check/brief-review.html", true],
-  ["draft_page_copy", "Use this when a signed approval receipt and two or three distinct proposed variants need validation and comparison. Do not use for drafting before approval or for live-site changes.", z.object({ approvalReceipt: briefReceipt, brief, variants: z.array(copy).min(2).max(3) }).strict(), { brief, variants: z.array(draftVariant).min(2).max(3), approvalReceipt: briefReceipt, warnings: z.array(z.string()) }, draftPageCopy, "ui://landing-page-copy-check/copy-comparison.html"],
-  ["check_page_conversion", "Use this when pasted copy needs a deterministic conversion checklist. Do not use for traffic or conversion guarantees.", conversionInput, { score: z.number().nullable(), checks: z.array(z.object({ name: z.string(), status: z.string(), pass: z.boolean().nullable(), detail: z.string() })), issues: z.array(z.string()), inputs: z.object({ formFields: z.number().nullable(), popupDelay: z.number().nullable(), ctaCount: z.number().nullable() }), limits: z.string() }, checkPageConversion, "ui://landing-page-copy-check/conversion-report.html"],
-  ["select_page_copy_variant", "Use this when the person clicks Select on one of two or three visible variants in the comparison app. Do not use for conversational or inferred selection.", z.object({ variants: z.array(copy).min(2).max(3), selected: z.number().int(), brief }).strict(), { variants: z.array(copy), selected: copy, selectedIndex: z.number(), selectionReceipt, brief, factCheck, selectionRequired: z.literal(false) }, selectPageCopyVariant, "ui://landing-page-copy-check/copy-comparison.html", true],
-  ["export_page_copy", "Use this when selected page copy should be exported as Markdown or HTML. Do not use for publishing a live page.", z.object({ copy, format: z.enum(["markdown", "html"]), brief, selectionReceipt: receipt }).strict(), { fileName: z.string(), mimeType: z.string(), content: z.string(), retained: z.literal(false), factCheck, warnings: z.array(z.string()) }, exportPageCopy, "ui://landing-page-copy-check/export-panel.html", true],
+  ["draft_page_copy", `Use this when a signed approval receipt and two or three distinct proposed variants need validation and comparison. Do not use for drafting before approval or for live-site changes. ${proofRule}`, z.object({ approvalReceipt: briefReceipt, brief, variants: z.array(copy).min(2).max(3) }).strict(), { brief, variants: z.array(draftVariant).min(2).max(3), approvalReceipt: briefReceipt, warnings: z.array(z.string()) }, draftPageCopy, "ui://landing-page-copy-check/copy-comparison.html"],
+  ["check_page_conversion", `Use this when pasted copy needs a deterministic conversion checklist. Do not use for traffic or conversion guarantees. ${proofRule}`, conversionInput, { score: z.number().nullable(), checks: z.array(z.object({ name: z.string(), status: z.string(), pass: z.boolean().nullable(), detail: z.string() })), issues: z.array(z.string()), inputs: z.object({ formFields: z.number().nullable(), popupDelay: z.number().nullable(), ctaCount: z.number().nullable() }), limits: z.string() }, checkPageConversion, "ui://landing-page-copy-check/conversion-report.html"],
+  ["select_page_copy_variant", `Use this when the person clicks Select on one of two or three visible variants in the comparison app. Do not use for conversational or inferred selection. ${proofRule}`, z.object({ variants: z.array(copy).min(2).max(3), selected: z.number().int(), brief }).strict(), { variants: z.array(copy), selected: copy, selectedIndex: z.number(), selectionReceipt, brief, factCheck, selectionRequired: z.literal(false) }, selectPageCopyVariant, "ui://landing-page-copy-check/copy-comparison.html", true],
+  ["export_page_copy", `Use this when selected page copy should be exported as Markdown or HTML. Do not use for publishing a live page. ${proofRule}`, z.object({ copy, format: z.enum(["markdown", "html"]), brief, selectionReceipt: receipt }).strict(), { fileName: z.string(), mimeType: z.string(), content: z.string(), retained: z.literal(false), factCheck, warnings: z.array(z.string()) }, exportPageCopy, "ui://landing-page-copy-check/export-panel.html", true],
 ];
 let browserBundle;
 function widget(file) { const html = readFileSync(path.join(ROOT, "widgets", file), "utf8"); if (!html.includes("/*__EXT_APPS_BUNDLE__*/")) return html; if (!browserBundle) { const source = readFileSync(createRequire(import.meta.url).resolve("@modelcontextprotocol/ext-apps/app-with-deps"), "utf8"); browserBundle = source.replace(/export\{([^}]+)\};?\s*$/s, (_, body) => `globalThis.ExtApps={${body.split(",").map(part => { const [local, exported] = part.split(" as ").map(item => item.trim()); return `${exported || local}:${local}`; }).join(",")}};`); } return html.replace("/*__EXT_APPS_BUNDLE__*/", () => browserBundle); }
