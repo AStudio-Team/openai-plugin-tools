@@ -29,7 +29,7 @@ function sign(value) { return createHmac("sha256", receiptKey()).update(JSON.str
 function makeReceipt(kind, value, selectedIndex) { const unsigned = { kind, digest: digest(value), ...(selectedIndex !== undefined ? { selectedIndex } : {}) }; return { ...unsigned, signature: sign(unsigned) }; }
 function verifyReceipt(value, kind, subject) { const parsed = receipt.parse(value); const unsigned = { kind: parsed.kind, digest: parsed.digest, ...(parsed.kind === "selection" ? { selectedIndex: parsed.selectedIndex } : {}) }; const expected = sign(unsigned); if (parsed.kind !== kind || parsed.digest !== digest(subject) || !timingSafeEqual(Buffer.from(expected, "hex"), Buffer.from(parsed.signature, "hex"))) throw Error(`A valid signed ${kind} receipt is required.`); return parsed; }
 function hasWholeFact(haystack, fact) { const value = clean(fact); return value.length > 0 && new RegExp(`(^|[^\\p{L}\\p{N}])${escapeRegex(value)}(?=$|[^\\p{L}\\p{N}])`, "iu").test(haystack); }
-function normalizeProof(value) { return clean(value).replace(/[.!?]$/u, "").trimEnd().toLocaleLowerCase("en-US"); }
+function normalizeProof(value) { return clean(value).replace(/(?:[.!?:;,]|\u2026)+$/u, "").trimEnd(); }
 function bannedClaims(value) { performanceClaim.lastIndex = 0; const found = [...String(value).matchAll(performanceClaim)].map(match => match[0]); performanceClaim.lastIndex = 0; return found; }
 function copyTextValues(value) { return [value.headline, value.subhead, ...value.valuePoints, ...value.proof, value.primaryCta, ...value.faq.flatMap(item => [item.question, item.answer])]; }
 function nonProofTextValues(value) { return [value.headline, value.subhead, ...value.valuePoints, value.primaryCta, ...value.faq.flatMap(item => [item.question, item.answer])]; }
@@ -47,9 +47,25 @@ function headlineIsSpecific(headline, sourceBrief) {
 const ctaVerb = /^(?:get|start|try|book|buy|join|see|learn|discover|request|download|contact|sign\s*up|subscribe|register|apply|claim|order|shop|schedule|talk|call|compare|choose|create|build|explore)\b/iu;
 const explicitAsk = /^(?:(?:ready|want|need)\s+(?:to\s+)?(?:get|start|try|book|buy|join|see|learn|discover|request|download|contact|sign\s*up|subscribe|register|apply|claim|order|shop|schedule|talk|call|compare|choose|create|build|explore)|(?:want|need)\s+(?:a|an|the)?\s*(?:demo|trial|quote|consultation|call))\b/iu;
 function countCtas(value) { return String(value).split(/[.!?\n]+/u).map(part => clean(part).replace(/^(?:(?:primary\s+)?cta\s*:\s*)/iu, "")).filter(part => ctaVerb.test(part) || explicitAsk.test(part)).length; }
-const proofLikeClaim = /(?:\b(?:trusted|used|chosen|recommended|rated)\s+by\b|\b\d+(?:\.\d+)?\s*%|\b\d+(?:\.\d+)?\s*(?:\/\s*5|stars?)\b|[★☆]|\btestimonial\b|\baward(?:ed|-winning)?\b|\bwinner\b)/iu;
+const proofClaimTerm = /(?:\bcustomers?\b|\bclients?\b|\bboutiques?\b|\busers?\b|\bcompanies\b|\bteams?\b|\breviews?\b|\bratings?\b|\bstars?\b|\bawards?\b|\btrusted\s+by\b|\bserving\b|\brated\b|\brecommend(?:ed|s|ing)?\b|\bsatisfaction\b|\btestimonials?\b)/iu;
+const claimNumber = /(?:\d|\p{Sc}|\b(?:USD|AED|EUR|GBP|JPY|SAR)\b|%)/iu;
 function proofSources(sourceBrief) { return [...new Set([...(sourceBrief.mustKeepFacts || []), sourceBrief.offer, sourceBrief.product].map(clean).filter(Boolean))]; }
-function validateProof(items, sourceBrief, otherCopyText = []) { const allowed = proofSources(sourceBrief), unsupported = items.filter(item => !allowed.some(fact => normalizeProof(item) === normalizeProof(fact))); if (unsupported.length) throw Error(`Remove unsupported proof: ${unsupported.join(", ")}. Proof lines must quote a must-keep fact, the offer or the product statement: ${allowed.join(", ")}.`); if (!items.length && otherCopyText.some(value => proofLikeClaim.test(value))) throw Error("Add an allowed proof source for proof-like claims, or remove those claims from the copy."); }
+function wholeSourceMatch(item, source) { const allowed = normalizeProof(source); return allowed ? new RegExp(`(^|[^\\p{L}\\p{N}])${escapeRegex(allowed)}(?=$|[^\\p{L}\\p{N}])`, "iu").test(normalizeProof(item)) : false; }
+function sourceMatch(item, source) {
+  const value = normalizeProof(item), allowed = normalizeProof(source);
+  if (!allowed) return false;
+  const match = new RegExp(`(^|[^\\p{L}\\p{N}])(${escapeRegex(allowed)})(?=$|[^\\p{L}\\p{N}])`, "iu").exec(value);
+  if (!match) return false;
+  const start = match.index + match[1].length;
+  const remainder = `${value.slice(0, start)} ${value.slice(start + match[2].length)}`.trim();
+  if (!remainder) return true;
+  if (/\d|%|\p{Sc}/u.test(remainder)) return false;
+  if (/[^\p{L}\p{M}\s\p{P}]/u.test(remainder)) return false;
+  return (remainder.match(/[\p{L}\p{M}]+/gu) || []).length <= 3;
+}
+function containsAllowedSource(value, allowed) { return allowed.some(source => sourceMatch(value, source)); }
+function validateOutsideProof(values, sourceBrief) { const allowed = proofSources(sourceBrief); const hit = values.find(value => claimNumber.test(value) && proofClaimTerm.test(value) && !allowed.some(source => wholeSourceMatch(value, source))); if (hit) throw Error(`Unsupported claim outside proof: ${hit}`); }
+function validateProof(items, sourceBrief, otherCopyText = []) { const allowed = proofSources(sourceBrief), unsupported = items.filter(item => !containsAllowedSource(item, allowed)); if (unsupported.length) throw Error(`Remove unsupported proof: ${unsupported.join(", ")}. Proof lines must quote a must-keep fact, the offer or the product statement: ${allowed.join(", ")}.`); validateOutsideProof(otherCopyText, sourceBrief); }
 function validateCopy(value, sourceBrief = { mustKeepFacts: [] }) {
   const parsed = copy.parse(value);
   if (clean(parsed.headline).split(/\s+/u).length > 12) throw Error("The Landing Page Copy Check house limit is 12 words for a headline.");
@@ -73,7 +89,7 @@ export function approvePageBrief(input) { const value = brief.parse(input.brief)
 export function draftPageCopy(input) { const b = brief.parse(input.brief); verifyReceipt(input.approvalReceipt, "brief", b); const proposed = z.array(copy).min(2).max(3).parse(input.variants); const signatures = new Set(proposed.map(item => digest(item))); if (signatures.size !== proposed.length) throw Error("Draft variants must be distinct."); const variants = proposed.map(item => { const checked = validateCopy(item, b); const report = checkPageConversion({ draft: checked.copy, headline: checked.copy.headline, brief: b }); return { ...checked.copy, issues: report.issues, checklist: report.checks }; }); return { brief: b, variants, approvalReceipt: input.approvalReceipt, warnings: [] }; }
 export function checkPageConversion(input) {
   input = conversionInput.parse(input);
-  if (input.draft && input.brief) validateProof(input.draft.proof, input.brief, nonProofTextValues(input.draft));
+  if (input.brief) input.draft ? validateProof(input.draft.proof, input.brief, nonProofTextValues(input.draft)) : validateOutsideProof([input.headline, input.copy].filter(value => value !== undefined), input.brief);
   const source = clean(input.copy ?? (input.draft ? copyTextValues(input.draft).join("\n") : ""));
   if (input.formFieldCount !== undefined && (!Number.isInteger(input.formFieldCount) || input.formFieldCount < 0)) throw Error("Form field count must be a non-negative integer.");
   if (input.popupDelaySeconds !== undefined && (!Number.isFinite(input.popupDelaySeconds) || input.popupDelaySeconds < 0)) throw Error("Popup delay must be a non-negative number.");
