@@ -1,6 +1,7 @@
 import subprocess
 import tempfile
 import unittest
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -9,6 +10,14 @@ BLOCK = ROOT / "deploy" / "tools.astudio.agency.caddy"
 
 
 class DeployConfigTests(unittest.TestCase):
+    def test_caddyfile_has_no_inline_blocks(self):
+        inline_blocks = [
+            line
+            for line in BLOCK.read_text().splitlines()
+            if re.match(r"^\s*\w+\s+\{.*\}\s*$", line)
+        ]
+        self.assertEqual(inline_blocks, [], "Caddy blocks must place braces on separate lines")
+
     def test_inserts_and_replaces_managed_block_inside_main_site(self):
         original = """{
     email test@example.com
