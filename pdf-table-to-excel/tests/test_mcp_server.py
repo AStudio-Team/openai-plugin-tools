@@ -62,7 +62,7 @@ class McpProtocolTests(unittest.TestCase):
         self.assertEqual(tool["name"], "convert_pdf_tables_to_excel")
         self.assertEqual(
             tool["description"],
-            "Use this when the user asks to extract selectable tables from one PDF into an XLSX workbook. It handles invoices, reports, statements, schedules, rate cards, media plans, catalogues and price lists, including multiple detected tables. It does not perform OCR on scanned image-only PDFs. The generated download expires after 15 minutes.",
+            "Use this when the user asks to extract selectable tables from one uploaded PDF into an XLSX workbook. It handles invoices, reports, statements, schedules, rate cards, media plans, catalogues and price lists, including multiple detected tables. It returns a text fallback plus an interactive result preview with a host-mediated download when widgets are supported. It does not perform OCR on scanned image-only PDFs. The generated download expires after 15 minutes.",
         )
         self.assertEqual(tool["annotations"], {
             "readOnlyHint": False,
@@ -78,6 +78,10 @@ class McpProtocolTests(unittest.TestCase):
         self.assertIn("file identifier", file_schema["properties"]["file_id"]["description"])
         self.assertIn("up to 90 characters", tool["inputSchema"]["properties"]["output_filename"]["description"])
         self.assertEqual(tool["_meta"]["openai/fileParams"], ["file"])
+        self.assertEqual(tool["_meta"]["ui"]["resourceUri"], "ui://pdf-table-to-excel/result-preview.html")
+        preview_schema = tool["outputSchema"]["properties"]["previews"]["items"]
+        self.assertIn("preview", preview_schema["properties"])
+        self.assertEqual(tool["outputSchema"]["additionalProperties"], False)
 
     def test_rejects_missing_jsonrpc(self):
         status, response = post({"id": 3, "method": "tools/list"})

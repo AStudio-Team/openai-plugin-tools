@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://www.astudio.agency/tools/ai-crawler-readiness-auditor/sitemap.xml

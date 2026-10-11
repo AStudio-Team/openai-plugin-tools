@@ -1,0 +1,11 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+const brief=readFileSync(new URL("../widgets/brief-editor.html",import.meta.url),"utf8"),preview=readFileSync(new URL("../widgets/diagram-preview.html",import.meta.url),"utf8"),both=brief+preview;
+test("widgets contain the official inline-bundle placeholder only",()=>{for(const html of [brief,preview]){assert.equal((html.match(/__EXT_APPS_BUNDLE__/g)||[]).length,1);assert.doesNotMatch(html,/<script[^>]+src=|https?:\/\//i)}});
+test("widgets use app APIs for server calls, visible messages, silent checkpoint context and download",()=>{assert.match(brief,/app\.callServerTool/);assert.match(brief,/app\.sendMessage/);assert.match(brief,/app\.updateModelContext/);assert.doesNotMatch(brief,/Use checkpoint token/);assert.match(preview,/app\.callServerTool/);assert.match(preview,/app\.sendMessage/);assert.match(preview,/app\.downloadFile/);assert.match(preview,/contents:\[\{type:"resource"/)});
+test("widgets support theme, safe areas, auto resize and reduced motion",()=>{assert.match(both,/safeAreaInsets/);assert.match(both,/applyHostStyleVariables/);assert.match(both,/autoResize:true/);assert.match(both,/prefers-reduced-motion/);assert.match(both,/env\(safe-area-inset/)});
+test("preview supports three layouts, zoom, drag, edits, undo, reset and fallback",()=>{for(const term of ["variant","zoomIn","pointerdown","set-label","set-edge-label","set-color-role","set-line-style","set-direction","Undo","Reset","text fallback"])assert.ok(preview.includes(term),term)});
+test("widget controls are accessible and mobile responsive",()=>{assert.match(both,/@media\(max-width:520px\)/);assert.match(both,/min-height:44px/);assert.match(both,/:focus-visible/);assert.match(preview,/aria-label="Diagram canvas/);assert.match(preview,/class="sr"/)});
+test("compatibility and no-upload disclosures are visible",()=>{assert.match(preview,/independent and is not endorsed/);assert.match(preview,/No external upload occurred/);assert.match(preview,/not retained/)});
+test("no host DOM or browser storage APIs are used",()=>{assert.doesNotMatch(both,/window\.(parent|top)|localStorage|sessionStorage|document\.cookie|fetch\(/)});

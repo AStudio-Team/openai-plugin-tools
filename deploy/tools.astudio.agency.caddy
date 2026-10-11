@@ -1,9 +1,9 @@
 # BEGIN OPENAI_PLUGIN_TOOLS
-    redir /tools /tools/ 308
-
     handle_path /tools/verified-buy-link* {
         reverse_proxy __VERIFIED_BUY_LINK_UPSTREAM__:8790
     }
+
+    redir /tools /tools/ 308
 
     handle_path /tools/* {
         reverse_proxy __PDF_PLUGIN_UPSTREAM__:8788
@@ -37,6 +37,90 @@
         reverse_proxy __ARABIC_PLUGIN_UPSTREAM__:8789
     }
 
+    handle /openai-plugins/ad-creative-lab/mcp {
+        request_body {
+            max_size 512KB
+        }
+        rewrite * /mcp
+        reverse_proxy __AD_CREATIVE_LAB_UPSTREAM__:8790 {
+            header_up X-Plugin-Client-IP {remote_host}
+        }
+    }
+
+    handle_path /openai-plugins/ad-creative-lab/* {
+        reverse_proxy __AD_CREATIVE_LAB_UPSTREAM__:8790
+    }
+
+    handle /.well-known/openai-apps-challenge {
+        reverse_proxy __PDF_PLUGIN_UPSTREAM__:8788
+    }
+    handle /openai-plugins/growth-marketing-planner/mcp {
+        request_body {
+            max_size 256KB
+        }
+        rewrite * /mcp
+        reverse_proxy __GROWTH_PLUGIN_UPSTREAM__:8790 {
+            header_up X-Plugin-Client-IP {remote_host}
+        }
+    }
+
+    handle_path /openai-plugins/growth-marketing-planner/* {
+        reverse_proxy __GROWTH_PLUGIN_UPSTREAM__:8790
+    }
+
+    handle /openai-plugins/ai-crawler-readiness-auditor/mcp {
+        request_body {
+            max_size 128KB
+        }
+        rewrite * /mcp
+        reverse_proxy __CRAWLER_PLUGIN_UPSTREAM__:8790 {
+            header_up X-Plugin-Client-IP {remote_host}
+        }
+    }
+
+    handle_path /openai-plugins/ai-crawler-readiness-auditor/* {
+        reverse_proxy __CRAWLER_PLUGIN_UPSTREAM__:8790
+    }
+
+    redir /tools/ai-crawler-readiness-auditor /tools/ai-crawler-readiness-auditor/ 308
+
+    handle_path /tools/ai-crawler-readiness-auditor/* {
+        reverse_proxy __CRAWLER_PLUGIN_UPSTREAM__:8790
+    }
+
+    handle_path /tools/open-data-fetcher* {
+        reverse_proxy __DATA_PLUGIN_UPSTREAM__:8791
+    }
+
+    handle /openai-plugins/open-data-fetcher/mcp {
+        request_body {
+            max_size 256KB
+        }
+        rewrite * /mcp
+        reverse_proxy __DATA_PLUGIN_UPSTREAM__:8791 {
+            header_up X-Plugin-Client-IP {remote_host}
+        }
+    }
+
+    handle_path /openai-plugins/open-data-fetcher/* {
+        reverse_proxy __DATA_PLUGIN_UPSTREAM__:8791
+    }
+
+    handle /openai-plugins/editable-diagram-builder/mcp {
+        request_body {
+            max_size 256KB
+        }
+        rewrite * /mcp
+        reverse_proxy __DIAGRAM_PLUGIN_UPSTREAM__:8790 {
+            header_up X-Plugin-Client-IP {remote_host}
+        }
+    }
+
+    handle_path /openai-plugins/editable-diagram-builder/* {
+        reverse_proxy __DIAGRAM_PLUGIN_UPSTREAM__:8790
+    }
+
+
     handle /openai-plugins/verified-buy-link/mcp {
         request_body {
             max_size 256KB
@@ -51,7 +135,4 @@
         reverse_proxy __VERIFIED_BUY_LINK_UPSTREAM__:8790
     }
 
-    handle /.well-known/openai-apps-challenge {
-        reverse_proxy __PDF_PLUGIN_UPSTREAM__:8788
-    }
 # END OPENAI_PLUGIN_TOOLS

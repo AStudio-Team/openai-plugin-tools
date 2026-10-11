@@ -1,0 +1,11 @@
+{
+  "product": "Editable Diagram Builder",
+  "version": "1.0.0",
+  "flow": ["guided-intake", "explicit-checkpoint", "deterministic-preview", "bounded-revision", "native-download"],
+  "positive_cases": ["architecture", "flowchart", "sequence", "concept-map", "visual-revision-download"],
+  "negative_cases": ["general-illustration", "automatic-upload", "unsafe-oversized-scene"],
+  "additional_cases": ["incomplete", "existing-context", "brief-edit", "intake-cancellation", "preview-cancellation", "expired-checkpoint", "changed-brief", "scope-change", "minor-revision", "protected-terms", "widget-fallback-equivalence", "boundary-limits"],
+  "determinism_runs": 100,
+  "network_behavior": "No external upload, share link, analytics or application fetch.",
+  "host_review_status": "Real ChatGPT host exercise and review recording remain publication gates."
+}
