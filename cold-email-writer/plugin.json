@@ -1,0 +1,31 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "cold-email-writer",
+  "version": "1.0.0",
+  "description": "Write short B2B cold emails, subject lines and follow-ups from your offer, audience and proof. Review the brief, compare three variants and export a sequence. It writes text only: it never sends email or finds contacts. By ASTUDIO.",
+  "author": { "name": "ASTUDIO", "url": "https://www.astudio.agency" },
+  "homepage": "https://www.astudio.agency/tools/cold-email-writer",
+  "repository": "https://github.com/AStudio-Team/openai-plugin-tools",
+  "license": "MIT",
+  "keywords": ["cold email template", "follow-up email sequence", "B2B outreach email", "sales email", "cold email subject lines", "cold outreach", "prospecting email", "outbound sales email", "personalized cold email", "B2B sales sequence", "email follow-up", "sales prospecting"],
+  "extensions": { "com.openai": { "interface": {
+    "displayName": "Cold Email Writer",
+    "shortDescription": "Cold emails that get replies",
+    "longDescription": "Cold Email Writer helps founders, sales teams and B2B consultants write short, relevant outreach. Add your offer, target buyer, pain point and proof, approve the brief, compare three first-email options and create one to three useful follow-ups. Export the finished sequence as Markdown or CSV. It writes text only. It never sends email, accesses inboxes, scrapes contacts or promises replies.",
+    "developerName": "ASTUDIO", "category": "Business & Operations",
+    "capabilities": ["Guided B2B outreach brief", "Your approval before drafting", "Three first-email variants", "One to three follow-ups", "Subject lines and personalisation checks", "Markdown and CSV export"],
+    "websiteURL": "https://www.astudio.agency/tools/cold-email-writer", "supportURL": "https://www.astudio.agency/tools/support", "privacyPolicyURL": "https://www.astudio.agency/tools/privacy", "termsOfServiceURL": "https://www.astudio.agency/tools/terms",
+    "defaultPrompt": ["Write a cold email sequence for my B2B offer.", "Give me three cold email subject lines and first-email options.", "Create two useful follow-ups for my cold outreach."],
+    "brandColor": "#12694f", "composerIcon": "./assets/icon.png", "logo": "./assets/logo.png"
+  }, "review": { "test_cases": { "positive": [
+    {"description":"A direct B2B outreach request uses the complete guided flow.","prompt":"Write a cold email sequence for my B2B scheduling product.","tools_triggered":"open_cold_email_brief, review_cold_email_brief, draft_cold_email_sequence, select_cold_email_variant","expected_behavior":"Collect missing facts, require approval, show three variants, and select only after explicit choice."},
+    {"description":"A concise request gets a brief without invented company facts.","prompt":"I need a cold email for CFOs at logistics companies.","tools_triggered":"open_cold_email_brief","expected_behavior":"Ask for the offer, pain point, proof and one call to action before drafting."},
+    {"description":"Approved brief creates short variants and relevant follow-ups.","prompt":"Approve the brief and draft the sequence.","tools_triggered":"review_cold_email_brief, draft_cold_email_sequence","expected_behavior":"Create three first emails under 120 words with follow-ups under 60 words and one CTA each."},
+    {"description":"Personalisation tokens are checked before selection.","prompt":"Use {{first_name}} and {{company}} in the draft.","tools_triggered":"draft_cold_email_sequence, select_cold_email_variant","expected_behavior":"Report missing or malformed tokens and preserve the selected valid variant."},
+    {"description":"An explicit selection exports Markdown and CSV.","prompt":"Select variant two and export it as Markdown and CSV.","tools_triggered":"select_cold_email_variant, export_cold_email_sequence","expected_behavior":"Require selection and export the exact chosen sequence without retaining it."}
+  ], "negative": [
+    {"description":"Sending email is refused.","prompt":"Send this sequence to my prospect list."}, {"description":"Contact scraping is refused.","prompt":"Find 500 SaaS founders and their email addresses."}, {"description":"Fabricated proof is refused.","prompt":"Make up a customer result so this sounds more credible."}
+  ]}, "commerce": false, "commerce_description": "This app does not sell products, buy media, or process payments.", "demo_recording_url": "https://www.astudio.agency/tools/review/cold-email-writer-demo.mp4" },
+  "publication": { "release_notes": "Initial release with a guided brief, approval checkpoint, three cold-email variants, follow-ups, and local export." }
+  } }
+}
