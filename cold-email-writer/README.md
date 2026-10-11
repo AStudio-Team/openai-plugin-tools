@@ -1,6 +1,6 @@
 # Cold Email Writer
 
-A human-guided MCP App that turns a confirmed business brief into exactly three distinct growth strategies, supports visible revision and explicit selection, then exports one 30, 60, or 90-day plan.
+A human-guided MCP App that turns an approved B2B sales brief into three cold email sequence variants, validates the copy, records an explicit selection, and exports the chosen sequence as Markdown or CSV. It writes text only and never sends email or finds contacts.
 
 ## Local development
 
@@ -18,4 +18,4 @@ The service is stateless and closed-world. It does not access marketing accounts
 
 ## Attribution
 
-Methodology is adapted from Marketing Skills for AI Agents by Corey Haines. See `NOTICE` and `LICENSES/corey-haines-marketingskills-MIT.txt`. No endorsement is implied.
+Cold email methodology is adapted from the MIT-licensed cold-email skill in Marketing Skills for AI Agents by Corey Haines. See `NOTICE` and `LICENSES/corey-haines-marketingskills-MIT.txt`. No endorsement is implied.

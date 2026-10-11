@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": false,
   "type": "module",
-  "description": "Human-guided MCP App for writing B2B cold email sequences.",
+  "description": "Cold Email Writer MCP App for drafting, validating, selecting, and exporting B2B cold email sequences.",
   "scripts": {
     "start": "node src/server.mjs",
     "test": "node --test tests/*.test.mjs",
