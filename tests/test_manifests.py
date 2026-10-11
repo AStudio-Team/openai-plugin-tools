@@ -11,10 +11,11 @@ class ManifestAndPackageTests(unittest.TestCase):
         self.gcc = json.loads((ROOT / "gcc-arabic-writer" / "plugin.json").read_text())
         self.pdf = json.loads((ROOT / "pdf-table-to-excel" / "plugin.json").read_text())
         self.ad = json.loads((ROOT / "ad-creative-lab" / "plugin.json").read_text())
+        self.growth = json.loads((ROOT / "growth-marketing-planner" / "plugin.json").read_text())
 
     def test_astudio_is_publisher_for_both_products(self):
         self.assertEqual(self.gcc["name"], "astudio-gcc-arabic-writer")
-        for manifest in (self.gcc, self.pdf, self.ad):
+        for manifest in (self.gcc, self.pdf, self.ad, self.growth):
             self.assertEqual(manifest["author"]["name"], "ASTUDIO")
             self.assertEqual(manifest["extensions"]["com.openai"]["interface"]["developerName"], "ASTUDIO")
 
@@ -78,6 +79,23 @@ class ManifestAndPackageTests(unittest.TestCase):
             "https://www.astudio.agency/openai-plugins/gcc-arabic-writer/mcp",
         )
 
+    def test_growth_planner_review_flow_and_attribution_are_complete(self):
+        review = self.growth["extensions"]["com.openai"]["review"]
+        self.assertEqual(len(review["test_cases"]["positive"]), 5)
+        self.assertEqual(len(review["test_cases"]["negative"]), 3)
+        self.assertEqual(review["demo_recording_status"], "required-before-portal-submission")
+        text = json.dumps(self.growth, ensure_ascii=False).lower()
+        for phrase in ("exactly three", "mandatory human confirmation", "markdown and json export", "does not connect"):
+            self.assertIn(phrase, text)
+        notice = (ROOT / "growth-marketing-planner" / "NOTICE").read_text()
+        license_text = (ROOT / "growth-marketing-planner" / "LICENSES" / "corey-haines-marketingskills-MIT.txt").read_text()
+        self.assertIn("Corey Haines", notice)
+        self.assertIn("Copyright (c) 2025 Corey Haines", license_text)
+        self.assertIn("Permission is hereby granted", license_text)
+
+    def test_growth_mcp_public_prefix_is_exact(self):
+        mcp = json.loads((ROOT / "growth-marketing-planner" / "mcp.json").read_text())
+        self.assertEqual(mcp["mcpServers"]["growth-marketing-planner"]["url"], "https://www.astudio.agency/openai-plugins/growth-marketing-planner/mcp")
     def test_next_version_and_interaction_docs_are_consistent(self):
         for product in ("gcc-arabic-writer", "pdf-table-to-excel"):
             package = json.loads((ROOT / product / "package.json").read_text())
