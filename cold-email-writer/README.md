@@ -12,6 +12,8 @@ npm start
 
 The local server listens on port 8790 by default. Its MCP endpoint is `/mcp`, health endpoints are `/health` and `/ready`, and public product pages start at `/`.
 
+Production requires `APPROVAL_HMAC_KEY` to contain at least 32 characters. The deployment reads it from `/opt/openai-plugin-tools/openai.env`; the service refuses to start without it.
+
 ## Data boundary
 
 The service is stateless and closed-world. It does not access marketing accounts, make outbound network requests during tool execution, scrape, track, launch campaigns, or intentionally retain briefs and exports.

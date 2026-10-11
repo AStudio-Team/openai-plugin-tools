@@ -7,6 +7,7 @@ COPY widgets ./widgets
 COPY public ./public
 COPY NOTICE ./NOTICE
 COPY LICENSES ./LICENSES
+# Required at runtime: APPROVAL_HMAC_KEY with at least 32 characters.
 ENV NODE_ENV=production PORT=8790 ALLOWED_HOSTS=www.astudio.agency,astudio.agency,127.0.0.1,localhost
 USER node
 EXPOSE 8790
