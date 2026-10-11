@@ -15,8 +15,8 @@ const PORT = Number(process.env.PORT || 8790);
 const ATTRIBUTION = "Provided by ASTUDIO. For a human ASTUDIO team on this work: https://www.astudio.agency/tools/landing-page-copy-check";
 const clean = value => String(value ?? "").trim();
 const nonBlank = (min = 1) => z.string().trim().min(min);
-const brief = z.object({ pageType: nonBlank(2), product: nonBlank(2), audience: nonBlank(2), offer: z.string().trim(), goal: nonBlank(2), tone: nonBlank(2), currentCopy: nonBlank().optional(), mustKeepFacts: z.array(nonBlank()).max(20) }).strict();
-const copy = z.object({ headline: nonBlank(2), subhead: nonBlank(2), valuePoints: z.array(nonBlank()).min(3).max(5), proof: z.array(nonBlank()), primaryCta: nonBlank(2), faq: z.array(z.object({ question: nonBlank(), answer: nonBlank() }).strict()).default([]) }).strict();
+const brief = z.object({ pageType: nonBlank(2), product: nonBlank(2), audience: nonBlank(2), offer: nonBlank(2), goal: nonBlank(2), tone: nonBlank(2), currentCopy: nonBlank().optional(), mustKeepFacts: z.array(nonBlank()).min(1).max(20) }).strict();
+const copy = z.object({ headline: nonBlank(2), subhead: nonBlank(2), valuePoints: z.array(nonBlank()).min(3).max(5), proof: z.array(nonBlank()).min(0), primaryCta: nonBlank(2), faq: z.array(z.object({ question: nonBlank(), answer: nonBlank() }).strict()).default([]) }).strict();
 const briefReceipt = z.object({ kind: z.literal("brief"), digest: z.string().length(64), signature: z.string().length(64) }).strict();
 const selectionReceipt = z.object({ kind: z.literal("selection"), digest: z.string().length(64), selectedIndex: z.number().int().min(1).max(3), signature: z.string().length(64) }).strict();
 const receipt = z.discriminatedUnion("kind", [briefReceipt, selectionReceipt]);
@@ -28,10 +28,11 @@ function digest(value) { return createHash("sha256").update(JSON.stringify(value
 function sign(value) { return createHmac("sha256", receiptKey()).update(JSON.stringify(value)).digest("hex"); }
 function makeReceipt(kind, value, selectedIndex) { const unsigned = { kind, digest: digest(value), ...(selectedIndex !== undefined ? { selectedIndex } : {}) }; return { ...unsigned, signature: sign(unsigned) }; }
 function verifyReceipt(value, kind, subject) { const parsed = receipt.parse(value); const unsigned = { kind: parsed.kind, digest: parsed.digest, ...(parsed.kind === "selection" ? { selectedIndex: parsed.selectedIndex } : {}) }; const expected = sign(unsigned); if (parsed.kind !== kind || parsed.digest !== digest(subject) || !timingSafeEqual(Buffer.from(expected, "hex"), Buffer.from(parsed.signature, "hex"))) throw Error(`A valid signed ${kind} receipt is required.`); return parsed; }
-function withoutTrailingPunctuation(value) { return clean(value).replace(/[\p{P}\p{S}]+$/gu, "").trimEnd(); }
-function hasWholeFact(haystack, fact) { const source = withoutTrailingPunctuation(haystack), value = withoutTrailingPunctuation(fact); return value.length > 0 && new RegExp(`(^|[^\\p{L}\\p{N}])${escapeRegex(value)}(?=$|[^\\p{L}\\p{N}])`, "iu").test(source); }
+function hasWholeFact(haystack, fact) { const value = clean(fact); return value.length > 0 && new RegExp(`(^|[^\\p{L}\\p{N}])${escapeRegex(value)}(?=$|[^\\p{L}\\p{N}])`, "iu").test(haystack); }
+function normalizeProof(value) { return clean(value).replace(/[.!?]$/u, "").trimEnd().toLocaleLowerCase("en-US"); }
 function bannedClaims(value) { performanceClaim.lastIndex = 0; const found = [...String(value).matchAll(performanceClaim)].map(match => match[0]); performanceClaim.lastIndex = 0; return found; }
 function copyTextValues(value) { return [value.headline, value.subhead, ...value.valuePoints, ...value.proof, value.primaryCta, ...value.faq.flatMap(item => [item.question, item.answer])]; }
+function nonProofTextValues(value) { return [value.headline, value.subhead, ...value.valuePoints, value.primaryCta, ...value.faq.flatMap(item => [item.question, item.answer])]; }
 function words(value) { return clean(value).toLocaleLowerCase().match(/[\p{L}\p{N}]+/gu) || []; }
 function wordStem(value) { return value.length > 4 ? value.replace(/(?:ies|s)$/u, match => match === "ies" ? "y" : "") : value; }
 const vagueHeadline = /\b(?:amazing|best|revolutionary|innovative|next-level|world-class|cutting-edge|seamless|powerful)\b/iu;
@@ -46,16 +47,17 @@ function headlineIsSpecific(headline, sourceBrief) {
 const ctaVerb = /^(?:get|start|try|book|buy|join|see|learn|discover|request|download|contact|sign\s*up|subscribe|register|apply|claim|order|shop|schedule|talk|call|compare|choose|create|build|explore)\b/iu;
 const explicitAsk = /^(?:(?:ready|want|need)\s+(?:to\s+)?(?:get|start|try|book|buy|join|see|learn|discover|request|download|contact|sign\s*up|subscribe|register|apply|claim|order|shop|schedule|talk|call|compare|choose|create|build|explore)|(?:want|need)\s+(?:a|an|the)?\s*(?:demo|trial|quote|consultation|call))\b/iu;
 function countCtas(value) { return String(value).split(/[.!?\n]+/u).map(part => clean(part).replace(/^(?:(?:primary\s+)?cta\s*:\s*)/iu, "")).filter(part => ctaVerb.test(part) || explicitAsk.test(part)).length; }
+const proofLikeClaim = /(?:\b(?:trusted|used|chosen|recommended|rated)\s+by\b|\b\d+(?:\.\d+)?\s*%|\b\d+(?:\.\d+)?\s*(?:\/\s*5|stars?)\b|[★☆]|\btestimonial\b|\baward(?:ed|-winning)?\b|\bwinner\b)/iu;
 function proofSources(sourceBrief) { return [...new Set([...(sourceBrief.mustKeepFacts || []), sourceBrief.offer, sourceBrief.product].map(clean).filter(Boolean))]; }
-function validateProof(items, sourceBrief) { const allowed = proofSources(sourceBrief), unsupported = items.filter(item => !allowed.some(fact => hasWholeFact(item, fact))); if (unsupported.length) throw Error(`Remove unsupported proof: ${unsupported.join(", ")}. Proof lines must quote a must-keep fact, the offer or the product statement: ${allowed.join(", ")}.`); }
+function validateProof(items, sourceBrief, otherCopyText = []) { const allowed = proofSources(sourceBrief), unsupported = items.filter(item => !allowed.some(fact => normalizeProof(item) === normalizeProof(fact))); if (unsupported.length) throw Error(`Remove unsupported proof: ${unsupported.join(", ")}. Proof lines must quote a must-keep fact, the offer or the product statement: ${allowed.join(", ")}.`); if (!items.length && otherCopyText.some(value => proofLikeClaim.test(value))) throw Error("Add an allowed proof source for proof-like claims, or remove those claims from the copy."); }
 function validateCopy(value, sourceBrief = { mustKeepFacts: [] }) {
   const parsed = copy.parse(value);
   if (clean(parsed.headline).split(/\s+/u).length > 12) throw Error("The Landing Page Copy Check house limit is 12 words for a headline.");
   const textValues = copyTextValues(parsed);
   const mustKeepFacts = sourceBrief.mustKeepFacts || [];
+  validateProof(parsed.proof, sourceBrief, nonProofTextValues(parsed));
   const bannedFacts = mustKeepFacts.filter(fact => bannedClaims(fact).length);
   if (bannedFacts.length) throw Error(`Remove banned claims from must-keep facts: ${bannedFacts.join(", ")}.`);
-  validateProof(parsed.proof, sourceBrief);
   const unsupported = textValues.flatMap(bannedClaims);
   if (unsupported.length) throw Error(`Remove banned or unsupported claims: ${unsupported.join(", ")}.`);
   const missing = mustKeepFacts.filter(fact => !textValues.some(value => hasWholeFact(value, fact)));
@@ -71,7 +73,7 @@ export function approvePageBrief(input) { const value = brief.parse(input.brief)
 export function draftPageCopy(input) { const b = brief.parse(input.brief); verifyReceipt(input.approvalReceipt, "brief", b); const proposed = z.array(copy).min(2).max(3).parse(input.variants); const signatures = new Set(proposed.map(item => digest(item))); if (signatures.size !== proposed.length) throw Error("Draft variants must be distinct."); const variants = proposed.map(item => { const checked = validateCopy(item, b); const report = checkPageConversion({ draft: checked.copy, headline: checked.copy.headline, brief: b }); return { ...checked.copy, issues: report.issues, checklist: report.checks }; }); return { brief: b, variants, approvalReceipt: input.approvalReceipt, warnings: [] }; }
 export function checkPageConversion(input) {
   input = conversionInput.parse(input);
-  if (input.draft && input.brief) validateProof(input.draft.proof, input.brief);
+  if (input.draft && input.brief) validateProof(input.draft.proof, input.brief, nonProofTextValues(input.draft));
   const source = clean(input.copy ?? (input.draft ? copyTextValues(input.draft).join("\n") : ""));
   if (input.formFieldCount !== undefined && (!Number.isInteger(input.formFieldCount) || input.formFieldCount < 0)) throw Error("Form field count must be a non-negative integer.");
   if (input.popupDelaySeconds !== undefined && (!Number.isFinite(input.popupDelaySeconds) || input.popupDelaySeconds < 0)) throw Error("Popup delay must be a non-negative number.");
