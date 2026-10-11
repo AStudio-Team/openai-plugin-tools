@@ -24,6 +24,12 @@ jobs:
           cache-dependency-path: |
             pdf-table-to-excel/package-lock.json
             gcc-arabic-writer/package-lock.json
+            ad-creative-lab/package-lock.json
+            growth-marketing-planner/package-lock.json
+            ai-crawler-readiness-auditor/package-lock.json
+            open-data-fetcher/package-lock.json
+            editable-diagram-builder/package-lock.json
+            verified-buy-link/package-lock.json
             grounded-citations/server/package-lock.json
       - name: Install Python dependencies
         working-directory: pdf-table-to-excel
@@ -34,6 +40,12 @@ jobs:
         run: |
           npm --prefix pdf-table-to-excel ci --ignore-scripts
           npm --prefix gcc-arabic-writer ci --ignore-scripts
+          npm --prefix ad-creative-lab ci --ignore-scripts
+          npm --prefix growth-marketing-planner ci --ignore-scripts
+          npm --prefix ai-crawler-readiness-auditor ci --ignore-scripts
+          npm --prefix open-data-fetcher ci --ignore-scripts
+          npm --prefix editable-diagram-builder ci --ignore-scripts
+          npm --prefix verified-buy-link ci --ignore-scripts
           npm --prefix grounded-citations/server ci --ignore-scripts
       - name: Test PDF MCP service
         working-directory: pdf-table-to-excel
@@ -42,6 +54,45 @@ jobs:
           npm audit --audit-level=high
       - name: Test GCC Arabic MCP service
         working-directory: gcc-arabic-writer
+        run: |
+          npm test
+          npm audit --audit-level=high
+      - name: Test Ad Creative Lab MCP App
+        working-directory: ad-creative-lab
+        run: |
+          npm test
+          npm audit --audit-level=high
+      - name: Test Growth Marketing Planner MCP App
+        working-directory: growth-marketing-planner
+        run: |
+          npm test
+        run: |
+          npm test
+          npm audit --audit-level=high
+      - name: Test Open Data MCP App
+        working-directory: open-data-fetcher
+        run: |
+          npm test
+          npm run check
+        run: |
+          npm test
+          npm audit --audit-level=high
+      - name: Test Editable Diagram MCP App
+        working-directory: editable-diagram-builder
+        env:
+          CHECKPOINT_SECRET: ci-checkpoint-secret-at-least-32-bytes
+        run: |
+          npm test
+          npm run audit:public
+          npm audit --audit-level=high
+        run: |
+          npm test
+          npm audit --audit-level=high
+      - name: Test Verified Buy Link MCP App
+        working-directory: verified-buy-link
+        run: |
+          npm test
+          npm audit --audit-level=high
         run: |
           npm test
           npm audit --audit-level=high
@@ -58,6 +109,14 @@ jobs:
           python tests/validate_packages.py
           python tests/audit_public_content.py
           python tests/build_archives.py
+      - name: Test AI crawler readiness MCP App
+        working-directory: ai-crawler-readiness-auditor
+        run: |
+          npm test
+          npm run check
+          npm audit --audit-level=high
+          npm run licenses
+          npm run sbom
       - name: Check forbidden punctuation
         run: |
           if git grep -n $'\u2014' -- '*.md' '*.json' '*.py' '*.mjs' '*.html' '*.css' '*.sh'; then
@@ -68,9 +127,15 @@ jobs:
         run: |
           docker build -t openai-plugin-pdf:ci pdf-table-to-excel
           docker build -t openai-plugin-arabic:ci gcc-arabic-writer
+          docker build -t openai-plugin-ad-creative-lab:ci ad-creative-lab
+          docker build -t openai-plugin-growth:ci growth-marketing-planner
+          docker build -t openai-plugin-crawler-auditor:ci ai-crawler-readiness-auditor
+          docker build -t openai-plugin-data:ci open-data-fetcher
+          docker build -t openai-plugin-diagram:ci editable-diagram-builder
+          docker build -t openai-plugin-verified-buy-link:ci verified-buy-link
           docker build -t openai-plugin-grounded:ci grounded-citations
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: openai-plugin-submission-zips
-          path: build/*-1.0.0-submission.zip
+          path: build/*-submission.zip
           if-no-files-found: error

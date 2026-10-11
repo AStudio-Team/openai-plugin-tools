@@ -4,15 +4,15 @@
   "scopes": {
     "application": {
       "description": "Plugin code, packages, public pages and tests.",
-      "paths": ["pdf-table-to-excel/**", "gcc-arabic-writer/**", "grounded-citations/**", "tests/**", "package*.json", ".planning/**"]
+      "paths": ["pdf-table-to-excel/**", "gcc-arabic-writer/**", "ad-creative-lab/**", "grounded-citations/**", "verified-buy-link/**", "editable-diagram-builder/**", "open-data-fetcher/**", "ai-crawler-readiness-auditor/**", "growth-marketing-planner/**", "tests/**", "package*.json", ".planning/**"]
     },
     "architecture": {
       "description": "Plans, project records and reports.",
-      "paths": ["PROJECT.md", "PLAN.md", "README.md", "LICENSE", "AGENTS.md", "reports/**", ".planning/**"]
+      "paths": ["PROJECT.md", "PLAN.md", "README.md", "LICENSE", "AGENTS.md", "docs/**", "reports/**", ".planning/**"]
     },
     "infrastructure": {
       "description": "Container, deployment and CI configuration.",
-      "paths": ["deploy/**", ".github/workflows/**", ".gitignore", ".gitattributes", "pdf-table-to-excel/Dockerfile", "pdf-table-to-excel/.dockerignore", "grounded-citations/Dockerfile", "grounded-citations/.dockerignore"]
+      "paths": ["deploy/**", ".github/workflows/**", ".gitignore", ".gitattributes", "pdf-table-to-excel/Dockerfile", "pdf-table-to-excel/.dockerignore", "growth-marketing-planner/Dockerfile", "growth-marketing-planner/.dockerignore"]
     },
     "repo-guardrails": {
       "description": "Repository collaboration controls.",

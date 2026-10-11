@@ -1,10 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import http from "node:http";
+import { readFileSync } from "node:fs";
 import { checkFidelity, consumeRateLimit, createHttpServer, lintCopy, prepareBrief } from "../src/server.mjs";
+import { loadWidget } from "../src/widget-support.mjs";
 
 const EXPECTED_DESCRIPTIONS = {
-  prepare_gcc_arabic_brief: "Use this when preparing Arabic copywriting, rewriting or GCC localization. It normalizes only the supplied brief, defaults to MSA, protects literals and returns a deterministic fingerprint. It does not generate copy or research facts.",
+  prepare_gcc_arabic_brief: "Use this when preparing Arabic copywriting, rewriting or GCC localization. It normalizes only the supplied brief, defaults to MSA, protects literals and opens a focused review form when widgets are supported. The user must explicitly send the reviewed brief before ChatGPT writes. It does not generate copy or research facts.",
   check_arabic_factual_fidelity: "Use this when checking whether rewritten or localized Arabic copy preserved source numbers, dates, percentages, currency or quantity literals, URLs and protected literals. It flags missing facts and extra numeric claims but does not verify truth.",
   lint_gcc_arabic_copy: "Use this when reviewing Arabic marketing or business copy for transparent style and safety rules. It checks punctuation, stock calques, unsupported superlatives, religious sales risk, dialect-marker heuristics, partial diacritics, length and Arabic-script ratio. It never certifies native, legal or cultural quality.",
 };
@@ -37,6 +39,27 @@ test("requires native review for dialect-sensitive briefs", () => {
   const brief = prepareBrief({ task: "localize", market: "saudi-arabia", register: "dialect-sensitive", dialect_requested: true });
   assert.equal(brief.native_review_required, true);
   assert.match(brief.language_policy, /dialect-sensitive/);
+});
+
+test("preserves the human-reviewed key message and explicit dialect choice", () => {
+  const brief = prepareBrief({ task: "caption", key_message: "  الحرفية أولاً  ", dialect_requested: false });
+  assert.equal(brief.key_message, "الحرفية أولاً");
+  assert.equal(brief.dialect_requested, false);
+});
+
+test("rewrite and localization calls preserve audience and source text end to end", async context => {
+  const server = createHttpServer();
+  const port = await listen(server);
+  context.after(() => new Promise(resolve => server.close(resolve)));
+  const source = "  Original line 1\r\nالسعر AED 250\nTrailing spaces  ";
+  for (const task of ["rewrite", "localize"]) {
+    const response = await post(port, { jsonrpc: "2.0", id: task, method: "tools/call", params: { name: "prepare_gcc_arabic_brief", arguments: { task, audience: "UAE design leaders", source_text: source } } });
+    const payload = await response.json();
+    assert.equal(payload.result.structuredContent.audience, "UAE design leaders");
+    assert.equal(payload.result.structuredContent.source_text, source);
+    assert.match(payload.result.content[0].text, /Audience: UAE design leaders/);
+    assert.ok(payload.result.content[0].text.includes(`Source text (immutable at approval): ${source}`));
+  }
 });
 
 test("fidelity handles Western and Arabic-Indic numeric equivalents", () => {
@@ -143,6 +166,68 @@ test("MCP lists strict tools with exact descriptions and read-only annotations",
     assert.deepEqual(tool.annotations, { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false });
     assert.equal(tool.inputSchema.additionalProperties, false);
     assert.equal(tool.outputSchema.additionalProperties, false);
+    assert.match(tool._meta.ui.resourceUri, /^ui:\/\//);
+  }
+  const briefTool = payload.result.tools.find(tool => tool.name === "prepare_gcc_arabic_brief");
+  assert.ok(briefTool.outputSchema.properties.key_message);
+  assert.ok(briefTool.outputSchema.properties.dialect_requested);
+});
+
+test("MCP lists and reads closed-CSP app resources with the official MIME type", async context => {
+  const server = createHttpServer();
+  const port = await listen(server);
+  context.after(() => new Promise(resolve => server.close(resolve)));
+  const listed = await (await post(port, { jsonrpc: "2.0", id: 21, method: "resources/list" })).json();
+  assert.equal(listed.result.resources.length, 2);
+  for (const resource of listed.result.resources) {
+    assert.equal(resource.mimeType, "text/html;profile=mcp-app");
+    assert.deepEqual(resource._meta.ui.csp, { connectDomains: [], resourceDomains: [], frameDomains: [], baseUriDomains: [] });
+    const read = await (await post(port, { jsonrpc: "2.0", id: 22, method: "resources/read", params: { uri: resource.uri } })).json();
+    const content = read.result.contents[0];
+    assert.equal(content.uri, resource.uri);
+    assert.equal(content.mimeType, "text/html;profile=mcp-app");
+    assert.ok(content.text.includes("globalThis.ExtApps="));
+    assert.equal(content.text.includes("/*__EXT_APPS_BUNDLE__*/"), false);
+    assert.equal(/<script[^>]+src=/iu.test(content.text), false);
+    assert.deepEqual(content._meta.ui.csp, resource._meta.ui.csp);
+  }
+});
+
+test("widgets provide explicit human send, revision, cancellation, mobile, theme and accessibility paths", () => {
+  const brief = readFileSync(new URL("../widgets/brief-builder.html", import.meta.url), "utf8");
+  const review = readFileSync(new URL("../widgets/copy-review.html", import.meta.url), "utf8");
+  for (const html of [brief, review]) {
+    assert.match(html, /app\.sendMessage/);
+    assert.match(html, /autoResize:\s*true/);
+    assert.match(html, /onhostcontextchanged/);
+    assert.match(html, /theme\s*===\s*"dark"/);
+    assert.match(html, /@media\(max-width:/);
+    assert.match(html, /aria-live="polite"/);
+    assert.match(html, /focus-visible/);
+    assert.equal(/<script[^>]+src=/iu.test(html), false);
+    assert.equal(/window\.open|target="_blank"/iu.test(html), false);
+  }
+  assert.match(brief, /form\.addEventListener\("submit"/);
+  assert.match(brief, /Send reviewed brief/);
+  assert.match(brief, /name="audience"/);
+  assert.match(brief, /name="source_text"[^>]*readonly/);
+  assert.match(brief, /immutableSourceText\s*=\s*String\(data\.source_text/);
+  assert.match(brief, /source_text:\s*immutableSourceText/);
+  assert.doesNotMatch(brief, /source_text:\s*String\(values\.get\("source_text"\)/);
+  assert.match(brief, /audience:\s*String\(values\.get\("audience"\)/);
+  assert.match(brief, /immutable at approval/);
+  assert.match(brief, /Cancel this GCC Arabic writing request/);
+  assert.match(brief, /native speaker from the selected market/);
+  assert.match(review, /Ask for a revision/);
+  assert.match(review, /Keep current option/);
+});
+
+test("inlined widget module scripts are syntactically valid", () => {
+  for (const file of ["../widgets/brief-builder.html", "../widgets/copy-review.html"]) {
+    const html = loadWidget(file);
+    const scripts = [...html.matchAll(/<script type="module">([\s\S]*?)<\/script>/gu)];
+    assert.equal(scripts.length, 1);
+    assert.doesNotThrow(() => new Function(`return (async()=>{${scripts[0][1]}\n})`));
   }
 });
 
@@ -169,6 +254,8 @@ test("MCP validates strict input and returns deterministic structured output", a
     const first = await (await post(port, call)).json();
     const second = await (await post(port, call)).json();
     assert.equal(first.result.structuredContent.fingerprint, second.result.structuredContent.fingerprint);
+    assert.match(first.result.content[0].text, /explicitly send the reviewed brief/i);
+    assert.equal(first.result.content[0].text.startsWith("{"), false);
     const invalid = await (await post(port, { ...call, id: 3, params: { ...call.params, arguments: { task: "tagline", unknown: true } } })).json();
     assert.equal(invalid.result.isError, true);
   } finally {
