@@ -3,6 +3,10 @@
         reverse_proxy __VERIFIED_BUY_LINK_UPSTREAM__:8790
     }
 
+    handle_path /tools/growth-marketing-planner* {
+        reverse_proxy __GROWTH_PLUGIN_UPSTREAM__:8790
+    }
+
     redir /tools /tools/ 308
 
     handle_path /tools/* {
