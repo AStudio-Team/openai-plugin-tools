@@ -12,6 +12,7 @@ class ManifestAndPackageTests(unittest.TestCase):
         self.pdf = json.loads((ROOT / "pdf-table-to-excel" / "plugin.json").read_text())
         self.ad = json.loads((ROOT / "ad-creative-lab" / "plugin.json").read_text())
         self.growth = json.loads((ROOT / "growth-marketing-planner" / "plugin.json").read_text())
+        self.landing_copy = json.loads((ROOT / "landing-page-copy-check" / "plugin.json").read_text())
         self.crawler = json.loads((ROOT / "ai-crawler-readiness-auditor" / "plugin.json").read_text())
         self.data = json.loads((ROOT / "open-data-fetcher" / "plugin.json").read_text())
         self.diagram = json.loads((ROOT / "editable-diagram-builder" / "plugin.json").read_text())
@@ -19,7 +20,7 @@ class ManifestAndPackageTests(unittest.TestCase):
 
     def test_astudio_is_publisher_for_all_products(self):
         self.assertEqual(self.gcc["name"], "astudio-gcc-arabic-writer")
-        for manifest in (self.gcc, self.pdf, self.ad, self.growth, self.crawler, self.data, self.diagram, self.grounded):
+        for manifest in (self.gcc, self.pdf, self.ad, self.growth, self.landing_copy, self.crawler, self.data, self.diagram, self.grounded):
             self.assertEqual(manifest["author"]["name"], "ASTUDIO")
             self.assertEqual(manifest["extensions"]["com.openai"]["interface"]["developerName"], "ASTUDIO")
 
@@ -137,6 +138,12 @@ class ManifestAndPackageTests(unittest.TestCase):
     def test_growth_mcp_public_prefix_is_exact(self):
         mcp = json.loads((ROOT / "growth-marketing-planner" / "mcp.json").read_text())
         self.assertEqual(mcp["mcpServers"]["growth-marketing-planner"]["url"], "https://www.astudio.agency/openai-plugins/growth-marketing-planner/mcp")
+    def test_landing_copy_mcp_public_prefix_is_exact(self):
+        review = self.landing_copy["extensions"]["com.openai"]["review"]
+        self.assertEqual(len(review["test_cases"]["positive"]), 5)
+        self.assertEqual(len(review["test_cases"]["negative"]), 3)
+        mcp = json.loads((ROOT / "landing-page-copy-check" / "mcp.json").read_text())
+        self.assertEqual(mcp["mcpServers"]["landing-page-copy-check"]["url"], "https://www.astudio.agency/openai-plugins/landing-page-copy-check/mcp")
     def test_next_version_and_interaction_docs_are_consistent(self):
         for product in ("gcc-arabic-writer", "pdf-table-to-excel"):
             package = json.loads((ROOT / product / "package.json").read_text())
