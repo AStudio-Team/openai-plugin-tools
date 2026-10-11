@@ -1,0 +1,22 @@
+{
+  "default_base": "origin/main",
+  "allowed_branch_prefixes": ["agent", "codex", "human"],
+  "scopes": {
+    "application": {
+      "description": "Plugin code, packages, public pages and tests.",
+      "paths": ["pdf-table-to-excel/**", "gcc-arabic-writer/**", "tests/**", "package*.json", ".planning/**"]
+    },
+    "architecture": {
+      "description": "Plans, project records and reports.",
+      "paths": ["PROJECT.md", "PLAN.md", "README.md", "LICENSE", "AGENTS.md", "reports/**", ".planning/**"]
+    },
+    "infrastructure": {
+      "description": "Container, deployment and CI configuration.",
+      "paths": ["deploy/**", ".github/workflows/**", ".gitignore", ".gitattributes", "pdf-table-to-excel/Dockerfile", "pdf-table-to-excel/.dockerignore"]
+    },
+    "repo-guardrails": {
+      "description": "Repository collaboration controls.",
+      "paths": [".github/**", ".githooks/**", "scripts/check-agent-scope.py", "scripts/install-git-guardrails.sh"]
+    }
+  }
+}

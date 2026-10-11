@@ -1,0 +1,22 @@
+{
+  "name": "pdf-table-to-excel",
+  "version": "1.0.0",
+  "private": false,
+  "type": "module",
+  "description": "Public MCP plugin that converts selectable PDF tables into Excel workbooks.",
+  "scripts": {
+    "start": "node src/server.mjs",
+    "test": "python3 -m unittest discover -s tests -v && node --test tests/*.test.mjs",
+    "check": "node --check src/server.mjs"
+  },
+  "engines": {
+    "node": ">=20",
+    "python": ">=3.10"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.32.1",
+    "ipaddr.js": "2.5.0",
+    "zod": "4.6.5"
+  },
+  "license": "MIT"
+}

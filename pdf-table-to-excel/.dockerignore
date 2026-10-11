@@ -1,0 +1,12 @@
+node_modules
+.venv
+__pycache__
+tests
+skills
+assets
+plugin.json
+mcp.json
+README.md
+requirements-dev*
+scripts
+.DS_Store

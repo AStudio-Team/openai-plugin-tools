@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+set -euo pipefail
+branch="$(git branch --show-current)"
+if [[ "$branch" == "main" || "$branch" == "master" ]]; then
+  echo "Commit blocked on protected branch: $branch" >&2
+  exit 1
+fi
+files="$(git diff --cached --name-only --diff-filter=ACMR)"
+if [[ -n "$files" ]]; then
+  python3 - "$files" <<'PY'
+import pathlib, sys
+bad=[]
+for name in sys.argv[1].splitlines():
+    p=pathlib.Path(name)
+    if p.is_file() and p.suffix.lower() in {'.md','.json','.py','.mjs','.html','.css','.sh','.yml','.yaml'}:
+        if chr(0x2014) in p.read_text(errors='ignore'):
+            bad.append(name)
+if bad:
+    print('Em dash found in staged files:', *bad, sep='\n', file=sys.stderr)
+    raise SystemExit(1)
+PY
+fi
