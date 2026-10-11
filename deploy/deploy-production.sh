@@ -53,7 +53,8 @@ rollback() {
   trap - EXIT INT TERM HUP
   local rollback_ok=1
   if [ "$CONFIG_MUTATED" -eq 1 ] && [ -f "$BACKUP" ]; then
-    if ! cp "$BACKUP" "${CADDYFILE}.rollback-${DEPLOY_ID}" || ! mv "${CADDYFILE}.rollback-${DEPLOY_ID}" "$CADDYFILE"; then
+    # Write into the existing file: the Caddy container bind-mounts this path and follows the inode, so a rename would leave it reading the old content.
+    if ! cp "$BACKUP" "$CADDYFILE"; then
       rollback_ok=0
     elif ! docker exec websites-caddy-1 caddy validate --config /etc/caddy/Caddyfile; then
       rollback_ok=0
@@ -196,7 +197,7 @@ import sys
 import urllib.request
 
 url, expected_csv = sys.argv[1:]
-headers = {"Content-Type": "application/json", "Accept": "application/json, text/event-stream"}
+headers = {"Content-Type": "application/json", "Accept": "application/json, text/event-stream", "User-Agent": "astudio-plugin-tools-deploy-check/1.0"}
 
 def post(payload):
     request = urllib.request.Request(url, data=json.dumps(payload).encode(), headers=headers, method="POST")
