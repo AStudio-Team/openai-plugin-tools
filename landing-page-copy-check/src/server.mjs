@@ -64,6 +64,7 @@ export function checkPageConversion(input) {
 }
 export function selectPageCopyVariant(input) { const variants = z.array(copy).min(2).max(3).parse(input.variants); const b = brief.parse(input.brief); const checked = variants.map(item => validateCopy(item, b)); const selected = z.number().int().min(1).max(variants.length).parse(input.selected); if (input.selectionApproved !== true) throw Error("Selection requires explicit approval."); const chosen = checked[selected - 1]; return { variants: checked.map(item => item.copy), selected: chosen.copy, selectedIndex: selected, selectionReceipt: makeReceipt("selection", chosen.copy, selected), factCheck: { missing: chosen.missing }, selectionRequired: false }; }
 export function exportPageCopy(input) {
+  if (!input.selectionReceipt) throw Error("A signed selection receipt is required for export.");
   const b = brief.parse(input.brief), checked = validateCopy(input.copy, b), c = checked.copy, format = z.enum(["markdown", "html"]).parse(input.format);
   verifyReceipt(input.selectionReceipt, "selection", c);
   const md = `# ${escapeMarkdown(c.headline)}\n\n${escapeMarkdown(c.subhead)}\n\n${c.valuePoints.map(item => `- ${escapeMarkdown(item)}`).join("\n")}\n\n## Proof\n\n${c.proof.length ? c.proof.map(item => `- ${escapeMarkdown(item)}`).join("\n") : "None supplied."}\n\n[${escapeMarkdown(c.primaryCta)}](#cta)\n\n## FAQ\n\n${c.faq.length ? c.faq.map(item => `### ${escapeMarkdown(item.question)}\n\n${escapeMarkdown(item.answer)}`).join("\n\n") : "None supplied."}\n`;
