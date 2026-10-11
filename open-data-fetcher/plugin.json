@@ -33,7 +33,7 @@
         "shortDescription": "Find official open datasets",
         "longDescription": "Open Data Fetcher is a productivity tool for finding official public datasets on US Data.gov, UK Data.gov.uk and World Bank Open Data. Search, choose the dataset yourself, review its publisher, licence and size, preview up to 200 rows, pick columns and filters, and export a temporary CSV, JSON Lines or Parquet file. It is for analysts, researchers, journalists and students. Limits: only those three official catalogs; no arbitrary URLs, credentials, private data or browser automation; red-rights datasets are not exported.",
         "developerName": "ASTUDIO",
-        "category": "Productivity",
+        "category": "Data & Analytics",
         "capabilities": [
           "Search US Data.gov, UK Data.gov.uk and World Bank Open Data",
           "You choose the dataset",
