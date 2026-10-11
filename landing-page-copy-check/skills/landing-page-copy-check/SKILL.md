@@ -1,0 +1,17 @@
+---
+name: landing-page-copy-check
+description: "Use when the user asks for landing page, homepage, pricing page, CTA, form, or popup copy review and conversion checks. Do not use for fetching URLs, editing a live site, traffic analysis, or conversion guarantees."
+version: 1.0.0
+author: ASTUDIO
+license: MIT
+---
+
+# Landing Page Copy Check
+
+Work only with copy the user supplies. Collect page type, product, audience, offer, goal, tone, current copy, and must-keep facts. Show the normalized brief and wait for explicit approval before drafting.
+
+Draft a headline of no more than 12 words, a subhead, three to five value points, proof based only on supplied facts, one primary CTA, and optional FAQ. Do not invent prices, proof, testimonials, features, urgency, results, or claims. Flag banned or unsupported claims.
+
+Check pasted copy deterministically: clear audience and outcome, CTA presence and count, headline length and clarity, form field count and friction, and popup timing. Report a score with specific fixes. Compare two or three variants only after the user sees them, then export selected copy as Markdown or HTML.
+
+Never fetch a URL, change a live site, access analytics, use dark patterns, fabricate proof, make guaranteed outcomes, or claim conversion results. Methodology is adapted from Marketing Skills for AI Agents by Corey Haines under the MIT License. No endorsement is implied.
