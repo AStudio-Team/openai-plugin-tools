@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "pdf-table-to-excel",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Extract selectable tables from PDFs into downloadable XLSX workbooks with one worksheet per detected table.",
   "author": {
     "name": "ASTUDIO",
@@ -16,7 +16,7 @@
       "interface": {
         "displayName": "PDF Table to Excel",
         "shortDescription": "Extract PDF tables to Excel",
-        "longDescription": "Extract selectable tables from a PDF into a downloadable Excel XLSX workbook. Use it for invoices, financial or business statements, reports, schedules, rate cards, media plans, catalogues, price lists and multi-page documents. Each detected table gets its own worksheet plus a summary sheet. It supports text-based PDFs up to 20 MB and does not perform OCR on scanned image-only files.",
+        "longDescription": "Extract selectable tables from an uploaded PDF into a downloadable Excel XLSX workbook. A read-only result preview shows the filename, pages, table count, worksheet names, sample rows and expiry, with a host-mediated download and visible follow-up actions. Complete text fallbacks remain available. It supports text-based PDFs up to 20 MB and does not perform OCR on scanned image-only files.",
         "developerName": "ASTUDIO",
         "category": "Productivity",
         "capabilities": ["Extract selectable PDF tables", "Create XLSX workbooks", "Convert invoices and statements", "Convert reports and schedules", "Convert catalogues and price lists", "Split multiple tables into worksheets"],
@@ -97,7 +97,7 @@
         "commerce_description": "This plugin does not sell products or process payments."
       },
       "publication": {
-        "release_notes": "Initial public release with safe PDF table extraction, separate worksheets, temporary downloads and clear limits."
+        "release_notes": "Adds an interactive read-only workbook result preview, host-mediated download and visible rename, inspect and convert-another follow-up paths while preserving text fallback."
       }
     }
   }
