@@ -27,15 +27,16 @@ class ManifestAndPackageTests(unittest.TestCase):
         self.assertLessEqual(len(self.gcc["keywords"]), 15)
         self.assertLessEqual(len(self.pdf["keywords"]), 15)
 
-    def test_review_selection_cases_and_honest_demo_gate(self):
+    def test_review_selection_cases_and_public_demo(self):
         gcc_review = self.gcc["extensions"]["com.openai"]["review"]
         self.assertEqual(len(gcc_review["test_cases"]["positive"]), 5)
         self.assertEqual(len(gcc_review["test_cases"]["negative"]), 3)
-        self.assertNotIn("demo_recording_url", gcc_review)
-        self.assertEqual(gcc_review["demo_recording_status"], "required-before-portal-submission")
-        self.assertEqual(gcc_review["local_demo_artifact"], "./review/deterministic-demo.json")
+        self.assertEqual(gcc_review["demo_recording_url"], "https://www.astudio.agency/tools/review/gcc-arabic-writer-demo.mp4")
+        demo_path = ROOT / "pdf-table-to-excel" / "public" / "review" / "gcc-arabic-writer-demo.mp4"
+        self.assertTrue(demo_path.is_file())
+        self.assertGreater(demo_path.stat().st_size, 100_000)
         demo = json.loads((ROOT / "gcc-arabic-writer" / "review" / "deterministic-demo.json").read_text())
-        self.assertIn("real public demo recording URL", demo["remaining_gate"])
+        self.assertEqual(demo["public_demo_url"], gcc_review["demo_recording_url"])
         pdf_negatives = " ".join(case["prompt"] for case in self.pdf["extensions"]["com.openai"]["review"]["test_cases"]["negative"])
         self.assertIn("scanned PDF", pdf_negatives)
         self.assertIn("JPG", pdf_negatives)
