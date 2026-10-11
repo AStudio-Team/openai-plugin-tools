@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: pdf-table-to-excel/package-lock.json
+      - name: Install Python dependencies
+        working-directory: pdf-table-to-excel
+        run: |
+          python -m venv .venv
+          .venv/bin/pip install --require-hashes -r requirements-dev.lock
+      - name: Install Node dependencies
+        working-directory: pdf-table-to-excel
+        run: npm ci --ignore-scripts
+      - name: Test PDF MCP service
+        working-directory: pdf-table-to-excel
+        run: |
+          PATH="$PWD/.venv/bin:$PATH" npm test
+          npm audit --audit-level=high
+      - name: Validate public packages
+        run: |
+          python -m unittest discover -s tests -v
+          python tests/validate_packages.py
+          python tests/audit_public_content.py
+          python tests/build_archives.py
+      - name: Check forbidden punctuation
+        run: |
+          if git grep -n $'\u2014' -- '*.md' '*.json' '*.py' '*.mjs' '*.html' '*.css' '*.sh'; then
+            echo 'Em dash found'
+            exit 1
+          fi
+      - name: Build production container
+        run: docker build -t openai-plugin-tools:ci pdf-table-to-excel
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: openai-plugin-submission-zips
+          path: build/*-1.0.0-submission.zip
+          if-no-files-found: error
