@@ -53,8 +53,8 @@ function safeName(value) {
 
 export function createPluginServer(options = {}) {
   const server = new McpServer({ name: "open-data-fetcher", version: "1.0.0" });
-  registerAppResource(server, "Open Data Search", SEARCH_URI, { _meta: { ui: { prefersBorder: true, domain: APP_ORIGIN, csp: { connectDomains: [], resourceDomains: [], baseUriDomains: [] } } } }, async () => ({ contents: [{ uri: SEARCH_URI, mimeType: RESOURCE_MIME_TYPE, text: SEARCH_HTML, _meta: { ui: { prefersBorder: true, domain: APP_ORIGIN, csp: { connectDomains: [], resourceDomains: [], baseUriDomains: [] } } } }] }));
-  registerAppResource(server, "Open Dataset Preview", PREVIEW_URI, { _meta: { ui: { prefersBorder: true, domain: APP_ORIGIN, csp: { connectDomains: [], resourceDomains: [], baseUriDomains: [] } } } }, async () => ({ contents: [{ uri: PREVIEW_URI, mimeType: RESOURCE_MIME_TYPE, text: PREVIEW_HTML, _meta: { ui: { prefersBorder: true, domain: APP_ORIGIN, csp: { connectDomains: [], resourceDomains: [], baseUriDomains: [] } } } }] }));
+  registerAppResource(server, "Open Data Search", SEARCH_URI, { _meta: { ui: { prefersBorder: true, csp: { connectDomains: [], resourceDomains: [], frameDomains: [], baseUriDomains: [] } } } }, async () => ({ contents: [{ uri: SEARCH_URI, mimeType: RESOURCE_MIME_TYPE, text: SEARCH_HTML, _meta: { ui: { prefersBorder: true, csp: { connectDomains: [], resourceDomains: [], frameDomains: [], baseUriDomains: [] } } } }] }));
+  registerAppResource(server, "Open Dataset Preview", PREVIEW_URI, { _meta: { ui: { prefersBorder: true, csp: { connectDomains: [], resourceDomains: [], frameDomains: [], baseUriDomains: [] } } } }, async () => ({ contents: [{ uri: PREVIEW_URI, mimeType: RESOURCE_MIME_TYPE, text: PREVIEW_HTML, _meta: { ui: { prefersBorder: true, csp: { connectDomains: [], resourceDomains: [], frameDomains: [], baseUriDomains: [] } } } }] }));
 
   registerAppTool(server, "search_open_data", {
     title: "Search official open-data catalogs",
