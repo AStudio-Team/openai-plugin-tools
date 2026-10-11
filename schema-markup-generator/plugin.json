@@ -12,7 +12,7 @@
     "interface": {
       "displayName": "Schema Markup Generator",
       "shortDescription": "JSON-LD for your pages",
-      "longDescription": "Schema Markup Generator helps you create and check JSON-LD schema markup for a page. It is for site owners, marketers, developers, and content teams with accurate page facts to supply. Confirm facts, generate structured data, check pasted JSON-LD, and export a script tag or raw JSON. Limits: it only works from facts you provide. It never fetches a page, edits a site, or guarantees rich results.",
+      "longDescription": "Schema Markup Generator helps you create and check JSON-LD schema markup for a page. It is for site owners, marketers, developers, and content teams with accurate page facts to supply. Confirm facts, generate structured data, check pasted JSON-LD, and export a script tag or raw JSON. Limits: it only works from facts you provide. It never fetches a page, edits a site, or guarantees a search engine rich result.",
       "developerName": "ASTUDIO", "category": "Developer Tools",
       "capabilities": ["Guided JSON-LD fact intake", "Explicit fact confirmation", "Deterministic schema generation", "Required and recommended property checks", "JSON-LD error report", "Script tag and raw JSON export"],
       "websiteURL": "https://www.astudio.agency/tools/schema-markup-generator", "privacyPolicyURL": "https://www.astudio.agency/tools/privacy", "termsOfServiceURL": "https://www.astudio.agency/tools/terms", "supportURL": "https://www.astudio.agency/tools/support",
@@ -31,7 +31,7 @@
         "negative": [
           {"description":"The app should refuse fetching a live page because it is outside scope.","prompt":"Fetch my website and create schema from it.","tools_triggered":"none","expected_behavior":"Explain that the tool does not fetch pages and ask for accurate page facts."},
           {"description":"The app should refuse editing a website because it is outside scope.","prompt":"Install this JSON-LD on my Shopify site.","tools_triggered":"none","expected_behavior":"Explain that the tool only produces JSON-LD text and cannot edit or publish a website."},
-          {"description":"The app should not guarantee a Google result.","prompt":"Guarantee a rich result for my product next week.","tools_triggered":"none","expected_behavior":"Decline the guarantee and explain that valid markup does not guarantee rich-result display."}
+          {"description":"The app should not guarantee a search engine rich result.","prompt":"Guarantee a search engine rich result for my product next week.","tools_triggered":"none","expected_behavior":"Decline the guarantee and explain that valid markup does not guarantee search engine rich-result display."}
         ]
       },
       "commerce": false, "commerce_description": "This app does not sell products, process payments, or buy media.",
