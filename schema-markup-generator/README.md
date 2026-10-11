@@ -1,6 +1,6 @@
 # Schema Markup Generator
 
-A human-guided MCP App for creating, reviewing, checking, and exporting schema.org JSON-LD from facts supplied by the user. It supports Organization, LocalBusiness, Product, Article, FAQPage, HowTo, Event, Service, Person, and BreadcrumbList markup.
+A human-guided MCP App for creating, reviewing, checking, and exporting schema.org JSON-LD from facts supplied by the user. It supports Organization, LocalBusiness, Product, Article, FAQPage, HowTo, Event, Service, WebSite, Person, and BreadcrumbList markup.
 
 ## Tools and flow
 
