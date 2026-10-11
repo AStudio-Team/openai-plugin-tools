@@ -1,0 +1,9 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
+  "mcpServers": {
+    "cold-email-writer": {
+      "type": "streamable-http",
+      "url": "https://www.astudio.agency/openai-plugins/cold-email-writer/mcp"
+    }
+  }
+}

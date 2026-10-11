@@ -51,6 +51,11 @@ PRODUCTS = {
         "root_files": {"plugin.json", "mcp.json", "NOTICE"},
         "directories": {"assets", "skills", "LICENSES"},
     },
+    "cold-email-writer": {
+        "archive": "cold-email-writer-1.0.0-submission.zip",
+        "root_files": {"plugin.json", "mcp.json", "NOTICE"},
+        "directories": {"assets", "skills", "LICENSES"},
+    },
     "launch-plan-builder": {
         "archive": "launch-plan-builder-1.0.0-submission.zip",
         "root_files": {"plugin.json", "mcp.json", "NOTICE"},
@@ -124,6 +129,11 @@ def main() -> int:
                 missing = required.difference(names)
                 if missing:
                     raise SystemExit(f"social planner archive missing required attribution or package files: {sorted(missing)}")
+            if product == "cold-email-writer":
+                required = {"NOTICE", "LICENSES/corey-haines-marketingskills-MIT.txt", "skills/cold-email-writer/SKILL.md", "assets/icon.png", "assets/logo.png"}
+                missing = required.difference(names)
+                if missing:
+                    raise SystemExit(f"cold email archive missing required attribution or package files: {sorted(missing)}")
             if product == "launch-plan-builder":
                 required = {"NOTICE", "LICENSES/corey-haines-marketingskills-MIT.txt", "skills/launch-plan-builder/SKILL.md", "assets/icon.png", "assets/logo.png"}
                 missing = required.difference(names)

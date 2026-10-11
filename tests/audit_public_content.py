@@ -7,7 +7,7 @@ import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-PACKAGE_ROOTS = [ROOT / "pdf-table-to-excel", ROOT / "gcc-arabic-writer", ROOT / "ad-creative-lab", ROOT / "growth-marketing-planner", ROOT / "launch-plan-builder", ROOT / "landing-page-copy-check", ROOT / "social-content-planner", ROOT / "ai-crawler-readiness-auditor", ROOT / "open-data-fetcher", ROOT / "editable-diagram-builder", ROOT / "verified-buy-link", ROOT / "grounded-citations", ROOT / "schema-markup-generator"]
+PACKAGE_ROOTS = [ROOT / "pdf-table-to-excel", ROOT / "gcc-arabic-writer", ROOT / "ad-creative-lab", ROOT / "growth-marketing-planner", ROOT / "launch-plan-builder", ROOT / "landing-page-copy-check", ROOT / "social-content-planner", ROOT / "cold-email-writer", ROOT / "ai-crawler-readiness-auditor", ROOT / "open-data-fetcher", ROOT / "editable-diagram-builder", ROOT / "verified-buy-link", ROOT / "grounded-citations", ROOT / "schema-markup-generator"]
 TEXT_SUFFIXES = {".md", ".json", ".py", ".mjs", ".html", ".css", ".sh", ".yml", ".yaml", ".txt", ".lock"}
 SKIP_PARTS = {"node_modules", ".venv", ".git", "__pycache__", "build"}
 FORBIDDEN = {
