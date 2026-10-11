@@ -1,7 +1,7 @@
 ---
 name: gcc-arabic-writer
 description: "Use when writing, rewriting or reviewing Arabic marketing, advertising, brand, luxury, social, tagline, caption, website, product, PR, video or business copy for GCC or pan-Arab audiences. Do not use for literal translation, tutoring, general research, full marketing strategy, legal advice or trademark clearance."
-version: 1.0.0
+version: 1.1.0
 author: ASTUDIO
 license: MIT
 metadata:
@@ -38,10 +38,10 @@ Do not activate for literal translation, Arabic tutoring, general research, full
 
 ChatGPT writes the copy. The MCP tools are deterministic checks and never generate prose, browse, call an LLM or certify a market.
 
-1. Before writing, call `prepare_gcc_arabic_brief` when market, register, mandatory facts, protected literals or source copy matter. Use its normalized brief and MSA fallback.
+1. Before writing, call `prepare_gcc_arabic_brief` when market, register, mandatory facts, protected literals or source copy matter. When the brief widget renders, wait for the user to review and explicitly send it back into chat. Without widgets, show the text summary and ask the user to approve or revise it in chat. Do not generate copy before this checkpoint.
 2. Write or rewrite inside ChatGPT using only user-provided facts or facts already verified from an appropriate source. Never ask the tool to invent or research claims.
 3. For any rewrite, localization or fact-bearing draft, call `check_arabic_factual_fidelity` with the authoritative source, candidate, mandatory facts and protected literals. Correct every missing caller-supplied literal or extra numeric claim before returning the copy. This deterministic check does not understand or verify every factual statement.
-4. Call `lint_gcc_arabic_copy` on final marketing, advertising, product, website, PR, video and business copy. Resolve errors and either resolve or disclose relevant warnings.
+4. Call `lint_gcc_arabic_copy` on final marketing, advertising, product, website, PR, video and business copy. Let the user choose a revision or keep an option through the review widget or the same plain-text choice. Resolve errors and either resolve or disclose relevant warnings.
 5. Require native-market review before publication whenever dialect, regional slang, sensitive cultural context or country-specific spoken rhythm is requested. Tool output does not replace that review.
 
 Do not send irrelevant conversation history. Keep inputs to the minimum text and facts needed for the check.
