@@ -47,7 +47,7 @@ function headlineIsSpecific(headline, sourceBrief) {
 const ctaVerb = /^(?:get|start|try|book|buy|join|see|learn|discover|request|download|contact|sign\s*up|subscribe|register|apply|claim|order|shop|schedule|talk|call|compare|choose|create|build|explore)\b/iu;
 const explicitAsk = /^(?:(?:ready|want|need)\s+(?:to\s+)?(?:get|start|try|book|buy|join|see|learn|discover|request|download|contact|sign\s*up|subscribe|register|apply|claim|order|shop|schedule|talk|call|compare|choose|create|build|explore)|(?:want|need)\s+(?:a|an|the)?\s*(?:demo|trial|quote|consultation|call))\b/iu;
 function countCtas(value) { return String(value).split(/[.!?\n]+/u).map(part => clean(part).replace(/^(?:(?:primary\s+)?cta\s*:\s*)/iu, "")).filter(part => ctaVerb.test(part) || explicitAsk.test(part)).length; }
-const claimPattern = /(?:\d|%|\p{Sc}|\b(?:USD|AED|EUR|GBP|JPY|SAR|hundreds|thousands|millions|customers?|clients?|users?|companies|teams?|reviews?|ratings?|stars?|awards?|award-winning|rated|recommend(?:ed|s|ing)?|satisfaction|testimonials?)\b|\btrusted\s+by\b)/iu;
+const claimPattern = /(?:\d|%|[$€£¥₹]|د\.إ|\b(?:AED|USD|EUR|GBP|SAR|JPY|CAD|AUD|CHF|QAR|KWD|BHD|OMR)\b|\b(?:trusted\s+by|testimonial|testimonials|award|award-winning|rated|five-star|five\s+star|star\s+rating|recommended\s+by|recommend\s+us|satisfaction\s+rate|case\s+study)\b)/iu;
 function proofSources(sourceBrief) { return [...new Set([...(sourceBrief.mustKeepFacts || []), sourceBrief.offer, sourceBrief.product].map(clean).filter(Boolean))]; }
 function wholeSourceMatch(item, source) { const allowed = normalizeSource(source); return allowed ? new RegExp(`(^|[^\\p{L}\\p{N}])${escapeRegex(allowed)}(?=$|[^\\p{L}\\p{N}])`, "iu").test(normalizeSource(item)) : false; }
 function sourceMatch(item, source) {
