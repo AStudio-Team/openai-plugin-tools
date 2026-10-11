@@ -16,6 +16,8 @@ Create and check schema.org JSON-LD from facts the user supplies. Do not infer f
 - Confirm facts before generation and retain approval provenance.
 - Validate JSON before export. Fully qualify URLs and use ISO 8601 dates where a date is supplied.
 - Explain that Google Rich Results Test, Schema.org Validator, and Search Console are useful follow-up checks, not guarantees.
+- Google retired HowTo rich results in 2023. HowTo markup can still describe visible content, but do not promise a Google HowTo rich result.
+- Google retired FAQ rich results in 2026. FAQPage markup can still describe visible content, but do not promise a Google FAQ rich result.
 
 ## Supported types
 
@@ -28,9 +30,9 @@ Create and check schema.org JSON-LD from facts the user supplies. Do not infer f
 | FAQPage | mainEntity question and answer pairs |
 | HowTo | name, step |
 | Event | name, startDate, location |
-| Service | name, provider |
 | Person | name |
 | BreadcrumbList | itemListElement with position, name, item |
+| WebSite | name, url |
 
 Recommended facts include logo, sameAs, and contactPoint for Organization; dateModified, publisher, and description for Article; SKU, brand, aggregateRating, and review for Product; and URLs for breadcrumb items. Missing facts are reported as not checked, never as passed.
 
