@@ -33,7 +33,7 @@ astudio.agency, www.astudio.agency {
             self.assertEqual(second.count("# BEGIN OPENAI_PLUGIN_TOOLS"), 1)
             self.assertEqual(first, second)
 
-    def test_deployment_is_transactional_for_both_services(self):
+    def test_deployment_is_transactional_for_all_services(self):
         script = (ROOT / "deploy" / "deploy-production.sh").read_text()
         self.assertIn("trap cleanup EXIT", script)
         self.assertIn("flock -n 9", script)
@@ -42,6 +42,7 @@ astudio.agency, www.astudio.agency {
         self.assertIn("COMMITTED=1", script)
         self.assertIn('docker build --pull -t "$PDF_IMAGE" pdf-table-to-excel', script)
         self.assertIn('docker build --pull -t "$ARABIC_IMAGE" gcc-arabic-writer', script)
+        self.assertIn('docker build --pull -t "$GROWTH_IMAGE" growth-marketing-planner', script)
         self.assertIn("--memory 512m", script)
         self.assertIn("--pids-limit 64", script)
         self.assertIn("--log-opt max-file=2", script)
@@ -49,8 +50,8 @@ astudio.agency, www.astudio.agency {
         self.assertIn('LEGACY_STATE_FILE="${STATE_DIR}/current-container"', script)
         self.assertIn('elif [ -s "$LEGACY_STATE_FILE" ]', script)
         self.assertIn('rm -f "$LEGACY_STATE_FILE"', script)
-        self.assertIn('docker rm -f "$PDF_CONTAINER" "$ARABIC_CONTAINER"', script)
-        last_external_check = script.index("check_mcp https://www.astudio.agency/openai-plugins/gcc-arabic-writer/mcp")
+        self.assertIn('docker rm -f "$PDF_CONTAINER" "$ARABIC_CONTAINER" "$GROWTH_CONTAINER"', script)
+        last_external_check = script.index("check_mcp https://www.astudio.agency/openai-plugins/growth-marketing-planner/mcp")
         self.assertLess(last_external_check, script.index('docker rm -f "$previous"'))
         self.assertLess(script.index("SWITCHED=1"), last_external_check)
         self.assertIn("tool.get('outputSchema')", script)
@@ -60,14 +61,17 @@ astudio.agency, www.astudio.agency {
         self.assertLess(committed, script.index('rm -f "$LEGACY_STATE_FILE"'))
         self.assertLess(committed, script.index('docker rm -f "$previous"'))
 
-    def test_caddy_routes_two_isolated_upstreams_and_public_checks(self):
+    def test_caddy_routes_three_isolated_upstreams_and_public_checks(self):
         block = BLOCK.read_text()
         self.assertIn("__PDF_PLUGIN_UPSTREAM__:8788", block)
         self.assertIn("__ARABIC_PLUGIN_UPSTREAM__:8789", block)
+        self.assertIn("__GROWTH_PLUGIN_UPSTREAM__:8790", block)
         self.assertIn("/openai-plugins/pdf-table-to-excel/mcp", block)
         self.assertIn("/openai-plugins/gcc-arabic-writer/mcp", block)
+        self.assertIn("/openai-plugins/growth-marketing-planner/mcp", block)
         self.assertIn("max_size 1MB", block)
         self.assertIn("max_size 128KB", block)
+        self.assertIn("max_size 256KB", block)
         self.assertIn("handle_path /openai-plugins/gcc-arabic-writer/*", block)
 
     def test_deploy_shell_is_syntactically_valid(self):

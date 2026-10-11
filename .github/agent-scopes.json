@@ -4,7 +4,7 @@
   "scopes": {
     "application": {
       "description": "Plugin code, packages, public pages and tests.",
-      "paths": ["pdf-table-to-excel/**", "gcc-arabic-writer/**", "tests/**", "package*.json", ".planning/**"]
+      "paths": ["pdf-table-to-excel/**", "gcc-arabic-writer/**", "growth-marketing-planner/**", "tests/**", "package*.json", ".planning/**"]
     },
     "architecture": {
       "description": "Plans, project records and reports.",
@@ -12,7 +12,7 @@
     },
     "infrastructure": {
       "description": "Container, deployment and CI configuration.",
-      "paths": ["deploy/**", ".github/workflows/**", ".gitignore", ".gitattributes", "pdf-table-to-excel/Dockerfile", "pdf-table-to-excel/.dockerignore"]
+      "paths": ["deploy/**", ".github/workflows/**", ".gitignore", ".gitattributes", "pdf-table-to-excel/Dockerfile", "pdf-table-to-excel/.dockerignore", "growth-marketing-planner/Dockerfile", "growth-marketing-planner/.dockerignore"]
     },
     "repo-guardrails": {
       "description": "Repository collaboration controls.",
