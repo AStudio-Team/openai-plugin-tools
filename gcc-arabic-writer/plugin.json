@@ -32,7 +32,7 @@
       "interface": {
         "displayName": "GCC Arabic Writer",
         "shortDescription": "Arabic marketing copy, GCC",
-        "longDescription": "Write, rewrite and review Arabic marketing, advertising, brand and luxury copy for GCC and pan-Arab audiences. A focused brief builder lets you review and explicitly send the deliverable, market, surface, voice, message, facts, protected literals and constraints before ChatGPT writes. Read-only review results support revision or selection. Text fallbacks remain available. MSA is the default, and country dialect always requires native-market review.",
+        "longDescription": "GCC Arabic Writer is a productivity tool for writing, rewriting and reviewing Arabic marketing copy for the Gulf and the wider Arab world: taglines, social captions, ad copy, product and website copy, brand and luxury copy. A short brief (deliverable, market, surface, voice, message, facts to keep) is reviewed and sent by you before ChatGPT writes; the review tools check that names, prices, dates and claims stay unchanged and flag style and safety issues. It is for brands, agencies and marketers working in Arabic. Limits: Modern Standard Arabic by default and country dialect needs native-market review; it is not a literal translation service, legal advice or trademark clearance.",
         "developerName": "ASTUDIO",
         "category": "Productivity",
         "capabilities": [

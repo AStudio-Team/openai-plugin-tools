@@ -32,7 +32,7 @@
       "interface": {
         "displayName": "Ad Creative Lab",
         "shortDescription": "Ad copy ideas and checks",
-        "longDescription": "Build a structured campaign brief, approve it at a signed human checkpoint, compare 3 to 5 text-only concepts, select or request revisions, validate current platform copy limits, and export CSV, JSON or Markdown. It never connects to ad accounts, publishes ads, forecasts performance or generates imagery.",
+        "longDescription": "Ad Creative Lab is a productivity tool that writes and checks ad copy from a campaign brief you approve, for Meta (Facebook, Instagram), Google responsive search ads, LinkedIn, TikTok and X. Fill the guided brief, approve it at a human checkpoint, compare three to five text-only concepts, pick one or ask for a visible revision, check the copy against each platform's character limits and your approved claims, and export CSV, JSON or Markdown. It is for advertisers, performance marketers and agencies. Limits: text only; it never connects to ad accounts, publishes ads, generates images or video, or forecasts results.",
         "developerName": "ASTUDIO",
         "category": "Productivity",
         "capabilities": [
@@ -105,7 +105,8 @@
           ]
         },
         "commerce": false,
-        "commerce_description": "This plugin does not sell products or process payments."
+        "commerce_description": "This plugin does not sell products or process payments.",
+        "demo_recording_url": "https://www.astudio.agency/tools/review/ad-creative-lab-demo.mp4"
       },
       "publication": {
         "release_notes": "Initial public text-only human-controlled creative workflow with signed approval, deterministic validation and local export."

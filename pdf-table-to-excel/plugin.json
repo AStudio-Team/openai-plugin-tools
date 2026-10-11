@@ -32,7 +32,7 @@
       "interface": {
         "displayName": "PDF Table to Excel",
         "shortDescription": "Convert PDF tables to Excel",
-        "longDescription": "Extract selectable tables from an uploaded PDF into a downloadable Excel XLSX workbook. A read-only result preview shows the filename, pages, table count, worksheet names, sample rows and expiry, with a host-mediated download and visible follow-up actions. Complete text fallbacks remain available. It supports text-based PDFs up to 20 MB and does not perform OCR on scanned image-only files.",
+        "longDescription": "PDF Table to Excel is a productivity tool that converts the tables in a PDF into an Excel workbook. Upload a text-based PDF such as an invoice, bank statement, report, schedule, catalogue or price list; the plugin extracts every selectable table into its own worksheet, shows a preview with the file name, pages, table count and sample rows, and gives you a temporary download link. It is for anyone who needs PDF tables in a spreadsheet. Limits: text-based PDFs up to 20 MB; scanned image-only PDFs are not read (no OCR); nothing is stored after the link expires.",
         "developerName": "ASTUDIO",
         "category": "Productivity",
         "capabilities": [

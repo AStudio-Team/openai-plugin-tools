@@ -32,7 +32,7 @@
       "interface": {
         "displayName": "Growth Marketing Planner",
         "shortDescription": "90-day marketing plan builder",
-        "longDescription": "Turn a confirmed business brief into exactly three materially distinct growth marketing strategies. Compare estimated goal, audience, channel, budget, capacity, and evidence fit; request visible revisions; select one strategy; and export a practical 30, 60, or 90-day plan as Markdown or JSON. The planner does not connect to accounts, scrape websites, track users, launch campaigns, or promise outcomes.",
+        "longDescription": "Growth Marketing Planner is a productivity tool that builds a 30, 60 or 90-day marketing plan. Confirm a short brief (goal, audience, budget, channels, capacity), compare exactly three realistic growth strategies side by side, request visible revisions, choose one, and export the plan as Markdown or JSON. It is for founders, marketing managers and small teams planning growth. Limits: it does not connect to marketing accounts, scrape websites, track users, launch campaigns or promise outcomes.",
         "developerName": "ASTUDIO",
         "category": "Productivity",
         "capabilities": [
@@ -44,9 +44,9 @@
           "Export as Markdown or JSON"
         ],
         "websiteURL": "https://www.astudio.agency/tools/growth-marketing-planner",
-        "supportURL": "https://www.astudio.agency/openai-plugins/growth-marketing-planner/support",
-        "privacyPolicyURL": "https://www.astudio.agency/openai-plugins/growth-marketing-planner/privacy",
-        "termsOfServiceURL": "https://www.astudio.agency/openai-plugins/growth-marketing-planner/terms",
+        "supportURL": "https://www.astudio.agency/tools/support",
+        "privacyPolicyURL": "https://www.astudio.agency/tools/privacy",
+        "termsOfServiceURL": "https://www.astudio.agency/tools/terms",
         "defaultPrompt": [
           "Build a 90-day marketing plan for my business.",
           "Compare three marketing strategies for a product launch with a small budget.",
@@ -106,7 +106,8 @@
           ]
         },
         "commerce": false,
-        "commerce_description": "This app does not sell products, buy media, or process payments."
+        "commerce_description": "This app does not sell products, buy media, or process payments.",
+        "demo_recording_url": "https://www.astudio.agency/tools/review/growth-marketing-planner-demo.mp4"
       },
       "publication": {
         "release_notes": "Initial release with a guided brief, mandatory review checkpoint, three-option comparison, visible revision, final planning, and local export."
