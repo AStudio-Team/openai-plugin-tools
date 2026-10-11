@@ -206,7 +206,7 @@ if ! grep -Eq '^CHECKPOINT_SECRET=.{32,}$' "$ENV_FILE" 2>/dev/null; then
   exit 78
 fi
 if ! grep -Eq '^APPROVAL_HMAC_KEY=.{32,}$' "$ENV_FILE" 2>/dev/null; then
-  echo "APPROVAL_HMAC_KEY with at least 32 bytes is required in ${ENV_FILE} (Ad Creative Lab approval receipts)" >&2
+  echo "APPROVAL_HMAC_KEY with at least 32 bytes is required in ${ENV_FILE} (approval receipts)" >&2
   exit 78
 fi
 BUY_LINK_ARGS=()

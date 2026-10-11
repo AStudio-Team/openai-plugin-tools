@@ -11,4 +11,4 @@ ENV NODE_ENV=production PORT=8790 ALLOWED_HOSTS=www.astudio.agency,astudio.agenc
 USER node
 EXPOSE 8790
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 CMD node -e "fetch('http://127.0.0.1:8790/ready').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"
-CMD ["node", "src/server.mjs"]
+CMD ["sh", "-c", "test ${#APPROVAL_HMAC_KEY} -ge 32 || { echo 'APPROVAL_HMAC_KEY must contain at least 32 characters' >&2; exit 78; }; exec node src/server.mjs"]
