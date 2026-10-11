@@ -66,16 +66,12 @@ jobs:
         working-directory: growth-marketing-planner
         run: |
           npm test
-        run: |
-          npm test
           npm audit --audit-level=high
       - name: Test Open Data MCP App
         working-directory: open-data-fetcher
         run: |
           npm test
           npm run check
-        run: |
-          npm test
           npm audit --audit-level=high
       - name: Test Editable Diagram MCP App
         working-directory: editable-diagram-builder
@@ -84,9 +80,6 @@ jobs:
         run: |
           npm test
           npm run audit:public
-          npm audit --audit-level=high
-        run: |
-          npm test
           npm audit --audit-level=high
       - name: Test Verified Buy Link MCP App
         working-directory: verified-buy-link
