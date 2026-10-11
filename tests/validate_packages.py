@@ -68,18 +68,18 @@ def validate_skill(path: Path) -> None:
 
 def main() -> int:
     manifests = list(ROOT.glob("*/plugin.json"))
-    if len(manifests) != 4:
-        fail(f"expected 4 manifests, found {len(manifests)}")
+    if len(manifests) != 5:
+        fail(f"expected 5 manifests, found {len(manifests)}")
     for manifest in manifests:
         validate_manifest(manifest)
     skills = list(ROOT.glob("*/skills/*/SKILL.md"))
-    if len(skills) != 4:
-        fail(f"expected 4 packaged skills, found {len(skills)}")
+    if len(skills) != 5:
+        fail(f"expected 5 packaged skills, found {len(skills)}")
     for skill in skills:
         validate_skill(skill)
     mcp_configs = list(ROOT.glob("*/mcp.json"))
-    if len(mcp_configs) != 4:
-        fail(f"expected 4 MCP configs, found {len(mcp_configs)}")
+    if len(mcp_configs) != 5:
+        fail(f"expected 5 MCP configs, found {len(mcp_configs)}")
     for config in mcp_configs:
         data = json.loads(config.read_text())
         servers = data.get("mcpServers", {})

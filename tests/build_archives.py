@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import struct
 import zipfile
 from pathlib import Path
 
@@ -13,6 +14,11 @@ PRODUCTS = {
         "archive": "ad-creative-lab-1.0.0-submission.zip",
         "root_files": {"plugin.json", "mcp.json", "LICENSE", "THIRD_PARTY_NOTICES.md", "PRIVACY.md", "TERMS.md"},
         "directories": {"assets", "skills", "review"},
+    "ai-crawler-readiness-auditor": {
+        "archive": "ai-crawler-readiness-auditor-1.0.0-submission.zip",
+        "root_files": {"plugin.json", "mcp.json"},
+        "directories": {"assets", "skills"},
+    },
     },
     "gcc-arabic-writer": {
         "archive": "gcc-arabic-writer-1.1.0-submission.zip",
@@ -63,6 +69,20 @@ def main() -> int:
                     raise SystemExit(f"growth planner archive missing required attribution or package files: {sorted(missing)}")
             if any("__MACOSX" in name or "/._" in name or "__pycache__" in name for name in names):
                 raise SystemExit(f"unclean archive: {target}")
+            for name in names:
+                if not included(Path(name), spec):
+                    raise SystemExit(f"unexpected archive file: {target}:{name}")
+                source_bytes = (source / name).read_bytes()
+                if archive.read(name) != source_bytes:
+                    raise SystemExit(f"source-to-archive mismatch: {target}:{name}")
+                if b"/Users/" in source_bytes or b"/home/" in source_bytes:
+                    raise SystemExit(f"local path in archive: {target}:{name}")
+                if name.lower().endswith(".png"):
+                    if len(source_bytes) > 5 * 1024 * 1024 or source_bytes[:8] != b"\x89PNG\r\n\x1a\n":
+                        raise SystemExit(f"invalid PNG asset: {target}:{name}")
+                    width, height = struct.unpack(">II", source_bytes[16:24])
+                    if width != height or width < 48:
+                        raise SystemExit(f"icon must be square and at least 48 pixels: {target}:{name}")
             print(f"{target.name}: {len(names)} files, {target.stat().st_size} bytes")
     return 0
 
