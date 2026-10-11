@@ -1,10 +1,21 @@
 # Social Content Planner
 
-Social Content Planner turns a submitted brand brief into a reviewed weekly social content calendar and platform-ready post text. It does not post, schedule, access accounts, or retain submitted content after the response.
+Social Content Planner turns a user-confirmed brand brief into a validated, platform-ready social content calendar. It plans content only: nothing is posted or scheduled, and it does not access social accounts.
 
-The social-content guidance is adapted from Corey Haines' [marketingskills](https://github.com/coreyhaines31/marketingskills), licensed under MIT.
+## Flow and tools
 
-A human-guided MCP App that turns a confirmed business brief into exactly three distinct growth strategies, supports visible revision and explicit selection, then exports one 30, 60, or 90-day plan.
+1. `open_social_brief` opens a brief using only facts supplied by the user.
+2. `review_social_brief` normalizes the complete brief for the user to inspect.
+3. `approve_social_brief` is called only by the user's explicit approval in the review widget.
+4. `draft_content_calendar` drafts posts within the approved pillars, platforms, weekly post volume, and banned topics, then validates the calendar.
+5. `request_calendar_revision` records a user-requested revision for a week or individual post.
+6. `export_content_calendar` exports validated calendars as CSV and Markdown.
+
+The calendar cannot be drafted before approval. Every issue from calendar validation must be corrected before export. Revisions use the visible revision flow and are revalidated before export.
+
+## Limits
+
+The service is stateless and closed-world. It does not publish, schedule, access accounts, send messages, buy ads, scrape, track, make outbound requests during tool execution, or intentionally retain submitted briefs and exports. It does not promise engagement, followers, leads, sales, or other results.
 
 ## Local development
 
@@ -16,10 +27,6 @@ npm start
 
 The local server listens on port 8790 by default. Its MCP endpoint is `/mcp`, health endpoints are `/health` and `/ready`, and public product pages start at `/`.
 
-## Data boundary
-
-The service is stateless and closed-world. It does not access marketing accounts, make outbound network requests during tool execution, scrape, track, launch campaigns, or intentionally retain briefs and exports.
-
 ## Attribution
 
-Methodology is adapted from Marketing Skills for AI Agents by Corey Haines. See `NOTICE` and `LICENSES/corey-haines-marketingskills-MIT.txt`. No endorsement is implied.
+Social-content guidance is adapted from Corey Haines' [marketingskills](https://github.com/coreyhaines31/marketingskills) social-content skill, licensed under MIT. See `NOTICE` and `LICENSES/corey-haines-marketingskills-MIT.txt`. No endorsement is implied.
