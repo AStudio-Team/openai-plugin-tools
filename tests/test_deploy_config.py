@@ -80,6 +80,26 @@ astudio.agency, www.astudio.agency {
         self.assertLess(committed, script.index('rm -f "$LEGACY_STATE_FILE"'))
         self.assertLess(committed, script.index('docker rm -f "$previous"'))
 
+    def test_health_checked_package_servers_identify_their_service(self):
+        script = (ROOT / "deploy" / "deploy-production.sh").read_text()
+        services = set()
+        for line in script.splitlines():
+            parts = line.split()
+            if len(parts) == 3 and parts[0] == "check_health" and (ROOT / parts[2]).is_dir():
+                services.add(parts[2])
+        self.assertTrue(services)
+        for service in services:
+            package_dirs = [path.parent for path in (ROOT / service).rglob("package.json") if "node_modules" not in path.parts]
+            self.assertTrue(package_dirs, f"{service} needs a package folder")
+            for package_dir in package_dirs:
+                servers = list((package_dir / "src").glob("server.*"))
+                self.assertEqual(len(servers), 1, f"{package_dir} needs one src/server file")
+                source = servers[0].read_text()
+                self.assertTrue(
+                    f'service:"{service}"' in source or f'service: "{service}"' in source,
+                    f"{service} health response must identify its service",
+                )
+
     def test_caddy_routes_three_isolated_upstreams_and_public_checks(self):
         block = BLOCK.read_text()
         self.assertIn("__PDF_PLUGIN_UPSTREAM__:8788", block)
