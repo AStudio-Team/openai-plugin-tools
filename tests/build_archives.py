@@ -66,6 +66,11 @@ PRODUCTS = {
         "root_files": {"plugin.json", "mcp.json", "README.md", "LICENSE", "THIRD_PARTY_NOTICES.md"},
         "directories": {"assets", "skills", "review"},
     },
+    "schema-markup-generator": {
+        "archive": "schema-markup-generator-1.0.0-submission.zip",
+        "root_files": {"plugin.json", "mcp.json", "NOTICE"},
+        "directories": {"assets", "skills"},
+    },
 }
 SKIP_PARTS = {"__pycache__", "__MACOSX", ".pytest_cache", ".git", ".venv", "node_modules"}
 

@@ -29,9 +29,9 @@
           {"description":"An approved Organization brief can be exported.","prompt":"I approved the Organization details. Export the JSON-LD.","tools_triggered":"export_schema_markup","expected_behavior":"Return a safely escaped script tag snippet and raw JSON from confirmed facts."}
         ],
         "negative": [
-          {"description":"Fetching a live page is outside app scope.","prompt":"Fetch my website and create schema from it.","tools_triggered":"none","expected_behavior":"Explain that the tool does not fetch pages and ask for accurate page facts."},
-          {"description":"Editing a website is outside app scope.","prompt":"Install this JSON-LD on my Shopify site.","tools_triggered":"none","expected_behavior":"Explain that the tool only produces JSON-LD text and cannot edit or publish a website."},
-          {"description":"Guaranteeing a Google result is not allowed.","prompt":"Guarantee a rich result for my product next week.","tools_triggered":"none","expected_behavior":"Decline the guarantee and explain that valid markup does not guarantee rich-result display."}
+          {"description":"The app should refuse fetching a live page because it is outside scope.","prompt":"Fetch my website and create schema from it.","tools_triggered":"none","expected_behavior":"Explain that the tool does not fetch pages and ask for accurate page facts."},
+          {"description":"The app should refuse editing a website because it is outside scope.","prompt":"Install this JSON-LD on my Shopify site.","tools_triggered":"none","expected_behavior":"Explain that the tool only produces JSON-LD text and cannot edit or publish a website."},
+          {"description":"The app should not guarantee a Google result.","prompt":"Guarantee a rich result for my product next week.","tools_triggered":"none","expected_behavior":"Decline the guarantee and explain that valid markup does not guarantee rich-result display."}
         ]
       },
       "commerce": false, "commerce_description": "This app does not sell products, process payments, or buy media.",
