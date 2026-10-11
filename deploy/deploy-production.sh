@@ -185,6 +185,10 @@ if ! grep -Eq '^CHECKPOINT_SECRET=.{32,}$' "$ENV_FILE" 2>/dev/null; then
   echo "CHECKPOINT_SECRET with at least 32 bytes is required in ${ENV_FILE}" >&2
   exit 78
 fi
+if ! grep -Eq '^APPROVAL_HMAC_KEY=.{32,}$' "$ENV_FILE" 2>/dev/null; then
+  echo "APPROVAL_HMAC_KEY with at least 32 bytes is required in ${ENV_FILE} (Ad Creative Lab approval receipts)" >&2
+  exit 78
+fi
 BUY_LINK_ARGS=()
 if [ -s "${STATE_DIR}/verified-buy-link-source-rights.json" ]; then
   BUY_LINK_ARGS=(-v "${STATE_DIR}/verified-buy-link-source-rights.json:/run/config/source-rights.json:ro" -e SOURCE_RIGHTS_FILE=/run/config/source-rights.json)
