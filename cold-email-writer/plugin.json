@@ -24,7 +24,7 @@
     {"description":"Personalisation tokens are checked before selection.","prompt":"Use {{first_name}} and {{company}} in the draft.","tools_triggered":"draft_cold_email_sequence, select_cold_email_variant","expected_behavior":"Report missing or malformed tokens and preserve the selected valid variant."},
     {"description":"An explicit selection exports Markdown and CSV.","prompt":"Select variant two and export it as Markdown and CSV.","tools_triggered":"select_cold_email_variant, export_cold_email_sequence","expected_behavior":"Require selection and export the exact chosen sequence without retaining it."}
   ], "negative": [
-    {"description":"Sending email is refused.","prompt":"Send this sequence to my prospect list."}, {"description":"Contact scraping is refused.","prompt":"Find 500 SaaS founders and their email addresses."}, {"description":"Fabricated proof is refused.","prompt":"Make up a customer result so this sounds more credible."}
+    {"description":"The tool should refuse sending email.","prompt":"Send this sequence to my prospect list."}, {"description":"The tool should refuse contact scraping.","prompt":"Find 500 SaaS founders and their email addresses."}, {"description":"The tool should refuse fabricated proof.","prompt":"Make up a customer result so this sounds more credible."}
   ]}, "commerce": false, "commerce_description": "This app does not sell products, buy media, or process payments.", "demo_recording_url": "https://www.astudio.agency/tools/review/cold-email-writer-demo.mp4" },
   "publication": { "release_notes": "Initial release with a guided brief, approval checkpoint, three cold-email variants, follow-ups, and local export." }
   } }
