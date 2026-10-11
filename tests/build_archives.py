@@ -62,7 +62,7 @@ PRODUCTS = {
         "directories": {"assets", "skills", "LICENSES"},
     },
     "landing-page-copy-check": {
-        "archive": "landing-page-copy-check-1.0.0-submission.zip",
+        "archive": "landing-page-copy-check-1.0.1-submission.zip",
         "root_files": {"plugin.json", "mcp.json", "NOTICE"},
         "directories": {"assets", "skills", "LICENSES"},
     },

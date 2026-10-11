@@ -1,7 +1,7 @@
 ---
 name: landing-page-copy-check
 description: "Use when the user asks for landing page, homepage, pricing page, CTA, form, or popup copy review and conversion checks. Do not use for fetching URLs, editing a live site, traffic analysis, or conversion guarantees."
-version: 1.0.0
+version: 1.0.1
 author: ASTUDIO
 license: MIT
 ---
