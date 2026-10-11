@@ -66,7 +66,7 @@ function requestPinned(pinned, options) {
       protocol: "https:", hostname: pinned.url.hostname, port: 443,
       path: `${pinned.url.pathname}${pinned.url.search}`, method: "GET",
       servername: pinned.url.hostname, headers: { host: pinned.url.host, accept: "text/html,text/plain,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document", "accept-encoding": "identity", "user-agent": "Grounded-Citations/1.0" },
-      lookup: (_hostname, _opts, callback) => callback(null, pinned.address, pinned.family),
+      lookup: (_hostname, opts, callback) => (opts && opts.all ? callback(null, [{ address: pinned.address, family: pinned.family }]) : callback(null, pinned.address, pinned.family)),
       timeout: Math.max(1, options.remainingMs),
     }, res => {
       const declared = Number(res.headers["content-length"] || 0);
