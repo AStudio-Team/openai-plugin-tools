@@ -6,7 +6,7 @@
   "description": "Human-guided MCP App for generating and checking JSON-LD schema markup from supplied facts.",
   "scripts": {
     "start": "node src/server.mjs",
-    "test": "node --test tests/*.test.mjs",
+    "test": "node --import ./tests/setup.mjs --test tests/*.test.mjs",
     "check": "node --check src/server.mjs"
   },
   "engines": {
