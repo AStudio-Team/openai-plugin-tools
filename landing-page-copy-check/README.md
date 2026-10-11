@@ -1,6 +1,6 @@
-# Growth Marketing Planner
+# Landing Page Copy Check
 
-A human-guided MCP App that turns a confirmed business brief into exactly three distinct growth strategies, supports visible revision and explicit selection, then exports one 30, 60, or 90-day plan.
+A human-guided MCP App that reviews a landing page brief, validates two or three copy variants, checks conversion basics, records explicit selection, and exports the selected copy as Markdown or HTML.
 
 ## Local development
 
@@ -14,7 +14,7 @@ The local server listens on port 8790 by default. Its MCP endpoint is `/mcp`, he
 
 ## Data boundary
 
-The service is stateless and closed-world. It does not access marketing accounts, make outbound network requests during tool execution, scrape, track, launch campaigns, or intentionally retain briefs and exports.
+The service is stateless and closed-world. It does not fetch URLs, change websites, make outbound network requests during tool execution, or intentionally retain briefs and exports.
 
 ## Attribution
 
