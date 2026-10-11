@@ -17,7 +17,7 @@ class VerifiedBuyLinkPackageTests(unittest.TestCase):
         self.assertLessEqual(len(interface["shortDescription"]), 30)
         self.assertEqual(len(review["test_cases"]["positive"]), 5)
         self.assertEqual(len(review["test_cases"]["negative"]), 3)
-        self.assertEqual(review["demo_recording_status"], "required-before-portal-submission")
+        self.assertNotIn("demo_recording_status", review)
         self.assertFalse(review["commerce"])
 
     def test_source_register_has_no_blanket_authorized_domain(self):
