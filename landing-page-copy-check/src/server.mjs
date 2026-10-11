@@ -38,7 +38,6 @@ const genericConcrete = new Set(["tool", "platform", "software", "app", "service
 const headlineStopWords = new Set(["a", "an", "and", "for", "in", "of", "on", "or", "the", "to", "with"]);
 function headlineIsSpecific(headline, sourceBrief) {
   if (headline.length <= 5 || headline.split(/\s+/u).length > 12 || vagueHeadline.test(headline)) return false;
-  if (/\d/u.test(headline)) return true;
   const headlineWords = new Set(words(headline).map(wordStem));
   const briefWords = sourceBrief ? words([sourceBrief.product, sourceBrief.offer, sourceBrief.audience, ...(sourceBrief.mustKeepFacts || [])].join(" ")).filter(word => !headlineStopWords.has(word)).map(wordStem) : [];
   return briefWords.some(word => headlineWords.has(word)) || (!sourceBrief && [...headlineWords].some(word => genericConcrete.has(word)));
@@ -65,7 +64,7 @@ function escapeHtml(value) { return String(value).replaceAll("&", "&amp;").repla
 function escapeMarkdown(value) { return String(value).replace(/([\\`*_{}[\]()#+.!|>-])/g, "\\$1"); }
 
 export function openPageBrief(input = {}) { return { fields: ["pageType", "product", "audience", "offer", "goal", "tone", "currentCopy", "mustKeepFacts"], prefill: input.prefill || {}, privacyNotice: "This tool works on pasted text only. It does not fetch URLs or change sites." }; }
-export function reviewPageBrief(input) { const value = brief.parse(input); const banned = bannedClaims(JSON.stringify({ currentCopy: value.currentCopy, mustKeepFacts: value.mustKeepFacts })); if (banned.length) throw Error(`Banned claim in brief: ${banned.join(", ")}.`); return { normalizedBrief: value, canApprove: true, confirmationRequired: true, message: "Review the visible brief, then use the Approve brief button to authorize drafting." }; }
+export function reviewPageBrief(input) { const value = brief.parse(input); const text = [value.product, value.offer, value.goal, value.audience, value.tone, value.currentCopy, ...value.mustKeepFacts].filter(item => item !== undefined).join("\n"); const banned = [...new Set(bannedClaims(text))]; const issues = banned.map(claim => `Banned claim: ${claim}`); return { normalizedBrief: value, canApprove: issues.length === 0, confirmationRequired: true, issues, message: issues.length ? "Remove banned claims before approving this brief." : "Review the visible brief, then use the Approve brief button to authorize drafting." }; }
 export function approvePageBrief(input) { const value = brief.parse(input.brief); z.literal("approve").parse(input.approvalAction); return { approvalReceipt: makeReceipt("brief", value), approvedBrief: value }; }
 export function draftPageCopy(input) { const b = brief.parse(input.brief); verifyReceipt(input.approvalReceipt, "brief", b); const proposed = z.array(copy).min(2).max(3).parse(input.variants); const signatures = new Set(proposed.map(item => digest(item))); if (signatures.size !== proposed.length) throw Error("Draft variants must be distinct."); const variants = proposed.map(item => { const checked = validateCopy(item, b); const report = checkPageConversion({ draft: checked.copy, headline: checked.copy.headline, brief: b }); return { ...checked.copy, issues: report.issues, checklist: report.checks }; }); return { brief: b, variants, approvalReceipt: input.approvalReceipt, warnings: [] }; }
 export function checkPageConversion(input) {
@@ -75,7 +74,7 @@ export function checkPageConversion(input) {
   if (input.popupDelaySeconds !== undefined && (!Number.isFinite(input.popupDelaySeconds) || input.popupDelaySeconds < 0)) throw Error("Popup delay must be a non-negative number.");
   const fields = input.formFieldCount, delay = input.popupDelaySeconds;
   const headline = clean(input.headline ?? input.draft?.headline ?? (input.copy ? source.split("\n")[0] : ""));
-  const ctas = input.draft ? countCtas(input.draft.primaryCta) : countCtas(source);
+  const ctas = countCtas(source);
   const suppliedText = [input.headline, input.copy, ...(input.draft ? copyTextValues(input.draft) : [])].filter(value => value !== undefined);
   const banned = [...new Set(suppliedText.flatMap(bannedClaims))];
   const headlineSpecific = headlineIsSpecific(headline, input.brief);
@@ -105,7 +104,7 @@ export function exportPageCopy(input) {
 
 const annotations = { readOnlyHint: true, destructiveHint: false, openWorldHint: false, idempotentHint: true };
 const openOutput = { fields: z.array(z.string()), prefill: z.record(z.string(), z.unknown()), privacyNotice: z.string() };
-const reviewOutput = { normalizedBrief: brief, canApprove: z.boolean(), confirmationRequired: z.boolean(), message: z.string() };
+const reviewOutput = { normalizedBrief: brief, canApprove: z.boolean(), confirmationRequired: z.boolean(), issues: z.array(z.string()), message: z.string() };
 const factCheck = z.object({ kept: z.array(z.string()).optional(), missing: z.array(z.string()) }).strict();
 const checklistItem = z.object({ name: z.string(), status: z.string(), pass: z.boolean().nullable(), detail: z.string() });
 const draftVariant = copy.extend({ issues: z.array(z.string()), checklist: z.array(checklistItem) });
