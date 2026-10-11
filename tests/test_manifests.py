@@ -11,6 +11,7 @@ class ManifestAndPackageTests(unittest.TestCase):
         self.pdf = json.loads((ROOT / "pdf-table-to-excel" / "plugin.json").read_text())
 
     def test_astudio_is_publisher_for_both_products(self):
+        self.assertEqual(self.gcc["name"], "astudio-gcc-arabic-writer")
         for manifest in (self.gcc, self.pdf):
             self.assertEqual(manifest["author"]["name"], "ASTUDIO")
             self.assertEqual(manifest["extensions"]["com.openai"]["interface"]["developerName"], "ASTUDIO")
