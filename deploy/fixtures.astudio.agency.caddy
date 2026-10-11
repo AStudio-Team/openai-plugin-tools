@@ -1,0 +1,15 @@
+# BEGIN AI_CRAWLER_FIXTURES
+fixtures.astudio.agency,
+ready.fixtures.astudio.agency,
+robots-blocked.fixtures.astudio.agency,
+llms-html.fixtures.astudio.agency,
+invalid-jsonld.fixtures.astudio.agency,
+sitemap-timeout.fixtures.astudio.agency {
+    encode zstd gzip
+    header {
+        X-Content-Type-Options nosniff
+        Referrer-Policy no-referrer
+    }
+    reverse_proxy __CRAWLER_PLUGIN_UPSTREAM__:8790
+}
+# END AI_CRAWLER_FIXTURES
