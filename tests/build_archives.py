@@ -19,6 +19,11 @@ PRODUCTS = {
         "root_files": {"plugin.json", "mcp.json"},
         "directories": {"assets", "skills"},
     },
+    "editable-diagram-builder": {
+        "archive": "editable-diagram-builder-1.0.0-submission.zip",
+        "root_files": {"plugin.json", "mcp.json", "README.md", "LICENSE", "THIRD_PARTY_NOTICES.md"},
+        "directories": {"assets", "skills", "review"},
+    },
 }
 SKIP_PARTS = {"__pycache__", "__MACOSX", ".pytest_cache", ".git", ".venv", "node_modules"}
 
@@ -48,6 +53,9 @@ def main() -> int:
                 raise SystemExit(f"invalid archive root: {target}")
             if any("__MACOSX" in name or "/._" in name or "__pycache__" in name for name in names):
                 raise SystemExit(f"unclean archive: {target}")
+            for name in names:
+                if archive.read(name) != (source / name).read_bytes():
+                    raise SystemExit(f"source-to-archive mismatch: {target}:{name}")
             print(f"{target.name}: {len(names)} files, {target.stat().st_size} bytes")
     return 0
 

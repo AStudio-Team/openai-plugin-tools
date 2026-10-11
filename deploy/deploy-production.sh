@@ -8,17 +8,21 @@ RELEASE_DIR="/opt/openai-plugin-tools/releases/${RELEASE_SHA}"
 STATE_DIR="/opt/openai-plugin-tools"
 PDF_STATE_FILE="${STATE_DIR}/current-pdf-container"
 ARABIC_STATE_FILE="${STATE_DIR}/current-arabic-container"
+DIAGRAM_STATE_FILE="${STATE_DIR}/current-diagram-container"
 LEGACY_STATE_FILE="${STATE_DIR}/current-container"
 ENV_FILE="${STATE_DIR}/openai.env"
 CADDYFILE="/opt/websites/caddy/Caddyfile"
 BACKUP="${CADDYFILE}.plugin-tools.${DEPLOY_ID}.bak"
 PDF_IMAGE="openai-plugin-pdf:${RELEASE_SHA}"
 ARABIC_IMAGE="openai-plugin-arabic:${RELEASE_SHA}"
+DIAGRAM_IMAGE="openai-plugin-diagram:${RELEASE_SHA}"
 PDF_CONTAINER="openai-plugin-pdf-${DEPLOY_ID}"
 ARABIC_CONTAINER="openai-plugin-arabic-${DEPLOY_ID}"
+DIAGRAM_CONTAINER="openai-plugin-diagram-${DEPLOY_ID}"
 RENDERED_BLOCK="/tmp/openai-plugin-tools-${DEPLOY_ID}.caddy"
 PREVIOUS_PDF_CONTAINER=""
 PREVIOUS_ARABIC_CONTAINER=""
+PREVIOUS_DIAGRAM_CONTAINER=""
 CONFIG_MUTATED=0
 SWITCHED=0
 COMMITTED=0
@@ -36,6 +40,9 @@ elif [ -s "$LEGACY_STATE_FILE" ]; then
 fi
 if [ -s "$ARABIC_STATE_FILE" ]; then
   PREVIOUS_ARABIC_CONTAINER="$(tr -cd 'A-Za-z0-9_.-' < "$ARABIC_STATE_FILE")"
+fi
+if [ -s "$DIAGRAM_STATE_FILE" ]; then
+  PREVIOUS_DIAGRAM_CONTAINER="$(tr -cd 'A-Za-z0-9_.-' < "$DIAGRAM_STATE_FILE")"
 fi
 
 write_state() {
@@ -64,13 +71,15 @@ rollback() {
   if [ "$rollback_ok" -eq 1 ]; then
     write_state "$PDF_STATE_FILE" "$PREVIOUS_PDF_CONTAINER"
     write_state "$ARABIC_STATE_FILE" "$PREVIOUS_ARABIC_CONTAINER"
-    docker rm -f "$PDF_CONTAINER" "$ARABIC_CONTAINER" >/dev/null 2>&1 || true
+    write_state "$DIAGRAM_STATE_FILE" "$PREVIOUS_DIAGRAM_CONTAINER"
+    docker rm -f "$PDF_CONTAINER" "$ARABIC_CONTAINER" "$DIAGRAM_CONTAINER" >/dev/null 2>&1 || true
   else
     write_state "$PDF_STATE_FILE" "$PDF_CONTAINER"
     write_state "$ARABIC_STATE_FILE" "$ARABIC_CONTAINER"
+    write_state "$DIAGRAM_STATE_FILE" "$DIAGRAM_CONTAINER"
     echo "rollback failed; candidate containers were kept running for recovery" >&2
   fi
-  rm -f "${PDF_STATE_FILE}.tmp" "${ARABIC_STATE_FILE}.tmp" "${CADDYFILE}.rollback-${DEPLOY_ID}"
+  rm -f "${PDF_STATE_FILE}.tmp" "${ARABIC_STATE_FILE}.tmp" "${DIAGRAM_STATE_FILE}.tmp" "${CADDYFILE}.rollback-${DEPLOY_ID}"
   return $((1 - rollback_ok))
 }
 
@@ -89,10 +98,15 @@ trap 'exit 129' HUP
 cd "$RELEASE_DIR"
 docker build --pull -t "$PDF_IMAGE" pdf-table-to-excel
 docker build --pull -t "$ARABIC_IMAGE" gcc-arabic-writer
+docker build --pull -t "$DIAGRAM_IMAGE" editable-diagram-builder
 
 ENV_FILE_ARGS=()
 if [ -s "$ENV_FILE" ]; then
   ENV_FILE_ARGS=(--env-file "$ENV_FILE")
+fi
+if ! grep -Eq '^CHECKPOINT_SECRET=.{32,}$' "$ENV_FILE" 2>/dev/null; then
+  echo "CHECKPOINT_SECRET with at least 32 bytes is required in ${ENV_FILE}" >&2
+  exit 78
 fi
 
 run_container() {
@@ -126,6 +140,8 @@ run_container "$PDF_CONTAINER" "$PDF_IMAGE" 8788 \
   -e PYTHONDONTWRITEBYTECODE=1 \
   -e PUBLIC_BASE_URL=https://www.astudio.agency/openai-plugins/pdf-table-to-excel
 run_container "$ARABIC_CONTAINER" "$ARABIC_IMAGE" 8789
+run_container "$DIAGRAM_CONTAINER" "$DIAGRAM_IMAGE" 8790 \
+  -e TRUST_PROXY_HEADER=true
 
 wait_healthy() {
   local container="$1"
@@ -142,14 +158,15 @@ wait_healthy() {
 }
 wait_healthy "$PDF_CONTAINER"
 wait_healthy "$ARABIC_CONTAINER"
+wait_healthy "$DIAGRAM_CONTAINER"
 
-python3 - "$PDF_CONTAINER" "$ARABIC_CONTAINER" deploy/tools.astudio.agency.caddy "$RENDERED_BLOCK" <<'PY'
+python3 - "$PDF_CONTAINER" "$ARABIC_CONTAINER" "$DIAGRAM_CONTAINER" deploy/tools.astudio.agency.caddy "$RENDERED_BLOCK" <<'PY'
 import sys
 from pathlib import Path
-pdf, arabic, source, target = sys.argv[1:]
+pdf, arabic, diagram, source, target = sys.argv[1:]
 text = Path(source).read_text()
-text = text.replace("__PDF_PLUGIN_UPSTREAM__", pdf).replace("__ARABIC_PLUGIN_UPSTREAM__", arabic)
-if "__PDF_PLUGIN_UPSTREAM__" in text or "__ARABIC_PLUGIN_UPSTREAM__" in text:
+text = text.replace("__PDF_PLUGIN_UPSTREAM__", pdf).replace("__ARABIC_PLUGIN_UPSTREAM__", arabic).replace("__DIAGRAM_PLUGIN_UPSTREAM__", diagram)
+if "__PDF_PLUGIN_UPSTREAM__" in text or "__ARABIC_PLUGIN_UPSTREAM__" in text or "__DIAGRAM_PLUGIN_UPSTREAM__" in text:
     raise SystemExit("unresolved upstream placeholder")
 Path(target).write_text(text)
 PY
@@ -193,6 +210,9 @@ check_mcp https://www.astudio.agency/openai-plugins/pdf-table-to-excel/mcp pdf-t
 check_health https://www.astudio.agency/openai-plugins/gcc-arabic-writer/health gcc-arabic-writer
 check_health https://www.astudio.agency/openai-plugins/gcc-arabic-writer/ready gcc-arabic-writer
 check_mcp https://www.astudio.agency/openai-plugins/gcc-arabic-writer/mcp gcc-arabic-writer prepare_gcc_arabic_brief,check_arabic_factual_fidelity,lint_gcc_arabic_copy
+check_health https://www.astudio.agency/openai-plugins/editable-diagram-builder/health editable-diagram-builder
+check_health https://www.astudio.agency/openai-plugins/editable-diagram-builder/ready editable-diagram-builder
+check_mcp https://www.astudio.agency/openai-plugins/editable-diagram-builder/mcp editable-diagram-builder open_diagram_brief,confirm_diagram_brief,render_diagram_preview,apply_diagram_edits,export_excalidraw
 curl --fail --silent --show-error \
   -H 'Content-Type: application/json' \
   -H 'Accept: application/json, text/event-stream' \
@@ -214,15 +234,17 @@ rm -f "$PDF_CHECK_JSON" "$PDF_CHECK_XLSX"
 
 printf '%s\n' "$PDF_CONTAINER" > "${PDF_STATE_FILE}.tmp"
 printf '%s\n' "$ARABIC_CONTAINER" > "${ARABIC_STATE_FILE}.tmp"
+printf '%s\n' "$DIAGRAM_CONTAINER" > "${DIAGRAM_STATE_FILE}.tmp"
 mv "${PDF_STATE_FILE}.tmp" "$PDF_STATE_FILE"
 mv "${ARABIC_STATE_FILE}.tmp" "$ARABIC_STATE_FILE"
+mv "${DIAGRAM_STATE_FILE}.tmp" "$DIAGRAM_STATE_FILE"
 COMMITTED=1
 rm -f "$LEGACY_STATE_FILE"
-for previous in "$PREVIOUS_PDF_CONTAINER" "$PREVIOUS_ARABIC_CONTAINER"; do
-  if [ -n "$previous" ] && [ "$previous" != "$PDF_CONTAINER" ] && [ "$previous" != "$ARABIC_CONTAINER" ]; then
+for previous in "$PREVIOUS_PDF_CONTAINER" "$PREVIOUS_ARABIC_CONTAINER" "$PREVIOUS_DIAGRAM_CONTAINER"; do
+  if [ -n "$previous" ] && [ "$previous" != "$PDF_CONTAINER" ] && [ "$previous" != "$ARABIC_CONTAINER" ] && [ "$previous" != "$DIAGRAM_CONTAINER" ]; then
     docker rm -f "$previous" >/dev/null 2>&1 || true
   fi
 done
 rm -f "$BACKUP" "$RENDERED_BLOCK"
 
-echo "deployed ${RELEASE_SHA} as ${PDF_CONTAINER} and ${ARABIC_CONTAINER}"
+echo "deployed ${RELEASE_SHA} as ${PDF_CONTAINER}, ${ARABIC_CONTAINER} and ${DIAGRAM_CONTAINER}"
