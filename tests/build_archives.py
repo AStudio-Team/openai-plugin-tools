@@ -11,8 +11,8 @@ BUILD = ROOT / "build"
 PRODUCTS = {
     "gcc-arabic-writer": {
         "archive": "gcc-arabic-writer-1.0.0-submission.zip",
-        "root_files": {"plugin.json"},
-        "directories": {"assets", "skills"},
+        "root_files": {"plugin.json", "mcp.json"},
+        "directories": {"assets", "skills", "review"},
     },
     "pdf-table-to-excel": {
         "archive": "pdf-table-to-excel-1.0.0-submission.zip",

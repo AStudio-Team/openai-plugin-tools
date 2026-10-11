@@ -23,6 +23,7 @@ python3 tests/validate_packages.py
 python3 tests/audit_public_content.py
 python3 tests/build_archives.py
 npm --prefix pdf-table-to-excel test
+npm --prefix gcc-arabic-writer test
 ```
 
 ## License

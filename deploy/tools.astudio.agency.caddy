@@ -2,7 +2,7 @@
     redir /tools /tools/ 308
 
     handle_path /tools/* {
-        reverse_proxy __OPENAI_PLUGIN_UPSTREAM__:8788
+        reverse_proxy __PDF_PLUGIN_UPSTREAM__:8788
     }
 
     handle /openai-plugins/pdf-table-to-excel/mcp {
@@ -10,14 +10,30 @@
             max_size 1MB
         }
         rewrite * /mcp
-        reverse_proxy __OPENAI_PLUGIN_UPSTREAM__:8788
+        reverse_proxy __PDF_PLUGIN_UPSTREAM__:8788 {
+            header_up X-Plugin-Client-IP {remote_host}
+        }
     }
 
     handle_path /openai-plugins/pdf-table-to-excel/* {
-        reverse_proxy __OPENAI_PLUGIN_UPSTREAM__:8788
+        reverse_proxy __PDF_PLUGIN_UPSTREAM__:8788
+    }
+
+    handle /openai-plugins/gcc-arabic-writer/mcp {
+        request_body {
+            max_size 128KB
+        }
+        rewrite * /mcp
+        reverse_proxy __ARABIC_PLUGIN_UPSTREAM__:8789 {
+            header_up X-Plugin-Client-IP {remote_host}
+        }
+    }
+
+    handle_path /openai-plugins/gcc-arabic-writer/* {
+        reverse_proxy __ARABIC_PLUGIN_UPSTREAM__:8789
     }
 
     handle /.well-known/openai-apps-challenge {
-        reverse_proxy __OPENAI_PLUGIN_UPSTREAM__:8788
+        reverse_proxy __PDF_PLUGIN_UPSTREAM__:8788
     }
 # END OPENAI_PLUGIN_TOOLS
