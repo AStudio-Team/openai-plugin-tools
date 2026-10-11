@@ -27,9 +27,15 @@ const MAX_STORED_BYTES = Number(process.env.MAX_STORED_BYTES || 100 * 1024 * 102
 const RATE_WINDOW_MS = 60_000;
 const RATE_LIMIT_PER_CLIENT = Number(process.env.RATE_LIMIT_PER_CLIENT || 10);
 const RATE_LIMIT_GLOBAL = Number(process.env.RATE_LIMIT_GLOBAL || 120);
+const MAX_RATE_BUCKETS = Number(process.env.MAX_RATE_BUCKETS || 2000);
 const ALLOWED_HOSTS = new Set((process.env.ALLOWED_HOSTS || "127.0.0.1,localhost,www.astudio.agency,astudio.agency").split(",").map(v => v.trim().toLowerCase()).filter(Boolean));
 const downloads = new Map();
 const rateBuckets = new Map();
+const rateCleanup = setInterval(() => {
+  const now = Date.now();
+  for (const [key, bucket] of rateBuckets) if (bucket.resetAt <= now) rateBuckets.delete(key);
+}, RATE_WINDOW_MS);
+rateCleanup.unref();
 let storedBytes = 0;
 let activeConversions = 0;
 
@@ -49,10 +55,10 @@ function errorCategory(message) {
 }
 
 const openAiFileSchema = z.object({
-  download_url: z.string().url(),
-  file_id: z.string().min(1),
-  mime_type: z.string().optional(),
-  file_name: z.string().optional(),
+  download_url: z.string().url().describe("Temporary HTTPS download URL supplied by ChatGPT for the selected PDF."),
+  file_id: z.string().min(1).describe("ChatGPT file identifier for the selected PDF."),
+  mime_type: z.string().optional().describe("Optional MIME type. When present, it must be application/pdf."),
+  file_name: z.string().optional().describe("Optional original PDF filename used to suggest the XLSX filename."),
 }).strict();
 
 const outputSchema = {
@@ -204,7 +210,10 @@ function pruneDownloads() {
   while (downloads.size > MAX_STORED_FILES || storedBytes > MAX_STORED_BYTES) removeDownload(downloads.keys().next().value);
 }
 
-function storeDownload(buffer, filename) {
+const expirationTimer = setInterval(pruneDownloads, Math.min(DOWNLOAD_TTL_MS, 60_000));
+expirationTimer.unref();
+
+export function storeDownload(buffer, filename) {
   if (buffer.length > MAX_STORED_BYTES) throw new Error("Generated workbook exceeds the temporary storage limit.");
   pruneDownloads();
   const token = randomBytes(24).toString("hex");
@@ -215,23 +224,27 @@ function storeDownload(buffer, filename) {
   return `${PUBLIC_BASE_URL}/downloads/${token}/${encodeURIComponent(filename)}`;
 }
 
+export function temporaryDownloadCount() {
+  return downloads.size;
+}
+
 export function createPluginServer() {
   const server = new McpServer({ name: "pdf-table-to-excel", version: "1.0.0" });
   server.registerTool(
     "convert_pdf_tables_to_excel",
     {
       title: "Convert PDF tables to Excel",
-      description: "Converts selectable tables in one user-provided PDF into a clean XLSX workbook. Use it only when the user explicitly asks to extract or convert PDF tables. It does not perform OCR on scanned image-only PDFs. The output download expires after 15 minutes.",
+      description: "Use this when the user asks to extract selectable tables from one PDF into an XLSX workbook. It handles invoices, reports, statements, schedules, rate cards, media plans, catalogues and price lists, including multiple detected tables. It does not perform OCR on scanned image-only PDFs. The generated download expires after 15 minutes.",
       inputSchema: {
         file: openAiFileSchema.describe("The PDF selected or uploaded by the user."),
-        output_filename: z.string().max(90).optional().describe("Optional XLSX filename."),
+        output_filename: z.string().max(90).optional().describe("Optional output filename of up to 90 characters. The service removes unsafe characters and adds .xlsx."),
       },
       outputSchema,
       annotations: {
         readOnlyHint: false,
         destructiveHint: false,
         openWorldHint: true,
-        idempotentHint: true,
+        idempotentHint: false,
       },
       _meta: {
         "openai/fileParams": ["file"],
@@ -290,21 +303,20 @@ function hostAllowed(req) {
 
 export function consumeRateLimit(req) {
   const now = Date.now();
-  const forwarded = String(req.headers["cf-connecting-ip"] || req.headers["x-forwarded-for"] || req.socket.remoteAddress || "unknown");
-  const client = forwarded.split(",")[0].trim().slice(0, 80);
-  const limits = [[`client:${client}`, RATE_LIMIT_PER_CLIENT], ["global", RATE_LIMIT_GLOBAL]];
-  for (const [key, limit] of limits) {
+  const consume = (key, limit) => {
     const current = rateBuckets.get(key);
     if (!current || current.resetAt <= now) {
+      if (rateBuckets.size >= MAX_RATE_BUCKETS) return false;
       rateBuckets.set(key, { count: 1, resetAt: now + RATE_WINDOW_MS });
-      continue;
+      return true;
     }
     if (current.count >= limit) return false;
     current.count += 1;
-  }
-  if (rateBuckets.size > 5000) {
-    for (const [key, bucket] of rateBuckets) if (bucket.resetAt <= now) rateBuckets.delete(key);
-  }
+    return true;
+  };
+  if (!consume("global", RATE_LIMIT_GLOBAL)) return false;
+  const client = String(req.headers["x-plugin-client-ip"] || req.socket.remoteAddress || "unknown").trim().slice(0, 80);
+  if (!consume(`client:${client}`, RATE_LIMIT_PER_CLIENT)) return false;
   return true;
 }
 
@@ -312,7 +324,7 @@ export function createHttpServer() {
   return http.createServer(async (req, res) => {
     if (!req.url || !hostAllowed(req)) return res.writeHead(421).end("Misdirected Request");
     const url = new URL(req.url, PUBLIC_BASE_URL);
-    if (req.method === "GET" && url.pathname === "/health") {
+    if (req.method === "GET" && ["/health", "/ready"].includes(url.pathname)) {
       res.writeHead(200, { "content-type": "application/json", "cache-control": "no-store" }).end(JSON.stringify({ status: "ok", service: "pdf-table-to-excel", version: "1.0.0" }));
       return;
     }
@@ -355,10 +367,14 @@ export function createHttpServer() {
       return;
     }
     if (req.method === "OPTIONS" && url.pathname === "/mcp") {
-      res.writeHead(204, { "access-control-allow-origin": "*", "access-control-allow-methods": "POST, GET, DELETE, OPTIONS", "access-control-allow-headers": "content-type, mcp-session-id", "access-control-expose-headers": "Mcp-Session-Id" }).end();
+      res.writeHead(204, { "access-control-allow-origin": "*", "access-control-allow-methods": "POST, OPTIONS", "access-control-allow-headers": "content-type", "access-control-expose-headers": "Mcp-Session-Id" }).end();
       return;
     }
-    if (url.pathname === "/mcp" && ["POST", "GET", "DELETE"].includes(req.method || "")) {
+    if (url.pathname === "/mcp" && ["GET", "DELETE"].includes(req.method || "")) {
+      res.writeHead(405, { allow: "POST, OPTIONS", "cache-control": "no-store" }).end("Method Not Allowed");
+      return;
+    }
+    if (url.pathname === "/mcp" && req.method === "POST") {
       if (!consumeRateLimit(req)) {
         logEvent("rate_limit_rejected");
         res.writeHead(429, { "content-type": "application/json", "retry-after": "60", "cache-control": "no-store" }).end(JSON.stringify({ error: "Rate limit exceeded. Try again in one minute." }));

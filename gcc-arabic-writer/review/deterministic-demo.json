@@ -1,0 +1,48 @@
+{
+  "description": "Deterministic local review fixture. Run npm test to verify the same contracts. This is not a portal demo recording.",
+  "cases": [
+    {
+      "tool": "prepare_gcc_arabic_brief",
+      "input": {
+        "task": "caption",
+        "market": "saudi-arabia",
+        "protected_literals": ["Maison X", "SAR 450"]
+      },
+      "expected": {
+        "language_policy": "Modern Standard Arabic",
+        "native_review_required": false,
+        "fingerprint": "c088d7ff1f571a3fb6de47615d68abfd9c1c5838691efffe3a44b46298c57a63"
+      }
+    },
+    {
+      "tool": "check_arabic_factual_fidelity",
+      "input": {
+        "source_text": "Maison X بسعر SAR 450",
+        "candidate_text": "Maison X بسعر SAR ٤٥٠",
+        "protected_literals": ["Maison X"]
+      },
+      "expected": {
+        "preservation_passed": true,
+        "missing_facts": [],
+        "extra_numeric_claims": []
+      }
+    },
+    {
+      "tool": "lint_gcc_arabic_copy",
+      "input": {
+        "text": "عطر يحمل ذاكرة المكان بحرفية دقيقة",
+        "market": "pan-arab",
+        "dialect_approved": false,
+        "approved_claims": [],
+        "minimum_arabic_ratio": 0.8
+      },
+      "expected": {
+        "passed": true,
+        "issues": [],
+        "words": 6,
+        "arabic_script_ratio": 1
+      }
+    }
+  ],
+  "remaining_gate": "A real public demo recording URL is required before OpenAI portal submission."
+}

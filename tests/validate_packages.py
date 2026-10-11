@@ -48,8 +48,12 @@ def validate_manifest(path: Path) -> None:
         for case in negative:
             if not case.get("prompt") or "should" not in str(case.get("description", "")).lower():
                 fail(f"incomplete negative review case: {path}")
-        if not review.get("demo_recording_url"):
-            fail(f"missing demo recording URL: {path}")
+        demo_url = review.get("demo_recording_url")
+        demo_status = review.get("demo_recording_status")
+        if not demo_url and demo_status != "required-before-portal-submission":
+            fail(f"missing truthful demo recording gate: {path}")
+        if demo_url and not str(demo_url).startswith("https://"):
+            fail(f"invalid demo recording URL: {path}")
 
 
 def validate_skill(path: Path) -> None:
@@ -73,6 +77,17 @@ def main() -> int:
         fail(f"expected 2 packaged skills, found {len(skills)}")
     for skill in skills:
         validate_skill(skill)
+    mcp_configs = list(ROOT.glob("*/mcp.json"))
+    if len(mcp_configs) != 2:
+        fail(f"expected 2 MCP configs, found {len(mcp_configs)}")
+    for config in mcp_configs:
+        data = json.loads(config.read_text())
+        servers = data.get("mcpServers", {})
+        if len(servers) != 1:
+            fail(f"expected one MCP server: {config}")
+        server = next(iter(servers.values()))
+        if server.get("type") != "streamable-http" or not str(server.get("url", "")).startswith("https://"):
+            fail(f"invalid MCP server: {config}")
     for path in ROOT.rglob("*"):
         if any(part in {"node_modules", ".venv", ".git", "__pycache__", "build"} for part in path.parts):
             continue

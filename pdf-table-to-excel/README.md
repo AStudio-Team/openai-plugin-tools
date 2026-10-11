@@ -1,28 +1,24 @@
 # PDF Table to Excel
 
-A narrow, universal OpenAI plugin prototype that converts selectable tables in PDF files into XLSX workbooks for any user or organization.
+A public OpenAI plugin that converts selectable tables in PDF files into downloadable XLSX workbooks for any user or organization.
 
 ## Local verification
 
 ```bash
-scripts/start-local.sh
-```
-
-The launcher creates an isolated `.venv`, installs the complete hashed dependency lock, and starts the local MCP server.
-
-Run tests with:
-
-```bash
-python3 -m unittest discover -s tests -v
+python3.11 -m venv .venv
+.venv/bin/pip install --require-hashes -r requirements-dev.lock
+npm ci --ignore-scripts
+PATH="$PWD/.venv/bin:$PATH" npm test
+npm audit --audit-level=high
 ```
 
 ## Current limits
 
 - Maximum decoded PDF size: 20 MB.
-- Selectable text tables only. OCR is not included in version 0.1.0.
-- Local prototype input is base64 PDF bytes.
-- Public hosting and ChatGPT file-library UI remain publication-phase work.
+- Selectable text tables only. OCR is not included.
+- One user-selected PDF per tool call.
+- Generated workbooks remain in memory for no more than 15 minutes and are removed by periodic expiration cleanup.
 
 ## External gates
 
-Public deployment, DNS, privacy and terms pages, developer identity verification, portal registration, submission and publication require fresh approval.
+Public deployment changes, developer identity verification, portal registration, submission and publication require fresh approval.

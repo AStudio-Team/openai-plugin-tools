@@ -60,10 +60,23 @@ class McpProtocolTests(unittest.TestCase):
         _, response = post({"jsonrpc": "2.0", "id": 2, "method": "tools/list"})
         tool = response["result"]["tools"][0]
         self.assertEqual(tool["name"], "convert_pdf_tables_to_excel")
+        self.assertEqual(
+            tool["description"],
+            "Use this when the user asks to extract selectable tables from one PDF into an XLSX workbook. It handles invoices, reports, statements, schedules, rate cards, media plans, catalogues and price lists, including multiple detected tables. It does not perform OCR on scanned image-only PDFs. The generated download expires after 15 minutes.",
+        )
+        self.assertEqual(tool["annotations"], {
+            "readOnlyHint": False,
+            "destructiveHint": False,
+            "idempotentHint": False,
+            "openWorldHint": True,
+        })
         self.assertEqual(tool["inputSchema"]["required"], ["file"])
         file_schema = tool["inputSchema"]["properties"]["file"]
         self.assertEqual(set(file_schema["properties"]), {"download_url", "file_id", "mime_type", "file_name"})
         self.assertEqual(set(file_schema["required"]), {"download_url", "file_id"})
+        self.assertIn("Temporary HTTPS", file_schema["properties"]["download_url"]["description"])
+        self.assertIn("file identifier", file_schema["properties"]["file_id"]["description"])
+        self.assertIn("up to 90 characters", tool["inputSchema"]["properties"]["output_filename"]["description"])
         self.assertEqual(tool["_meta"]["openai/fileParams"], ["file"])
 
     def test_rejects_missing_jsonrpc(self):
