@@ -6,7 +6,9 @@ author: ASTUDIO
 license: MIT
 ---
 
-# Growth Marketing Planner
+# Social Content Planner
+
+Social-content guidance is adapted from Corey Haines' marketingskills project, licensed under MIT.
 
 Use this skill when a founder, owner, small marketing team, product marketer, or consultant wants to decide which marketing approach to prioritize, compare realistic plans, or turn a selected strategy into a 30, 60, or 90-day action plan.
 

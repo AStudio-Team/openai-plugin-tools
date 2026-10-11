@@ -1,4 +1,8 @@
-# Growth Marketing Planner
+# Social Content Planner
+
+Social Content Planner turns a submitted brand brief into a reviewed weekly social content calendar and platform-ready post text. It does not post, schedule, access accounts, or retain submitted content after the response.
+
+The social-content guidance is adapted from Corey Haines' [marketingskills](https://github.com/coreyhaines31/marketingskills), licensed under MIT.
 
 A human-guided MCP App that turns a confirmed business brief into exactly three distinct growth strategies, supports visible revision and explicit selection, then exports one 30, 60, or 90-day plan.
 
