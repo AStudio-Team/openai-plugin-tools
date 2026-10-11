@@ -31,7 +31,7 @@
       "interface": {
         "displayName": "Verified Buy Link",
         "shortDescription": "Check product links to buy",
-        "longDescription": "Compare one to five exact public product pages supplied by the user. An interactive checkpoint confirms product identity, delivery country, currency, budget, permitted conditions and retailer constraints before any retrieval. Sources are fetched only when a current domain access record and robots policy permit it. The comparison separates product match, current purchase control, retailer identity, target-brand authorization, price, delivery and return restrictions. Human selection triggers an immediate recheck before the MCP host may open a normalized product-detail page. The app never discovers retailers, buys, reserves, logs in, adds to cart, starts checkout, submits forms or guarantees authenticity or safety.",
+        "longDescription": "Verified Buy Link is a shopping research tool that checks the exact product pages you paste before you buy. Confirm the product, variant, delivery country, currency and budget at a checkpoint; the plugin then inspects one to five supplied product pages and reports evidence for product match, retailer identity, price, delivery and return terms, with a recheck before any link is opened. It is for shoppers comparing specific listings. Limits: it never searches for retailers, finds deals, buys, reserves, logs in, adds to cart or guarantees authenticity; pages are fetched only where a documented access right and robots permission exist.",
         "developerName": "ASTUDIO",
         "category": "Shopping",
         "capabilities": [
@@ -42,9 +42,9 @@
           "Recheck a chosen page before opening it"
         ],
         "websiteURL": "https://www.astudio.agency/tools/verified-buy-link",
-        "supportURL": "https://www.astudio.agency/tools/verified-buy-link/support",
-        "privacyPolicyURL": "https://www.astudio.agency/tools/verified-buy-link/privacy",
-        "termsOfServiceURL": "https://www.astudio.agency/tools/verified-buy-link/terms",
+        "supportURL": "https://www.astudio.agency/tools/support",
+        "privacyPolicyURL": "https://www.astudio.agency/tools/privacy",
+        "termsOfServiceURL": "https://www.astudio.agency/tools/terms",
         "defaultPrompt": [
           "Check these product pages and tell me which one matches the exact model.",
           "Compare price and return terms on these product links for UAE delivery.",
@@ -104,7 +104,8 @@
           ]
         },
         "commerce": false,
-        "commerce_description": "Research-only. The app does not purchase, reserve, add to cart, start checkout or process payments."
+        "commerce_description": "Research-only. The app does not purchase, reserve, add to cart, start checkout or process payments.",
+        "demo_recording_url": "https://www.astudio.agency/tools/review/verified-buy-link-demo.mp4"
       },
       "publication": {
         "release_notes": "Initial public release with user-supplied exact URL intake, explicit market confirmation, fail-closed source-rights and robots checks, evidence comparison, immediate candidate recheck, SSRF-safe retrieval and 30-minute encrypted report expiry."

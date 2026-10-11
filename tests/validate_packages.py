@@ -51,6 +51,8 @@ def validate_manifest(path: Path) -> None:
         demo_url = review.get("demo_recording_url")
         if "demo_recording_status" in review:
             fail(f"demo_recording_status is rejected by the OpenAI portal validator (extra input): {path}")
+        if not demo_url:
+            fail(f"missing demo_recording_url (the portal requires a video walkthrough before submission): {path}")
         if demo_url and not str(demo_url).startswith("https://"):
             fail(f"invalid demo recording URL: {path}")
 
