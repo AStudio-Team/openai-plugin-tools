@@ -11,7 +11,7 @@ def rpc(identifier: int, method: str, params: dict | None = None) -> dict:
     payload = {"jsonrpc": "2.0", "id": identifier, "method": method}
     if params is not None:
         payload["params"] = params
-    request = urllib.request.Request(endpoint, data=json.dumps(payload).encode(), headers={"Content-Type": "application/json", "Accept": "application/json, text/event-stream"})
+    request = urllib.request.Request(endpoint, data=json.dumps(payload).encode(), headers={"Content-Type": "application/json", "Accept": "application/json, text/event-stream", "User-Agent": "astudio-plugin-tools-deploy-check/1.0"})
     with urllib.request.urlopen(request, timeout=45) as response:
         return json.load(response)
 
