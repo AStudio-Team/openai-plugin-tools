@@ -3,8 +3,7 @@
   "mcpServers": {
     "ai-crawler-readiness-auditor": {
       "type": "streamable-http",
-      "url": "https://www.astudio.agency/openai-plugins/ai-crawler-readiness-auditor/mcp",
-      "authentication": "none"
+      "url": "https://www.astudio.agency/openai-plugins/ai-crawler-readiness-auditor/mcp"
     }
   }
 }
