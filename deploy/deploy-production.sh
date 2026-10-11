@@ -430,7 +430,7 @@ check_mcp https://www.astudio.agency/openai-plugins/social-content-planner/mcp s
 check_resources https://www.astudio.agency/openai-plugins/social-content-planner/mcp ui://social-content-planner/brief-builder.html,ui://social-content-planner/brief-review.html,ui://social-content-planner/calendar-preview.html,ui://social-content-planner/export-panel.html
 check_health https://www.astudio.agency/openai-plugins/cold-email-writer/health cold-email-writer
 check_health https://www.astudio.agency/openai-plugins/cold-email-writer/ready cold-email-writer
-check_mcp https://www.astudio.agency/openai-plugins/cold-email-writer/mcp cold-email-writer open_cold_email_brief,review_cold_email_brief,draft_cold_email_sequence,select_cold_email_variant,export_cold_email_sequence
+check_mcp https://www.astudio.agency/openai-plugins/cold-email-writer/mcp cold-email-writer open_cold_email_brief,review_cold_email_brief,approve_cold_email_brief,draft_cold_email_sequence,submit_variant_selection,export_cold_email_sequence
 ACTUAL_OPENAI_CHALLENGE="$(curl --fail --silent --show-error https://www.astudio.agency/.well-known/openai-apps-challenge)"
 if [ "$ACTUAL_OPENAI_CHALLENGE" != "$EXPECTED_OPENAI_CHALLENGE" ]; then
   echo "OpenAI Apps challenge response mismatch" >&2
