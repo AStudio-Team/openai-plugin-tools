@@ -1,0 +1,9 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
+  "mcpServers": {
+    "growth-marketing-planner": {
+      "type": "streamable-http",
+      "url": "https://www.astudio.agency/openai-plugins/growth-marketing-planner/mcp"
+    }
+  }
+}
