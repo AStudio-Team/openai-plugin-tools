@@ -35,6 +35,10 @@ def validate_manifest(path: Path) -> None:
         fail(f"displayName too long: {path}")
     if len(interface["shortDescription"]) > 30:
         fail(f"shortDescription too long: {path}")
+    for key in ("composerIcon", "logo"):
+        asset = interface.get(key)
+        if not asset or not (path.parent / asset).is_file():
+            fail(f"missing packaged interface.{key}: {path}")
     review = data.get("extensions", {}).get("com.openai", {}).get("review")
     if review:
         cases = review.get("test_cases", {})
