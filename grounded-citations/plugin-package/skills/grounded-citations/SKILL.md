@@ -1,6 +1,6 @@
 ---
 name: grounded-citations
-description: Build citation ledgers from user-provided sources, verify exact quotes, and check draft citation mappings.
+description: "Use when the user asks to check, verify or build citations, sources, references or exact quotes against web pages, attached documents or pasted text they supply. Do not use to judge whether a claim is true, to search the web for new sources, or for legal or academic review."
 license: MIT
 metadata:
   author: Hermes Agent + Teknium

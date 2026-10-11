@@ -1,6 +1,6 @@
 ---
 name: pdf-table-to-excel
-description: "Use when the user explicitly asks to convert or extract selectable tables from an attached PDF into an Excel XLSX workbook."
+description: "Use when the user asks to convert or extract tables from an attached PDF (invoice, bank statement, report, price list, schedule, catalogue) into an Excel XLSX workbook or spreadsheet. Do not use for scanned image-only PDFs, Word or image files, or PDFs without tables."
 version: 1.1.0
 ---
 

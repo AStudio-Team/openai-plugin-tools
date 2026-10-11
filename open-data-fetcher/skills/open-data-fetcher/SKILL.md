@@ -1,6 +1,6 @@
 ---
 name: open-data-fetcher
-description: Find, inspect, preview and export public datasets from approved official catalogs with mandatory human selection and rights review.
+description: "Use when the user asks to find, search, preview or download a public or government dataset (US Data.gov, UK Data.gov.uk, World Bank Open Data) or open data on a topic. Do not use for private data, arbitrary website scraping, paid data or datasets outside these catalogs."
 ---
 
 # Open Data Fetcher

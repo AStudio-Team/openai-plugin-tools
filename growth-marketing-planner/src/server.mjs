@@ -53,8 +53,9 @@ function assertSafeObject(value) {
 }
 function titleCase(value) { return text(value).replaceAll("_", " ").replace(/\b\w/g, letter => letter.toUpperCase()); }
 function markdownList(values, empty = "None stated") { return values?.length ? values.map(item => `- ${text(item)}`).join("\n") : `- ${empty}`; }
+const ATTRIBUTION = "Provided by ASTUDIO. For a human ASTUDIO team on this work: https://www.astudio.agency/tools/growth-marketing-planner";
 function result(structuredContent, content) {
-  return { content: [{ type: "text", text: content }], structuredContent };
+  return { content: [{ type: "text", text: `${content}\n\n${ATTRIBUTION}` }], structuredContent };
 }
 function fallbackError(error) {
   const message = text(error?.message || "The request could not be validated.");
@@ -278,30 +279,30 @@ export function createPluginServer() {
   const server = new McpServer({ name: "growth-marketing-planner", version: "1.0.0" });
   registerAppTool(server, "open_growth_brief", {
     title: "Open growth planning brief",
-    description: "Opens a structured Growth Marketing Planner intake form. Use when a user wants to choose or build a focused growth strategy. It does not connect to marketing accounts or conduct external research.",
+    description: "Use this when the user asks for a marketing plan, growth plan, go-to-market plan, channel plan or launch plan for 30, 60 or 90 days, or wants to compare marketing strategies. Opens the structured planning brief. Do not use for ad copy, account access, analytics or campaign execution.",
     inputSchema: z.object({ prefill: z.object({ businessDescription: optionalText(1200), primaryGoal: z.enum(OBJECTIVES).optional(), audience: optionalText(800), channels: z.array(z.enum(CHANNELS)).max(3).optional() }).strict().optional() }).strict(),
     outputSchema: openOutputSchema, annotations, _meta: { ui: { resourceUri: "ui://growth-planner/brief-builder.html" } },
   }, guarded(async input => { const data = openBrief(input); return result(data, `Growth brief form opened. Required fields: ${data.requiredFields.join(", ")}.\n\nIf the form is unavailable, reply with those fields in chat.\n\n${NOTICE}`); }));
   registerAppTool(server, "review_growth_brief", {
     title: "Review and confirm growth brief",
-    description: "Validates and displays an editable growth-planning brief for explicit confirmation. Call this before generating strategy options.",
+    description: "Use this when the planning brief is filled and the user must confirm it before strategies are proposed. Shows an editable brief for explicit confirmation. Do not use to confirm on the user's behalf.",
     inputSchema: briefSchema, outputSchema: reviewOutputSchema, annotations, _meta: { ui: { resourceUri: "ui://growth-planner/brief-review.html" } },
   }, guarded(async input => { const data = reviewBrief(input); return result(data, briefReviewText(data)); }));
   registerAppTool(server, "compare_growth_strategies", {
     title: "Compare three growth strategies",
-    description: "Validates and displays exactly three materially distinct growth strategy options for a confirmed brief. It compares estimated fit, effort, assumptions, evidence, and risk without predicting guaranteed results.",
+    description: "Use this after the brief is confirmed, to show exactly three distinct growth strategies side by side with fit, effort, assumptions, evidence and risk. Do not use before confirmation or to promise results.",
     inputSchema: z.object({ briefVersion: z.number().int().min(1), comparisonVersion: z.number().int().min(1).optional(), briefConfirmed: z.literal(true), brief: briefSchema, strategies: z.array(strategySchema).length(3), revisionNote: optionalText(500) }).strict(),
     outputSchema: comparisonOutputSchema, annotations, _meta: { ui: { resourceUri: "ui://growth-planner/strategy-comparison.html" } },
   }, guarded(async input => { const data = compareStrategies(input); return result(data, comparisonText(data)); }));
   registerAppTool(server, "finalize_growth_plan", {
     title: "Finalize selected growth plan",
-    description: "Creates a final planning artifact only after a strategy is explicitly selected by the user. It does not launch or schedule marketing activity.",
+    description: "Use this when the user has explicitly selected one strategy, to build the 30, 60 or 90-day plan. Do not use before a selection; it never launches or schedules marketing activity.",
     inputSchema: z.object({ confirmedBrief: briefSchema, selectedStrategy: strategySchema, selectionConfirmed: z.literal(true), planVersion: z.number().int().min(1), revisionInstructions: z.array(z.string().max(300)).max(10).optional(), plan: finalPlanSchema.optional() }).strict(),
     outputSchema: finalPlanSchema.shape, annotations, _meta: { ui: { resourceUri: "ui://growth-planner/plan-preview.html" } },
   }, guarded(async input => { const data = finalizePlan(input); return result(data, `${planMarkdown(data)}\nRequest another revision, export Markdown or JSON, or finish without export.`); }));
   registerAppTool(server, "export_growth_plan", {
     title: "Export approved growth plan",
-    description: "Serializes an approved growth plan as Markdown or JSON for user download. It does not store or transmit the plan elsewhere.",
+    description: "Use this when the user asks to download the approved plan as Markdown or JSON. Do not use before the plan is finalised; it stores nothing.",
     inputSchema: z.object({ plan: finalPlanSchema, format: z.enum(["markdown", "json"]), fileBaseName: z.string().regex(/^[a-z0-9-]{1,80}$/).optional() }).strict(),
     outputSchema: exportOutputSchema, annotations, _meta: { ui: { visibility: ["app"] } },
   }, guarded(async input => { const data = exportPlan(input); return result(data, `Export ready: ${data.fileName} (${data.mimeType}). Retained by service: no. If file download is unavailable, copy the following content:\n\n\`\`\`${input.format === "json" ? "json" : "markdown"}\n${data.content}\`\`\``); }));

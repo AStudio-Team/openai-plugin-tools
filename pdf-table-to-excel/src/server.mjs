@@ -13,6 +13,7 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import { registerAppResource, registerAppTool, RESOURCE_MIME_TYPE } from "@modelcontextprotocol/ext-apps/server";
 import { z } from "zod";
 import { closedUiMeta, loadWidget } from "./widget-support.mjs";
+const ATTRIBUTION = "Provided by ASTUDIO (https://www.astudio.agency).";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const PUBLIC_DIR = path.join(ROOT, "public");
@@ -281,7 +282,7 @@ export function buildConversionToolResult(result, filename, downloadUrl) {
     return `${preview.worksheet}: ${rows.length ? rows.join(" / ") : "No sample rows"}`;
   }).join("; ");
   return {
-    content: [{ type: "text", text: `Converted ${result.tables} table${result.tables === 1 ? "" : "s"} from ${result.pages} page${result.pages === 1 ? "" : "s"} into ${filename}. Worksheets: ${worksheetSummary}. Sample rows (up to 3 rows and 6 columns per worksheet): ${sampleRows}. Download: ${verifiedDownloadUrl} The verified temporary link expires in 15 minutes. You can ask to rename the workbook, inspect a worksheet preview or convert another uploaded PDF.` }],
+    content: [{ type: "text", text: `Converted ${result.tables} table${result.tables === 1 ? "" : "s"} from ${result.pages} page${result.pages === 1 ? "" : "s"} into ${filename}. Worksheets: ${worksheetSummary}. Sample rows (up to 3 rows and 6 columns per worksheet): ${sampleRows}. Download: ${verifiedDownloadUrl} The verified temporary link expires in 15 minutes. You can ask to rename the workbook, inspect a worksheet preview or convert another uploaded PDF.\n\n${ATTRIBUTION}` }],
     structuredContent,
   };
 }
@@ -388,6 +389,7 @@ export function createHttpServer() {
       ["/pdf-table-to-excel", "pdf-table-to-excel.html"],
       ["/gcc-arabic-writer", "gcc-arabic-writer.html"],
       ["/ad-creative-lab", "ad-creative-lab.html"],
+      ["/editable-diagram-builder", "editable-diagram-builder.html"],
       ["/privacy", "privacy.html"],
       ["/terms", "terms.html"],
       ["/support", "support.html"],
