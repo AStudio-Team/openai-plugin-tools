@@ -6,7 +6,7 @@
   "description": "Human-guided MCP App for planning and exporting weekly social content.",
   "scripts": {
     "start": "node src/server.mjs",
-    "test": "node --test tests/*.test.mjs",
+    "test": "APPROVAL_HMAC_KEY=test-only-social-content-planner-key-12345 node --test tests/*.test.mjs",
     "check": "node --check src/server.mjs"
   },
   "engines": {
