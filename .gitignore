@@ -14,3 +14,12 @@ FACTS.md
 FACTS.md.bak
 .FACTS.lock
 CHANGES-BY-CLAUDE.md
+coverage/
+dist/
+.env*
+*.log
+__MACOSX/
+*.tmp
+.cache/
+test-results/
+playwright-report/

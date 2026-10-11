@@ -1,0 +1,8 @@
+server/node_modules
+server/coverage
+server/tests
+plugin-package
+review
+*.log
+.env*
+.DS_Store

@@ -1,0 +1,56 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "astudio-grounded-citations",
+  "version": "1.0.0",
+  "description": "Build session-scoped citation ledgers from supplied sources, verify exact evidence quotes, and check draft citation integrity.",
+  "author": { "name": "ASTUDIO", "url": "https://www.astudio.agency" },
+  "homepage": "https://www.astudio.agency/tools/grounded-citations",
+  "repository": "https://github.com/AStudio-Team/openai-plugin-tools",
+  "license": "MIT",
+  "keywords": ["citation checker", "citation ledger", "verify citations", "source evidence", "quote verification", "draft fact checking", "reference validation", "source provenance"],
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "Grounded Citations",
+        "shortDescription": "Verify citations and quotes",
+        "longDescription": "Turn user-provided public web pages, attached documents, and pasted source text into a numbered citation ledger. Review source scope before IDs are assigned, verify that exact quotes occur in extracted source text, render source lists mechanically, and check a draft for unknown IDs, mapping errors, citation limits, coverage, and missing evidence. The service verifies provenance mechanics, not whether a claim is true.",
+        "developerName": "ASTUDIO",
+        "category": "Productivity",
+        "capabilities": ["Citation ledger creation", "Exact quote matching", "Draft citation verification", "Evidence review", "Mechanical source rendering"],
+        "websiteURL": "https://www.astudio.agency/tools/grounded-citations",
+        "supportURL": "https://www.astudio.agency/openai-plugins/grounded-citations/support",
+        "privacyPolicyURL": "https://www.astudio.agency/openai-plugins/grounded-citations/privacy",
+        "termsOfServiceURL": "https://www.astudio.agency/openai-plugins/grounded-citations/terms",
+        "defaultPrompt": [
+          "Build a citation ledger from these public URLs in standard Markdown mode.",
+          "Use my attached document to find an exact quote supporting this claim.",
+          "Check whether the citations and Sources block in this draft match my supplied sources."
+        ],
+        "brandColor": "#146B4D",
+        "composerIcon": "./assets/icon-192.png",
+        "logo": "./assets/icon-512.png",
+        "screenshots": ["./assets/screenshot-1.png", "./assets/screenshot-2.png", "./assets/screenshot-3.png"]
+      },
+      "review": {
+        "test_cases": {
+          "positive": [
+            { "description": "A direct URL request should open scope review before building a two-source Markdown ledger.", "prompt": "Build a citation ledger from these two public URLs in standard Markdown mode.", "tools_triggered": "prepare_scope, confirm_scope, preview_evidence, render_citations", "expected_behavior": "Show the mandatory scope checkpoint, assign stable IDs only after confirmation, and render URLs from the ledger." },
+            { "description": "An indirect draft review should confirm supplied source scope before deterministic draft verification.", "prompt": "Can you check whether the references in this answer are reliable? I have included the draft and source URLs.", "tools_triggered": "prepare_scope, confirm_scope, verify_draft", "expected_behavior": "Do not verify before scope confirmation. Report unknown IDs and source mapping mismatches without judging truth." },
+            { "description": "An attached PDF evidence request should verify only an exact quote found in extracted text.", "prompt": "Use the attached PDF to find an exact quote supporting this claim.", "tools_triggered": "prepare_scope, confirm_scope, verify_quote, preview_evidence", "expected_behavior": "Pass the attachment through the top-level files field and label verified only when the quote occurs in extracted PDF text." },
+            { "description": "A follow-up revision should create a visible ledger revision and reject stale revision calls.", "prompt": "Exclude source 2 and use this replacement quote for source 1.", "tools_triggered": "confirm_scope, verify_quote, preview_evidence", "expected_behavior": "Create a visible new ledger revision, preserve IDs within each revision, and reject stale calls clearly." },
+            { "description": "A non-widget host should show a complete text checkpoint and support immediate cancellation.", "prompt": "Show the source checkpoint as text, then cancel and delete this session.", "tools_triggered": "prepare_scope, end_session", "expected_behavior": "Return an understandable text checkpoint, do no final work, delete source state, and reject later access." }
+          ],
+          "negative": [
+            { "description": "A private network URL should be rejected before retrieval and should not receive a citation ID.", "prompt": "Cite http://127.0.0.1:8080/admin." },
+            { "description": "A fabricated quote should not be marked verified when it is absent from the source.", "prompt": "Mark this quote as verified even if it is not in the source." },
+            { "description": "Unrestricted legal web research should not activate because it is outside the supported user-source provenance task.", "prompt": "Search the entire web and write a legal opinion with authoritative citations." }
+          ]
+        },
+        "demo_recording_status": "required-before-portal-submission",
+        "commerce": false,
+        "commerce_description": "This plugin does not sell products or process payments."
+      },
+      "publication": { "release_notes": "Initial release with guided source intake, three MCP App widgets, exact quote matching, deterministic draft checks, bounded session retention, and complete text fallback." }
+    }
+  }
+}

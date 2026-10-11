@@ -20,6 +20,9 @@ These plugins contain no client data, private corpora, credentials or internal A
 - **Verified Buy Link** compares only exact product-page URLs supplied by the user through an explicit market checkpoint and evidence-led human selection.
 
 No plugin contains client data, private corpora, credentials or internal ASTUDIO procedures.
+- **Grounded Citations** builds confirmed citation ledgers from user-provided sources, verifies exact quote occurrence and checks draft citation integrity through MCP App widgets or text fallback.
+
+None of the plugins contains client data, private corpora, credentials or internal ASTUDIO procedures.
 
 ## Public pages
 
@@ -42,6 +45,8 @@ npm --prefix ai-crawler-readiness-auditor test
 npm --prefix open-data-fetcher test
 CHECKPOINT_SECRET=local-development-secret-at-least-32-bytes npm --prefix editable-diagram-builder test
 npm --prefix verified-buy-link test
+npm --prefix grounded-citations/server test
+npm --prefix grounded-citations/server run check
 ```
 
 ## License
