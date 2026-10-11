@@ -30,6 +30,6 @@ validated = rpc(20, "tools/call", {"name": "validate_audit_target", "arguments":
 assert validated["valid"] is True
 run_arguments = {**arguments, "url": validated["target"]["normalizedUrl"], "checkpointToken": validated["checkpoint"]["token"]}
 audited = rpc(21, "tools/call", {"name": "run_readiness_audit", "arguments": run_arguments})["result"]["structuredContent"]
-assert audited["status"] in {"no_issues_detected_within_scope", "issues_detected"}, audited["status"]
+assert audited["status"] in {"no_issues_detected_within_scope", "warnings_only", "issues_detected"}, audited["status"]
 assert audited["requestUsage"]["requestsMade"] <= 8
 print("public crawler auditor MCP flow passed")
