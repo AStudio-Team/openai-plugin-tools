@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    :root{color-scheme:light dark;--bg:#f7f4ed;--card:#fff;--ink:#211d1a;--muted:#6c645e;--line:#d9d1c8;--accent:#0b6b57;--soft:#e3f2ed;--warn:#8a4b0f;--radius:18px}*{box-sizing:border-box}html.dark{--bg:#171815;--card:#22231f;--ink:#f6f2e9;--muted:#b9b2a8;--line:#41423b;--accent:#73d8bc;--soft:#253c35;--warn:#f2b36f}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding:var(--safe-top,0) var(--safe-right,0) var(--safe-bottom,0) var(--safe-left,0)}main{padding:18px;max-width:880px;margin:auto}.top{display:flex;gap:16px;align-items:flex-start;justify-content:space-between;margin-bottom:16px}.eyebrow{text-transform:uppercase;letter-spacing:.12em;font-size:11px;font-weight:800;color:var(--accent)}h1{font-size:26px;line-height:1.1;margin:5px 0 6px;letter-spacing:-.025em}.step{font-size:12px;color:var(--muted);white-space:nowrap}.notice{background:var(--soft);border:1px solid color-mix(in srgb,var(--accent) 30%,transparent);padding:12px 14px;border-radius:12px;margin-bottom:16px}.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.wide{grid-column:1/-1}label{font-weight:700;font-size:12px;display:grid;gap:6px}input,select,textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 11px;min-width:0}textarea{min-height:86px;resize:vertical}.help{font-size:11px;color:var(--muted);font-weight:400}.actions{display:flex;justify-content:flex-end;gap:9px;margin-top:16px;flex-wrap:wrap}button{font:inherit;font-weight:750;border-radius:999px;border:1px solid var(--line);padding:10px 15px;background:var(--card);color:var(--ink);cursor:pointer}button.primary{background:var(--accent);border-color:var(--accent);color:#fff}html.dark button.primary{color:#10241f}button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 40%,transparent);outline-offset:2px}.summary{display:grid;grid-template-columns:160px 1fr;gap:9px 14px}.summary dt{font-weight:750}.summary dd{margin:0;color:var(--muted);word-break:break-word}.error{color:#a43225;font-weight:700;margin-top:12px}.hidden{display:none!important}@media(max-width:620px){main{padding:14px}.grid{grid-template-columns:1fr}.wide{grid-column:auto}.summary{grid-template-columns:1fr;gap:2px}.summary dd{margin-bottom:8px}.actions button{flex:1}.top{display:block}.step{margin-top:7px}}
+  </style>
+</head>
+<body>
+<main>
+  <div class="top"><div><div class="eyebrow">Verified Buy Link</div><h1 id="heading">Define the exact product</h1></div><div class="step" id="step">Step 1 of 2</div></div>
+  <div class="notice">Verified Buy Link researches public listings. It does not purchase, reserve, log in, add to cart, or guarantee authenticity or safety.</div>
+  <section class="card" id="intake">
+    <form id="form">
+      <div class="grid">
+        <label>Brand or manufacturer<input name="brand" required maxlength="120" autocomplete="off"></label>
+        <label>Product name<input name="name" required maxlength="160" autocomplete="off"></label>
+        <label>Model, edition or generation<input name="model" maxlength="120" autocomplete="off"></label>
+        <label>Variant, color or storage<input name="variant" maxlength="120" autocomplete="off"></label>
+        <label>Size or pack size<input name="size" maxlength="80" autocomplete="off"></label>
+        <label>SKU, GTIN, UPC, EAN, ISBN or MPN<input name="identifier" maxlength="80" autocomplete="off"></label>
+        <label class="wide">Exact product-page URLs, one per line<textarea name="urls" required placeholder="https://retailer.example/products/exact-item" aria-describedby="url-help"></textarea><span class="help" id="url-help">Enter 1 to 5 exact public product pages. No search-result, cart, checkout, login or shortened links.</span></label>
+        <label>Delivery market<select name="country" required><option value="">Select ISO country</option><option value="AE">United Arab Emirates (AE)</option><option value="SA">Saudi Arabia (SA)</option><option value="US">United States (US)</option><option value="GB">United Kingdom (GB)</option><option value="CA">Canada (CA)</option><option value="AU">Australia (AU)</option><option value="DE">Germany (DE)</option><option value="FR">France (FR)</option><option value="SG">Singapore (SG)</option><option value="JP">Japan (JP)</option></select><span class="help">Commercial delivery country only. Do not enter an address or city.</span></label>
+        <label>Currency<input name="currency" required maxlength="3" pattern="[A-Za-z]{3}" placeholder="AED"></label>
+        <label>Maximum delivered price<input name="budget" type="number" min="0" step="0.01"></label>
+        <label>Maximum lead time in days<input name="lead" type="number" min="0" max="365" step="1"></label>
+        <label>Permitted conditions<select name="conditions" multiple size="6" required><option value="new" selected>New</option><option value="used">Used</option><option value="refurbished">Refurbished</option><option value="tester">Tester</option><option value="decant">Decant</option><option value="open_box">Open box</option></select></label>
+        <label>Marketplace tolerance<select name="marketplace"><option value="retailers_only">Retailers only</option><option value="marketplaces_allowed">Marketplaces allowed</option><option value="marketplaces_preferred">Marketplaces preferred</option></select></label>
+        <label>Authorization<select name="authorization"><option value="required">Required</option><option value="preferred" selected>Preferred</option><option value="not_required">Not required</option></select></label>
+        <label>Strict returns<select name="strictReturns"><option value="false">Not acceptable</option><option value="true">Acceptable</option></select></label>
+        <label>Substitutions<select name="substitutions"><option value="false">Not permitted</option><option value="true">Permitted</option></select></label>
+        <label>Excluded retailer domains<input name="excluded" placeholder="example.com, shop.example" autocomplete="off"><span class="help">Domains only, separated by commas.</span></label>
+      </div>
+      <div class="error hidden" id="error" role="alert"></div>
+      <div class="actions"><button type="button" id="cancel-a">Cancel</button><button class="primary" type="submit">Review details</button></div>
+    </form>
+  </section>
+  <section class="card hidden" id="checkpoint" aria-live="polite">
+    <dl class="summary" id="summary"></dl>
+    <div class="error hidden" id="confirm-error" role="alert"></div>
+    <div class="actions"><button type="button" id="cancel-b">Cancel</button><button type="button" id="edit">Edit details</button><button class="primary" type="button" id="confirm">Confirm and research</button></div>
+  </section>
+</main>
+<script type="module">
+/*__EXT_APPS_BUNDLE__*/
+const { App } = globalThis.ExtApps;
+const app = new App({ name: "Verified Buy Link Intake", version: "1.0.0" }, {}, { autoResize: true });
+const form = document.getElementById("form");
+const intake = document.getElementById("intake");
+const checkpoint = document.getElementById("checkpoint");
+const error = document.getElementById("error");
+let draft;
+
+function setTheme(context) {
+  document.documentElement.classList.toggle("dark", context?.theme === "dark");
+  const inset = context?.safeAreaInsets || {};
+  for (const side of ["top","right","bottom","left"]) document.documentElement.style.setProperty(`--safe-${side}`, `${Number(inset[side] || 0)}px`);
+}
+function lines(value){ return value.split(/\n+/).map(item => item.trim()).filter(Boolean); }
+function selected(select){ return [...select.selectedOptions].map(option => option.value); }
+function collect(){
+  const data = new FormData(form);
+  const urls = lines(data.get("urls") || "");
+  if (urls.length < 1 || urls.length > 5) throw new Error("Enter between 1 and 5 product-page URLs.");
+  for (const value of urls) {
+    const url = new URL(value);
+    if (url.protocol !== "https:" || url.username || url.password) throw new Error("Every product URL must be public HTTPS without embedded credentials.");
+    if (/\b(cart|checkout|login|signin|payment|subscribe)\b/i.test(url.pathname)) throw new Error("Use product-detail pages only, not cart, checkout, login, payment or subscription pages.");
+  }
+  const conditions = selected(form.elements.conditions);
+  if (!conditions.length) throw new Error("Select at least one permitted condition.");
+  const identifier = String(data.get("identifier") || "").trim();
+  return {
+    product: { brand:data.get("brand").trim(), name:data.get("name").trim(), model:data.get("model").trim() || undefined, variant:data.get("variant").trim() || undefined, size:data.get("size").trim() || undefined, identifiers: identifier ? { sku:identifier } : undefined },
+    product_urls: urls,
+    market: { country_code:data.get("country"), currency:data.get("currency").toUpperCase() },
+    constraints: { maximum_delivered_price:data.get("budget") ? Number(data.get("budget")) : undefined, acceptable_conditions:conditions, substitutions_allowed:data.get("substitutions") === "true", authorization_requirement:data.get("authorization"), maximum_lead_days:data.get("lead") ? Number(data.get("lead")) : undefined, marketplace_tolerance:data.get("marketplace"), strict_returns_acceptable:data.get("strictReturns") === "true", excluded_domains:String(data.get("excluded") || "").split(",").map(value => value.trim().toLowerCase()).filter(Boolean) }
+  };
+}
+function addSummary(term, value){ const dt=document.createElement("dt");dt.textContent=term;const dd=document.createElement("dd");dd.textContent=value || "Not supplied";document.getElementById("summary").append(dt,dd); }
+function showCheckpoint(){
+  document.getElementById("summary").replaceChildren();
+  addSummary("Exact product", [draft.product.brand,draft.product.name,draft.product.model,draft.product.variant,draft.product.size].filter(Boolean).join(" "));
+  addSummary("Product pages", draft.product_urls.join("\n"));
+  addSummary("Delivery market", draft.market.country_code);
+  addSummary("Currency", draft.market.currency);
+  addSummary("Maximum delivered", draft.constraints.maximum_delivered_price == null ? "No maximum" : `${draft.market.currency} ${draft.constraints.maximum_delivered_price}`);
+  addSummary("Lead time", draft.constraints.maximum_lead_days == null ? "Not supplied" : `${draft.constraints.maximum_lead_days} days`);
+  addSummary("Conditions", draft.constraints.acceptable_conditions.join(", "));
+  addSummary("Marketplace tolerance", draft.constraints.marketplace_tolerance.replaceAll("_"," "));
+  addSummary("Authorization", draft.constraints.authorization_requirement.replaceAll("_"," "));
+  addSummary("Strict returns", draft.constraints.strict_returns_acceptable ? "Acceptable" : "Not acceptable");
+  addSummary("Excluded domains", draft.constraints.excluded_domains.join(", ") || "None");
+  intake.classList.add("hidden"); checkpoint.classList.remove("hidden");
+  document.getElementById("heading").textContent="Confirm the research scope"; document.getElementById("step").textContent="Step 2 of 2";
+  document.getElementById("edit").focus();
+}
+form.addEventListener("submit", event => { event.preventDefault(); try{ if(!form.reportValidity()) return; draft=collect(); error.classList.add("hidden"); showCheckpoint(); }catch(reason){ error.textContent=reason.message; error.classList.remove("hidden"); } });
+document.getElementById("edit").addEventListener("click",()=>{ checkpoint.classList.add("hidden");intake.classList.remove("hidden");document.getElementById("heading").textContent="Define the exact product";document.getElementById("step").textContent="Step 1 of 2";form.elements.brand.focus(); });
+for(const id of ["cancel-a","cancel-b"]) document.getElementById(id).addEventListener("click",()=>app.sendMessage({role:"user",content:[{type:"text",text:"Cancel Verified Buy Link research. Do not fetch any product page."}]}));
+document.getElementById("confirm").addEventListener("click",async()=>{
+  const button=document.getElementById("confirm"); button.disabled=true; button.textContent="Sending confirmation...";
+  try{
+    const payload={...draft,confirmation:{confirmed:true,confirmed_at:new Date().toISOString()}};
+    await app.sendMessage({role:"user",content:[{type:"text",text:`I confirm this Verified Buy Link research scope. Call verify_buy_options with exactly this JSON and no additional URLs or personal data:\n${JSON.stringify(payload)}`}]});
+    button.textContent="Confirmed";
+  }catch(reason){document.getElementById("confirm-error").textContent="Could not send confirmation. No research started.";document.getElementById("confirm-error").classList.remove("hidden");button.disabled=false;button.textContent="Confirm and research";}
+});
+app.ontoolinput=({arguments:args})=>{ if(args?.supplied_product_url) form.elements.urls.value=args.supplied_product_url; if(args?.query) form.elements.name.value=args.query; };
+app.onhostcontextchanged=setTheme;
+await app.connect(); setTheme(app.getHostContext());
+</script>
+</body>
+</html>

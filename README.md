@@ -17,6 +17,8 @@ These plugins contain no client data, private corpora, credentials or internal A
 
 - **Editable Diagram Builder** creates human-reviewed flowcharts, architecture diagrams, sequence diagrams and concept maps with native editable downloads.
 
+- **Verified Buy Link** compares only exact product-page URLs supplied by the user through an explicit market checkpoint and evidence-led human selection.
+
 No plugin contains client data, private corpora, credentials or internal ASTUDIO procedures.
 
 ## Public pages
@@ -39,6 +41,7 @@ npm --prefix growth-marketing-planner test
 npm --prefix ai-crawler-readiness-auditor test
 npm --prefix open-data-fetcher test
 CHECKPOINT_SECRET=local-development-secret-at-least-32-bytes npm --prefix editable-diagram-builder test
+npm --prefix verified-buy-link test
 ```
 
 ## License
