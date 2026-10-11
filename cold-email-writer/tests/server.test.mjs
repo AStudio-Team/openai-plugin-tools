@@ -21,6 +21,7 @@ test("validation rejects no CTA and malformed or undeclared tokens",()=>{const n
 test("countCtas implements the final sentence algorithm",()=>{for(const [body,expected] of [
   ["We send weekly reports.",0],
   ["Could you review the outline?",1],
+  ["Could you review the outline and examples?",1],
   ["Could you review the outline or share feedback?",2],
   ["Could you book a call or reply with a time?",2],
   ["Could you book a call and send me your budget?",2],
@@ -28,7 +29,11 @@ test("countCtas implements the final sentence algorithm",()=>{for(const [body,ex
   ["Ever wondered why your inbox is quiet?",0],
   ["Would a 15 minute call next week work?",1],
   ["Please grab a slot here.",1],
+  ["Email me a suitable time.",1],
+  ["I think this is worth discussing?",0],
+  ["Hi Sara, could you send the deck?",1],
   ["Our team ships in two weeks and your inbox stays clean.",0],
+  ["Our team ships in two weeks.",0],
 ])assert.equal(countCtas(body),expected,body)});
 test("CTA counting follows body sentence and conjunction rules",()=>{for(const [body,subject,valid] of [
   ["Could you book a call or reply with a time?","A thought for {{company}}",false],
