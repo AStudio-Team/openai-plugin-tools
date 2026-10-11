@@ -30,21 +30,34 @@ function makeReceipt(kind, value, selectedIndex) { const unsigned = { kind, dige
 function verifyReceipt(value, kind, subject) { const parsed = receipt.parse(value); const unsigned = { kind: parsed.kind, digest: parsed.digest, ...(parsed.kind === "selection" ? { selectedIndex: parsed.selectedIndex } : {}) }; const expected = sign(unsigned); if (parsed.kind !== kind || parsed.digest !== digest(subject) || !timingSafeEqual(Buffer.from(expected, "hex"), Buffer.from(parsed.signature, "hex"))) throw Error(`A valid signed ${kind} receipt is required.`); return parsed; }
 function hasWholeFact(haystack, fact) { const value = clean(fact); return value.length > 0 && new RegExp(`(^|[^\\p{L}\\p{N}])${escapeRegex(value)}(?=$|[^\\p{L}\\p{N}])`, "iu").test(haystack); }
 function bannedClaims(value) { performanceClaim.lastIndex = 0; const found = [...String(value).matchAll(performanceClaim)].map(match => match[0]); performanceClaim.lastIndex = 0; return found; }
+function copyTextValues(value) { return [value.headline, value.subhead, ...value.valuePoints, ...value.proof, value.primaryCta, ...value.faq.flatMap(item => [item.question, item.answer])]; }
+function words(value) { return clean(value).toLocaleLowerCase().match(/[\p{L}\p{N}]+/gu) || []; }
+function wordStem(value) { return value.length > 4 ? value.replace(/(?:ies|s)$/u, match => match === "ies" ? "y" : "") : value; }
+const vagueHeadline = /\b(?:amazing|best|revolutionary|innovative|next-level|world-class|cutting-edge|seamless|powerful)\b/iu;
+const genericConcrete = new Set(["tool", "platform", "software", "app", "service", "product", "schedule", "scheduling", "team", "work", "page", "conversion", "demo", "trial", "sales", "marketing"]);
+const headlineStopWords = new Set(["a", "an", "and", "for", "in", "of", "on", "or", "the", "to", "with"]);
+function headlineIsSpecific(headline, sourceBrief) {
+  if (headline.length <= 5 || headline.split(/\s+/u).length > 12 || vagueHeadline.test(headline)) return false;
+  if (/\d/u.test(headline)) return true;
+  const headlineWords = new Set(words(headline).map(wordStem));
+  const briefWords = sourceBrief ? words([sourceBrief.product, sourceBrief.offer, sourceBrief.audience, ...(sourceBrief.mustKeepFacts || [])].join(" ")).filter(word => !headlineStopWords.has(word)).map(wordStem) : [];
+  return briefWords.some(word => headlineWords.has(word)) || (!sourceBrief && [...headlineWords].some(word => genericConcrete.has(word)));
+}
 const ctaVerb = /^(?:get|start|try|book|buy|join|see|learn|discover|request|download|contact|sign\s*up|subscribe|register|apply|claim|order|shop|schedule|talk|call|compare|choose|create|build|explore)\b/iu;
 const explicitAsk = /^(?:(?:ready|want|need)\s+(?:to\s+)?(?:get|start|try|book|buy|join|see|learn|discover|request|download|contact|sign\s*up|subscribe|register|apply|claim|order|shop|schedule|talk|call|compare|choose|create|build|explore)|(?:want|need)\s+(?:a|an|the)?\s*(?:demo|trial|quote|consultation|call))\b/iu;
 function countCtas(value) { return String(value).split(/[.!?\n]+/u).map(part => clean(part).replace(/^(?:(?:primary\s+)?cta\s*:\s*)/iu, "")).filter(part => ctaVerb.test(part) || explicitAsk.test(part)).length; }
 function validateCopy(value, sourceBrief = { mustKeepFacts: [] }) {
   const parsed = copy.parse(value);
   if (clean(parsed.headline).split(/\s+/u).length > 12) throw Error("The Landing Page Copy Check house limit is 12 words for a headline.");
-  const body = JSON.stringify(parsed);
+  const textValues = copyTextValues(parsed);
   const allowed = sourceBrief.mustKeepFacts || [];
   const bannedFacts = allowed.filter(fact => bannedClaims(fact).length);
   if (bannedFacts.length) throw Error(`Remove banned claims from must-keep facts: ${bannedFacts.join(", ")}.`);
   const unsupportedProof = parsed.proof.filter(item => !allowed.some(fact => hasWholeFact(fact, item)));
   if (unsupportedProof.length) throw Error(`Remove unsupported proof: ${unsupportedProof.join(", ")}.`);
-  const unsupported = bannedClaims(body);
+  const unsupported = textValues.flatMap(bannedClaims);
   if (unsupported.length) throw Error(`Remove banned or unsupported claims: ${unsupported.join(", ")}.`);
-  const missing = allowed.filter(fact => !hasWholeFact(body, fact));
+  const missing = allowed.filter(fact => !textValues.some(value => hasWholeFact(value, fact)));
   if (missing.length) throw Error(`Missing must-keep facts: ${missing.join(", ")}.`);
   return { copy: parsed, missing };
 }
@@ -54,17 +67,18 @@ function escapeMarkdown(value) { return String(value).replace(/([\\`*_{}[\]()#+.
 export function openPageBrief(input = {}) { return { fields: ["pageType", "product", "audience", "offer", "goal", "tone", "currentCopy", "mustKeepFacts"], prefill: input.prefill || {}, privacyNotice: "This tool works on pasted text only. It does not fetch URLs or change sites." }; }
 export function reviewPageBrief(input) { const value = brief.parse(input); const banned = bannedClaims(JSON.stringify({ currentCopy: value.currentCopy, mustKeepFacts: value.mustKeepFacts })); if (banned.length) throw Error(`Banned claim in brief: ${banned.join(", ")}.`); return { normalizedBrief: value, canApprove: true, confirmationRequired: true, message: "Review the visible brief, then use the Approve brief button to authorize drafting." }; }
 export function approvePageBrief(input) { const value = brief.parse(input.brief); z.literal("approve").parse(input.approvalAction); return { approvalReceipt: makeReceipt("brief", value), approvedBrief: value }; }
-export function draftPageCopy(input) { const b = brief.parse(input.brief); verifyReceipt(input.approvalReceipt, "brief", b); const proposed = z.array(copy).min(2).max(3).parse(input.variants); const signatures = new Set(proposed.map(item => digest(item))); if (signatures.size !== proposed.length) throw Error("Draft variants must be distinct."); const variants = proposed.map(item => { const checked = validateCopy(item, b); const report = checkPageConversion({ draft: checked.copy, headline: checked.copy.headline }); return { ...checked.copy, issues: report.issues, checklist: report.checks }; }); return { brief: b, variants, approvalReceipt: input.approvalReceipt, warnings: [] }; }
+export function draftPageCopy(input) { const b = brief.parse(input.brief); verifyReceipt(input.approvalReceipt, "brief", b); const proposed = z.array(copy).min(2).max(3).parse(input.variants); const signatures = new Set(proposed.map(item => digest(item))); if (signatures.size !== proposed.length) throw Error("Draft variants must be distinct."); const variants = proposed.map(item => { const checked = validateCopy(item, b); const report = checkPageConversion({ draft: checked.copy, headline: checked.copy.headline, brief: b }); return { ...checked.copy, issues: report.issues, checklist: report.checks }; }); return { brief: b, variants, approvalReceipt: input.approvalReceipt, warnings: [] }; }
 export function checkPageConversion(input) {
   input = conversionInput.parse(input);
-  const source = clean(input.copy ?? (input.draft ? JSON.stringify(input.draft) : ""));
+  const source = clean(input.copy ?? (input.draft ? copyTextValues(input.draft).join("\n") : ""));
   if (input.formFieldCount !== undefined && (!Number.isInteger(input.formFieldCount) || input.formFieldCount < 0)) throw Error("Form field count must be a non-negative integer.");
   if (input.popupDelaySeconds !== undefined && (!Number.isFinite(input.popupDelaySeconds) || input.popupDelaySeconds < 0)) throw Error("Popup delay must be a non-negative number.");
   const fields = input.formFieldCount, delay = input.popupDelaySeconds;
   const headline = clean(input.headline ?? input.draft?.headline ?? (input.copy ? source.split("\n")[0] : ""));
   const ctas = input.draft ? countCtas(input.draft.primaryCta) : countCtas(source);
-  const banned = bannedClaims(source);
-  const headlineSpecific = headline.length > 5 && headline.split(/\s+/u).length <= 12 && !/^(?:better|simpler|smarter|more|do more|your solution|welcome|transform your business)\b/iu.test(headline) && /\b(?:tool|platform|software|app|service|product|schedule|scheduling|team|work|page|conversion|demo|trial|sales|marketing|[A-Z][\p{L}\p{N}-]{2,})\b/u.test(headline);
+  const suppliedText = [input.headline, input.copy, ...(input.draft ? copyTextValues(input.draft) : [])].filter(value => value !== undefined);
+  const banned = [...new Set(suppliedText.flatMap(bannedClaims))];
+  const headlineSpecific = headlineIsSpecific(headline, input.brief);
   const checked = (name, pass, passDetail, failDetail) => ({ name, status: pass ? "pass" : "finding", pass, detail: pass ? passDetail : failDetail });
   const unchecked = (name, detail) => ({ name, status: "not checked", pass: null, detail });
   const checks = [
@@ -95,7 +109,7 @@ const reviewOutput = { normalizedBrief: brief, canApprove: z.boolean(), confirma
 const factCheck = z.object({ kept: z.array(z.string()).optional(), missing: z.array(z.string()) }).strict();
 const checklistItem = z.object({ name: z.string(), status: z.string(), pass: z.boolean().nullable(), detail: z.string() });
 const draftVariant = copy.extend({ issues: z.array(z.string()), checklist: z.array(checklistItem) });
-const conversionInput = z.object({ copy: z.string().optional(), draft: copy.optional(), headline: z.string().optional(), formFieldCount: z.number().int().min(0).optional(), popupDelaySeconds: z.number().min(0).optional() }).strict().superRefine((value, context) => { if ((value.copy === undefined) === (value.draft === undefined)) context.addIssue({ code: "custom", message: "Provide exactly one of copy or draft." }); });
+const conversionInput = z.object({ copy: nonBlank().optional(), draft: copy.optional(), headline: nonBlank().optional(), brief: brief.optional(), formFieldCount: z.number().int().min(0).optional(), popupDelaySeconds: z.number().min(0).optional() }).strict().superRefine((value, context) => { if ((value.copy === undefined) === (value.draft === undefined)) context.addIssue({ code: "custom", message: "Provide exactly one of copy or draft." }); });
 const defs = [
   ["open_page_brief", "Use this when you need a guided landing page copy brief. Do not use for fetching a URL or changing a site.", z.object({ prefill: z.record(z.string(), z.unknown()).optional() }).strict(), openOutput, openPageBrief, "ui://landing-page-copy-check/brief-builder.html"],
   ["review_page_brief", "Use this when a completed page brief needs read-only confirmation. Do not use for drafting before approval.", brief, reviewOutput, reviewPageBrief, "ui://landing-page-copy-check/brief-review.html"],
