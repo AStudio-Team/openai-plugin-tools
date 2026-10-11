@@ -15,6 +15,10 @@
         reverse_proxy __SOCIAL_PLANNER_UPSTREAM__:8790
     }
 
+    handle_path /tools/cold-email-writer* {
+        reverse_proxy __COLD_EMAIL_UPSTREAM__:8790
+    }
+
     handle_path /tools/launch-plan-builder* {
         reverse_proxy __LAUNCH_PLAN_UPSTREAM__:8790
     }
@@ -114,6 +118,20 @@
 
     handle_path /openai-plugins/social-content-planner/* {
         reverse_proxy __SOCIAL_PLANNER_UPSTREAM__:8790
+    }
+
+    handle /openai-plugins/cold-email-writer/mcp {
+        request_body {
+            max_size 256KB
+        }
+        rewrite * /mcp
+        reverse_proxy __COLD_EMAIL_UPSTREAM__:8790 {
+            header_up X-Plugin-Client-IP {remote_host}
+        }
+    }
+
+    handle_path /openai-plugins/cold-email-writer/* {
+        reverse_proxy __COLD_EMAIL_UPSTREAM__:8790
     }
 
     handle /openai-plugins/launch-plan-builder/mcp {

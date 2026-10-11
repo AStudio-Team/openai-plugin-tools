@@ -16,6 +16,7 @@ DATA_STATE_FILE="${STATE_DIR}/current-data-container"
 DIAGRAM_STATE_FILE="${STATE_DIR}/current-diagram-container"
 BUY_LINK_STATE_FILE="${STATE_DIR}/current-verified-buy-link-container"
 GROUNDED_STATE_FILE="${STATE_DIR}/current-grounded-container"
+COLD_EMAIL_STATE_FILE="${STATE_DIR}/current-cold-email-container"
 LAUNCH_PLAN_STATE_FILE="${STATE_DIR}/current-launch-plan-container"
 LANDING_COPY_STATE_FILE="${STATE_DIR}/current-landing-copy-container"
 SCHEMA_MARKUP_STATE_FILE="${STATE_DIR}/current-schema-markup-container"
@@ -45,6 +46,8 @@ LANDING_COPY_IMAGE="openai-plugin-landing-copy:${RELEASE_SHA}"
 LANDING_COPY_CONTAINER="openai-plugin-landing-copy-${DEPLOY_ID}"
 SCHEMA_MARKUP_IMAGE="openai-plugin-schema-markup:${RELEASE_SHA}"
 SCHEMA_MARKUP_CONTAINER="openai-plugin-schema-markup-${DEPLOY_ID}"
+COLD_EMAIL_IMAGE="openai-plugin-cold-email:${RELEASE_SHA}"
+COLD_EMAIL_CONTAINER="openai-plugin-cold-email-${DEPLOY_ID}"
 RENDERED_BLOCK="/tmp/openai-plugin-tools-${DEPLOY_ID}.caddy"
 RENDERED_FIXTURES="/tmp/ai-crawler-fixtures-${DEPLOY_ID}.caddy"
 PREVIOUS_PDF_CONTAINER=""
@@ -64,6 +67,7 @@ PREVIOUS_GROUNDED_CONTAINER=""
 PREVIOUS_LAUNCH_PLAN_CONTAINER=""
 PREVIOUS_LANDING_COPY_CONTAINER=""
 PREVIOUS_SCHEMA_MARKUP_CONTAINER=""
+PREVIOUS_COLD_EMAIL_CONTAINER=""
 CONFIG_MUTATED=0
 SWITCHED=0
 COMMITTED=0
@@ -115,6 +119,9 @@ fi
 if [ -s "$SCHEMA_MARKUP_STATE_FILE" ]; then
   PREVIOUS_SCHEMA_MARKUP_CONTAINER="$(tr -cd 'A-Za-z0-9_.-' < "$SCHEMA_MARKUP_STATE_FILE")"
 fi
+if [ -s "$COLD_EMAIL_STATE_FILE" ]; then
+  PREVIOUS_COLD_EMAIL_CONTAINER="$(tr -cd 'A-Za-z0-9_.-' < "$COLD_EMAIL_STATE_FILE")"
+fi
 
 write_state() {
   local path="$1"
@@ -152,7 +159,8 @@ rollback() {
     write_state "$BUY_LINK_STATE_FILE" "$PREVIOUS_BUY_LINK_CONTAINER"
     write_state "$GROUNDED_STATE_FILE" "$PREVIOUS_GROUNDED_CONTAINER"
     write_state "$LAUNCH_PLAN_STATE_FILE" "$PREVIOUS_LAUNCH_PLAN_CONTAINER"; write_state "$LANDING_COPY_STATE_FILE" "$PREVIOUS_LANDING_COPY_CONTAINER"; write_state "$SCHEMA_MARKUP_STATE_FILE" "$PREVIOUS_SCHEMA_MARKUP_CONTAINER"
-    docker rm -f "$PDF_CONTAINER" "$ARABIC_CONTAINER" "$AD_CONTAINER" "$GROWTH_CONTAINER" "$SOCIAL_PLANNER_CONTAINER" "$CRAWLER_CONTAINER" "$DATA_CONTAINER" "$DIAGRAM_CONTAINER" "$BUY_LINK_CONTAINER" "$GROUNDED_CONTAINER" "$LAUNCH_PLAN_CONTAINER" "$LANDING_COPY_CONTAINER" "$SCHEMA_MARKUP_CONTAINER" >/dev/null 2>&1 || true
+    write_state "$COLD_EMAIL_STATE_FILE" "$PREVIOUS_COLD_EMAIL_CONTAINER"
+    docker rm -f "$PDF_CONTAINER" "$ARABIC_CONTAINER" "$AD_CONTAINER" "$GROWTH_CONTAINER" "$SOCIAL_PLANNER_CONTAINER" "$CRAWLER_CONTAINER" "$DATA_CONTAINER" "$DIAGRAM_CONTAINER" "$BUY_LINK_CONTAINER" "$GROUNDED_CONTAINER" "$LAUNCH_PLAN_CONTAINER" "$LANDING_COPY_CONTAINER" "$SCHEMA_MARKUP_CONTAINER" "$COLD_EMAIL_CONTAINER" >/dev/null 2>&1 || true
   else
     write_state "$PDF_STATE_FILE" "$PDF_CONTAINER"
     write_state "$ARABIC_STATE_FILE" "$ARABIC_CONTAINER"
@@ -167,9 +175,10 @@ rollback() {
     write_state "$LAUNCH_PLAN_STATE_FILE" "$LAUNCH_PLAN_CONTAINER"
     write_state "$LANDING_COPY_STATE_FILE" "$LANDING_COPY_CONTAINER"
     write_state "$SCHEMA_MARKUP_STATE_FILE" "$SCHEMA_MARKUP_CONTAINER"
+    write_state "$COLD_EMAIL_STATE_FILE" "$COLD_EMAIL_CONTAINER"
     echo "rollback failed; candidate containers were kept running for recovery" >&2
   fi
-  rm -f "${PDF_STATE_FILE}.tmp" "${ARABIC_STATE_FILE}.tmp" "${AD_STATE_FILE}.tmp" "${GROWTH_STATE_FILE}.tmp" "${SOCIAL_PLANNER_STATE_FILE}.tmp" "${CRAWLER_STATE_FILE}.tmp" "${DATA_STATE_FILE}.tmp" "${DIAGRAM_STATE_FILE}.tmp" "${BUY_LINK_STATE_FILE}.tmp" "${GROUNDED_STATE_FILE}.tmp" "${LAUNCH_PLAN_STATE_FILE}.tmp" "${LANDING_COPY_STATE_FILE}.tmp" "${SCHEMA_MARKUP_STATE_FILE}.tmp" "${CADDYFILE}.rollback-${DEPLOY_ID}"
+  rm -f "${PDF_STATE_FILE}.tmp" "${ARABIC_STATE_FILE}.tmp" "${AD_STATE_FILE}.tmp" "${GROWTH_STATE_FILE}.tmp" "${SOCIAL_PLANNER_STATE_FILE}.tmp" "${CRAWLER_STATE_FILE}.tmp" "${DATA_STATE_FILE}.tmp" "${DIAGRAM_STATE_FILE}.tmp" "${BUY_LINK_STATE_FILE}.tmp" "${GROUNDED_STATE_FILE}.tmp" "${LAUNCH_PLAN_STATE_FILE}.tmp" "${LANDING_COPY_STATE_FILE}.tmp" "${SCHEMA_MARKUP_STATE_FILE}.tmp" "${COLD_EMAIL_STATE_FILE}.tmp" "${CADDYFILE}.rollback-${DEPLOY_ID}"
   return $((1 - rollback_ok))
 }
 
@@ -199,6 +208,7 @@ docker build --pull -t "$GROUNDED_IMAGE" grounded-citations
 docker build --pull -t "$LAUNCH_PLAN_IMAGE" launch-plan-builder
 docker build --pull -t "$LANDING_COPY_IMAGE" landing-page-copy-check
 docker build --pull -t "$SCHEMA_MARKUP_IMAGE" schema-markup-generator
+docker build --pull -t "$COLD_EMAIL_IMAGE" cold-email-writer
 
 ENV_FILE_ARGS=()
 if [ -s "$ENV_FILE" ]; then
@@ -283,6 +293,7 @@ run_container "$GROUNDED_CONTAINER" "$GROUNDED_IMAGE" 8790 local \
 run_container "$LAUNCH_PLAN_CONTAINER" "$LAUNCH_PLAN_IMAGE" 8790 local
 run_container "$LANDING_COPY_CONTAINER" "$LANDING_COPY_IMAGE" 8790 local
 run_container "$SCHEMA_MARKUP_CONTAINER" "$SCHEMA_MARKUP_IMAGE" 8790 local
+run_container "$COLD_EMAIL_CONTAINER" "$COLD_EMAIL_IMAGE" 8790 none
 
 wait_healthy() {
   local container="$1"
@@ -310,13 +321,14 @@ wait_healthy "$GROUNDED_CONTAINER"
 wait_healthy "$LAUNCH_PLAN_CONTAINER"
 wait_healthy "$LANDING_COPY_CONTAINER"
 wait_healthy "$SCHEMA_MARKUP_CONTAINER"
+wait_healthy "$COLD_EMAIL_CONTAINER"
 
-python3 - "$PDF_CONTAINER" "$ARABIC_CONTAINER" "$AD_CONTAINER" "$GROWTH_CONTAINER" "$SOCIAL_PLANNER_CONTAINER" "$CRAWLER_CONTAINER" "$DATA_CONTAINER" "$DIAGRAM_CONTAINER" "$BUY_LINK_CONTAINER" "$GROUNDED_CONTAINER" "$LAUNCH_PLAN_CONTAINER" "$LANDING_COPY_CONTAINER" "$SCHEMA_MARKUP_CONTAINER" deploy/tools.astudio.agency.caddy "$RENDERED_BLOCK" <<'PY'
+python3 - "$PDF_CONTAINER" "$ARABIC_CONTAINER" "$AD_CONTAINER" "$GROWTH_CONTAINER" "$SOCIAL_PLANNER_CONTAINER" "$CRAWLER_CONTAINER" "$DATA_CONTAINER" "$DIAGRAM_CONTAINER" "$BUY_LINK_CONTAINER" "$GROUNDED_CONTAINER" "$LAUNCH_PLAN_CONTAINER" "$LANDING_COPY_CONTAINER" "$SCHEMA_MARKUP_CONTAINER" "$COLD_EMAIL_CONTAINER" deploy/tools.astudio.agency.caddy "$RENDERED_BLOCK" <<'PY'
 import sys
 from pathlib import Path
-pdf, arabic, ad, growth, social_planner, crawler, data, diagram, buy_link, grounded, launch_plan, landing_copy, schema_markup, source, target = sys.argv[1:]
+pdf, arabic, ad, growth, social_planner, crawler, data, diagram, buy_link, grounded, launch_plan, landing_copy, schema_markup, cold_email, source, target = sys.argv[1:]
 text = Path(source).read_text()
-text = text.replace("__PDF_PLUGIN_UPSTREAM__", pdf).replace("__ARABIC_PLUGIN_UPSTREAM__", arabic).replace("__AD_CREATIVE_LAB_UPSTREAM__", ad).replace("__GROWTH_PLUGIN_UPSTREAM__", growth).replace("__SOCIAL_PLANNER_UPSTREAM__", social_planner).replace("__CRAWLER_PLUGIN_UPSTREAM__", crawler).replace("__DATA_PLUGIN_UPSTREAM__", data).replace("__DIAGRAM_PLUGIN_UPSTREAM__", diagram).replace("__VERIFIED_BUY_LINK_UPSTREAM__", buy_link).replace("__GROUNDED_PLUGIN_UPSTREAM__", grounded).replace("__LAUNCH_PLAN_UPSTREAM__", launch_plan).replace("__LANDING_COPY_UPSTREAM__", landing_copy).replace("__SCHEMA_MARKUP_UPSTREAM__", schema_markup)
+text = text.replace("__PDF_PLUGIN_UPSTREAM__", pdf).replace("__ARABIC_PLUGIN_UPSTREAM__", arabic).replace("__AD_CREATIVE_LAB_UPSTREAM__", ad).replace("__GROWTH_PLUGIN_UPSTREAM__", growth).replace("__SOCIAL_PLANNER_UPSTREAM__", social_planner).replace("__CRAWLER_PLUGIN_UPSTREAM__", crawler).replace("__DATA_PLUGIN_UPSTREAM__", data).replace("__DIAGRAM_PLUGIN_UPSTREAM__", diagram).replace("__VERIFIED_BUY_LINK_UPSTREAM__", buy_link).replace("__GROUNDED_PLUGIN_UPSTREAM__", grounded).replace("__LAUNCH_PLAN_UPSTREAM__", launch_plan).replace("__LANDING_COPY_UPSTREAM__", landing_copy).replace("__SCHEMA_MARKUP_UPSTREAM__", schema_markup).replace("__COLD_EMAIL_UPSTREAM__", cold_email)
 if "__" in text:
     raise SystemExit("unresolved upstream placeholder")
 Path(target).write_text(text)
@@ -416,6 +428,9 @@ check_health https://www.astudio.agency/openai-plugins/social-content-planner/he
 check_health https://www.astudio.agency/openai-plugins/social-content-planner/ready social-content-planner
 check_mcp https://www.astudio.agency/openai-plugins/social-content-planner/mcp social-content-planner open_social_brief,review_social_brief,approve_social_brief,draft_content_calendar,request_calendar_revision,export_content_calendar
 check_resources https://www.astudio.agency/openai-plugins/social-content-planner/mcp ui://social-content-planner/brief-builder.html,ui://social-content-planner/brief-review.html,ui://social-content-planner/calendar-preview.html,ui://social-content-planner/export-panel.html
+check_health https://www.astudio.agency/openai-plugins/cold-email-writer/health cold-email-writer
+check_health https://www.astudio.agency/openai-plugins/cold-email-writer/ready cold-email-writer
+check_mcp https://www.astudio.agency/openai-plugins/cold-email-writer/mcp cold-email-writer open_cold_email_brief,review_cold_email_brief,approve_cold_email_brief,draft_cold_email_sequence,submit_variant_selection,export_cold_email_sequence
 ACTUAL_OPENAI_CHALLENGE="$(curl --fail --silent --show-error https://www.astudio.agency/.well-known/openai-apps-challenge)"
 if [ "$ACTUAL_OPENAI_CHALLENGE" != "$EXPECTED_OPENAI_CHALLENGE" ]; then
   echo "OpenAI Apps challenge response mismatch" >&2
@@ -484,6 +499,7 @@ printf '%s\n' "$GROUNDED_CONTAINER" > "${GROUNDED_STATE_FILE}.tmp"
 printf '%s\n' "$LAUNCH_PLAN_CONTAINER" > "${LAUNCH_PLAN_STATE_FILE}.tmp"
 printf '%s\n' "$LANDING_COPY_CONTAINER" > "${LANDING_COPY_STATE_FILE}.tmp"
 printf '%s\n' "$SCHEMA_MARKUP_CONTAINER" > "${SCHEMA_MARKUP_STATE_FILE}.tmp"
+printf '%s\n' "$COLD_EMAIL_CONTAINER" > "${COLD_EMAIL_STATE_FILE}.tmp"
 mv "${PDF_STATE_FILE}.tmp" "$PDF_STATE_FILE"
 mv "${ARABIC_STATE_FILE}.tmp" "$ARABIC_STATE_FILE"
 mv "${AD_STATE_FILE}.tmp" "$AD_STATE_FILE"
@@ -497,13 +513,14 @@ mv "${GROUNDED_STATE_FILE}.tmp" "$GROUNDED_STATE_FILE"
 mv "${LAUNCH_PLAN_STATE_FILE}.tmp" "$LAUNCH_PLAN_STATE_FILE"
 mv "${LANDING_COPY_STATE_FILE}.tmp" "$LANDING_COPY_STATE_FILE"
 mv "${SCHEMA_MARKUP_STATE_FILE}.tmp" "$SCHEMA_MARKUP_STATE_FILE"
+mv "${COLD_EMAIL_STATE_FILE}.tmp" "$COLD_EMAIL_STATE_FILE"
 COMMITTED=1
 rm -f "$LEGACY_STATE_FILE"
-for previous in "$PREVIOUS_PDF_CONTAINER" "$PREVIOUS_ARABIC_CONTAINER" "$PREVIOUS_AD_CONTAINER" "$PREVIOUS_GROWTH_CONTAINER" "$PREVIOUS_SOCIAL_PLANNER_CONTAINER" "$PREVIOUS_CRAWLER_CONTAINER" "$PREVIOUS_DATA_CONTAINER" "$PREVIOUS_DIAGRAM_CONTAINER" "$PREVIOUS_BUY_LINK_CONTAINER" "$PREVIOUS_GROUNDED_CONTAINER" "$PREVIOUS_LAUNCH_PLAN_CONTAINER" "$PREVIOUS_LANDING_COPY_CONTAINER" "$PREVIOUS_SCHEMA_MARKUP_CONTAINER"; do
-  if [ -n "$previous" ] && [ "$previous" != "$PDF_CONTAINER" ] && [ "$previous" != "$ARABIC_CONTAINER" ] && [ "$previous" != "$AD_CONTAINER" ] && [ "$previous" != "$GROWTH_CONTAINER" ] && [ "$previous" != "$SOCIAL_PLANNER_CONTAINER" ] && [ "$previous" != "$CRAWLER_CONTAINER" ] && [ "$previous" != "$DATA_CONTAINER" ] && [ "$previous" != "$DIAGRAM_CONTAINER" ] && [ "$previous" != "$BUY_LINK_CONTAINER" ] && [ "$previous" != "$GROUNDED_CONTAINER" ] && [ "$previous" != "$LAUNCH_PLAN_CONTAINER" ] && [ "$previous" != "$LANDING_COPY_CONTAINER" ] && [ "$previous" != "$SCHEMA_MARKUP_CONTAINER" ]; then
+for previous in "$PREVIOUS_PDF_CONTAINER" "$PREVIOUS_ARABIC_CONTAINER" "$PREVIOUS_AD_CONTAINER" "$PREVIOUS_GROWTH_CONTAINER" "$PREVIOUS_SOCIAL_PLANNER_CONTAINER" "$PREVIOUS_CRAWLER_CONTAINER" "$PREVIOUS_DATA_CONTAINER" "$PREVIOUS_DIAGRAM_CONTAINER" "$PREVIOUS_BUY_LINK_CONTAINER" "$PREVIOUS_GROUNDED_CONTAINER" "$PREVIOUS_LAUNCH_PLAN_CONTAINER" "$PREVIOUS_LANDING_COPY_CONTAINER" "$PREVIOUS_SCHEMA_MARKUP_CONTAINER" "$PREVIOUS_COLD_EMAIL_CONTAINER"; do
+  if [ -n "$previous" ] && [ "$previous" != "$PDF_CONTAINER" ] && [ "$previous" != "$ARABIC_CONTAINER" ] && [ "$previous" != "$AD_CONTAINER" ] && [ "$previous" != "$GROWTH_CONTAINER" ] && [ "$previous" != "$SOCIAL_PLANNER_CONTAINER" ] && [ "$previous" != "$CRAWLER_CONTAINER" ] && [ "$previous" != "$DATA_CONTAINER" ] && [ "$previous" != "$DIAGRAM_CONTAINER" ] && [ "$previous" != "$BUY_LINK_CONTAINER" ] && [ "$previous" != "$GROUNDED_CONTAINER" ] && [ "$previous" != "$LAUNCH_PLAN_CONTAINER" ] && [ "$previous" != "$LANDING_COPY_CONTAINER" ] && [ "$previous" != "$SCHEMA_MARKUP_CONTAINER" ] && [ "$previous" != "$COLD_EMAIL_CONTAINER" ]; then
     docker rm -f "$previous" >/dev/null 2>&1 || true
   fi
 done
 rm -f "$BACKUP" "$RENDERED_BLOCK" "$RENDERED_FIXTURES"
 
-echo "deployed ${RELEASE_SHA} as ${PDF_CONTAINER}, ${ARABIC_CONTAINER}, ${AD_CONTAINER}, ${GROWTH_CONTAINER}, ${SOCIAL_PLANNER_CONTAINER}, ${CRAWLER_CONTAINER}, ${DATA_CONTAINER}, ${DIAGRAM_CONTAINER}, ${BUY_LINK_CONTAINER}, ${GROUNDED_CONTAINER}, ${LAUNCH_PLAN_CONTAINER}, ${LANDING_COPY_CONTAINER} and ${SCHEMA_MARKUP_CONTAINER}"
+echo "deployed ${RELEASE_SHA} as ${PDF_CONTAINER}, ${ARABIC_CONTAINER}, ${AD_CONTAINER}, ${GROWTH_CONTAINER}, ${SOCIAL_PLANNER_CONTAINER}, ${CRAWLER_CONTAINER}, ${DATA_CONTAINER}, ${DIAGRAM_CONTAINER}, ${BUY_LINK_CONTAINER}, ${GROUNDED_CONTAINER}, ${LAUNCH_PLAN_CONTAINER}, ${LANDING_COPY_CONTAINER}, ${SCHEMA_MARKUP_CONTAINER} and ${COLD_EMAIL_CONTAINER}"

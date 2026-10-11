@@ -14,6 +14,7 @@ class ManifestAndPackageTests(unittest.TestCase):
         self.growth = json.loads((ROOT / "growth-marketing-planner" / "plugin.json").read_text())
         self.landing_copy = json.loads((ROOT / "landing-page-copy-check" / "plugin.json").read_text())
         self.social = json.loads((ROOT / "social-content-planner" / "plugin.json").read_text())
+        self.cold_email = json.loads((ROOT / "cold-email-writer" / "plugin.json").read_text())
         self.crawler = json.loads((ROOT / "ai-crawler-readiness-auditor" / "plugin.json").read_text())
         self.data = json.loads((ROOT / "open-data-fetcher" / "plugin.json").read_text())
         self.diagram = json.loads((ROOT / "editable-diagram-builder" / "plugin.json").read_text())
@@ -22,9 +23,19 @@ class ManifestAndPackageTests(unittest.TestCase):
 
     def test_astudio_is_publisher_for_all_products(self):
         self.assertEqual(self.gcc["name"], "astudio-gcc-arabic-writer")
-        for manifest in (self.gcc, self.pdf, self.ad, self.growth, self.landing_copy, self.social, self.crawler, self.data, self.diagram, self.grounded, self.schema):
+        for manifest in (self.gcc, self.pdf, self.ad, self.growth, self.landing_copy, self.social, self.cold_email, self.crawler, self.data, self.diagram, self.grounded, self.schema):
             self.assertEqual(manifest["author"]["name"], "ASTUDIO")
             self.assertEqual(manifest["extensions"]["com.openai"]["interface"]["developerName"], "ASTUDIO")
+
+    def test_all_review_cases_have_complete_fields(self):
+        manifests = (self.gcc, self.pdf, self.ad, self.growth, self.cold_email, self.crawler, self.data, self.diagram, self.grounded)
+        required = {"description", "prompt", "tools_triggered", "expected_behavior"}
+        for manifest in manifests:
+            cases = manifest["extensions"]["com.openai"]["review"]["test_cases"]
+            for lane in ("positive", "negative"):
+                for case in cases[lane]:
+                    self.assertTrue(required.issubset(case), (manifest["name"], lane, case))
+                    self.assertTrue(all(case[field] for field in required))
 
     def test_discovery_metadata_has_distinct_natural_intents(self):
         gcc_text = json.dumps(self.gcc, ensure_ascii=False).lower()
@@ -162,6 +173,13 @@ class ManifestAndPackageTests(unittest.TestCase):
         self.assertLessEqual(len(self.social["keywords"]), 15)
         mcp = json.loads((ROOT / "social-content-planner" / "mcp.json").read_text())
         self.assertEqual(mcp["mcpServers"]["social-content-planner"]["url"], "https://www.astudio.agency/openai-plugins/social-content-planner/mcp")
+    def test_cold_email_writer_package_and_public_prefix_are_complete(self):
+        review = self.cold_email["extensions"]["com.openai"]["review"]
+        self.assertEqual(len(review["test_cases"]["positive"]), 5)
+        self.assertEqual(len(review["test_cases"]["negative"]), 3)
+        mcp = json.loads((ROOT / "cold-email-writer" / "mcp.json").read_text())
+        self.assertEqual(mcp["mcpServers"]["cold-email-writer"]["url"], "https://www.astudio.agency/openai-plugins/cold-email-writer/mcp")
+        self.assertTrue((ROOT / "cold-email-writer" / "public" / "index.html").is_file())
     def test_next_version_and_interaction_docs_are_consistent(self):
         for product in ("gcc-arabic-writer", "pdf-table-to-excel"):
             package = json.loads((ROOT / product / "package.json").read_text())
