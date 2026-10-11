@@ -1,0 +1,9 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
+  "mcpServers": {
+    "launch-plan-builder": {
+      "type": "streamable-http",
+      "url": "https://www.astudio.agency/openai-plugins/launch-plan-builder/mcp"
+    }
+  }
+}

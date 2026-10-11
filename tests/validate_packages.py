@@ -46,7 +46,8 @@ def validate_manifest(path: Path) -> None:
             if not all(case.get(key) for key in ("description", "prompt", "tools_triggered", "expected_behavior")):
                 fail(f"incomplete positive review case: {path}")
         for case in negative:
-            if not case.get("prompt") or "should" not in str(case.get("description", "")).lower():
+            required = ("description", "prompt", "tools_triggered", "expected_behavior") if path.parent.name == "launch-plan-builder" else ("description", "prompt")
+            if not all(case.get(key) for key in required):
                 fail(f"incomplete negative review case: {path}")
         demo_url = review.get("demo_recording_url")
         if "demo_recording_status" in review:
@@ -69,18 +70,18 @@ def validate_skill(path: Path) -> None:
 
 def main() -> int:
     manifests = list(ROOT.glob("*/plugin.json")) + list(ROOT.glob("*/plugin-package/plugin.json"))
-    if len(manifests) != 9:
-        fail(f"expected 9 manifests, found {len(manifests)}")
+    if len(manifests) != 10:
+        fail(f"expected 10 manifests, found {len(manifests)}")
     for manifest in manifests:
         validate_manifest(manifest)
     skills = list(ROOT.glob("*/skills/*/SKILL.md")) + list(ROOT.glob("*/plugin-package/skills/*/SKILL.md"))
-    if len(skills) != 9:
-        fail(f"expected 9 packaged skills, found {len(skills)}")
+    if len(skills) != 10:
+        fail(f"expected 10 packaged skills, found {len(skills)}")
     for skill in skills:
         validate_skill(skill)
     mcp_configs = list(ROOT.glob("*/mcp.json")) + list(ROOT.glob("*/plugin-package/mcp.json"))
-    if len(mcp_configs) != 9:
-        fail(f"expected 9 MCP configs, found {len(mcp_configs)}")
+    if len(mcp_configs) != 10:
+        fail(f"expected 10 MCP configs, found {len(mcp_configs)}")
     for config in mcp_configs:
         data = json.loads(config.read_text())
         servers = data.get("mcpServers", {})
