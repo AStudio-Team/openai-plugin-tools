@@ -1,6 +1,6 @@
 ---
-name: growth-marketing-planner
-description: "Use when the user asks for a marketing plan, growth plan, go-to-market plan, channel plan or launch plan for 30, 60 or 90 days, or wants to compare marketing strategies for a goal and budget. Do not use for ad copy, account access, analytics, campaign execution or performance guarantees."
+name: social-content-planner
+description: "Use when the user asks for social post ideas, captions, a content calendar, platform-specific post text, or content pillars. Do not use for publishing, scheduling, social-account access, engagement guarantees, or performance reporting."
 version: 1.0.0
 author: ASTUDIO
 license: MIT
