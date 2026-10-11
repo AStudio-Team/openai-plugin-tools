@@ -14,10 +14,11 @@ class ManifestAndPackageTests(unittest.TestCase):
         self.growth = json.loads((ROOT / "growth-marketing-planner" / "plugin.json").read_text())
         self.crawler = json.loads((ROOT / "ai-crawler-readiness-auditor" / "plugin.json").read_text())
         self.data = json.loads((ROOT / "open-data-fetcher" / "plugin.json").read_text())
+        self.diagram = json.loads((ROOT / "editable-diagram-builder" / "plugin.json").read_text())
 
     def test_astudio_is_publisher_for_all_products(self):
         self.assertEqual(self.gcc["name"], "astudio-gcc-arabic-writer")
-        for manifest in (self.gcc, self.pdf, self.ad, self.growth, self.crawler, self.data):
+        for manifest in (self.gcc, self.pdf, self.ad, self.growth, self.crawler, self.data, self.diagram):
             self.assertEqual(manifest["author"]["name"], "ASTUDIO")
             self.assertEqual(manifest["extensions"]["com.openai"]["interface"]["developerName"], "ASTUDIO")
 
@@ -32,6 +33,10 @@ class ManifestAndPackageTests(unittest.TestCase):
         self.assertNotIn("arabic copywriting", pdf_text)
         self.assertLessEqual(len(self.gcc["keywords"]), 15)
         self.assertLessEqual(len(self.pdf["keywords"]), 15)
+        diagram_text = json.dumps(self.diagram, ensure_ascii=False).lower()
+        for phrase in ("editable diagram", "flowchart", "sequence diagram", "concept map", ".excalidraw"):
+            self.assertIn(phrase, diagram_text)
+        self.assertNotIn("excalidraw diagram builder", self.diagram["extensions"]["com.openai"]["interface"]["displayName"].lower())
 
     def test_review_selection_cases_and_public_demo(self):
         gcc_review = self.gcc["extensions"]["com.openai"]["review"]
@@ -47,6 +52,19 @@ class ManifestAndPackageTests(unittest.TestCase):
         self.assertIn("scanned PDF", pdf_negatives)
         self.assertIn("JPG", pdf_negatives)
         self.assertIn("Arabic caption", pdf_negatives)
+        diagram_review = self.diagram["extensions"]["com.openai"]["review"]
+        self.assertEqual(len(diagram_review["test_cases"]["positive"]), 5)
+        self.assertEqual(len(diagram_review["test_cases"]["negative"]), 3)
+        self.assertEqual(diagram_review["demo_recording_status"], "required-before-portal-submission")
+
+    def test_diagram_package_is_pinned_and_closed_world(self):
+        package = json.loads((ROOT / "editable-diagram-builder" / "package.json").read_text())
+        self.assertEqual(package["engines"]["node"], ">=22")
+        self.assertEqual(set(package["dependencies"]), {"@modelcontextprotocol/ext-apps", "@modelcontextprotocol/sdk", "ajv", "zod"})
+        source = "\n".join(path.read_text() for path in (ROOT / "editable-diagram-builder" / "src").glob("*.ts"))
+        for forbidden in ("fetch(", "axios", "openai", "anthropic", "excalidraw.com"):
+            self.assertNotIn(forbidden, source.lower())
+        self.assertIn("outbound_network:false", source)
 
     def test_gcc_package_is_pinned_and_closed_world(self):
         package = json.loads((ROOT / "gcc-arabic-writer" / "package.json").read_text())

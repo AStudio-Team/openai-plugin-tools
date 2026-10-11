@@ -15,6 +15,8 @@ No product contains client data, private corpora, credentials or internal ASTUDI
 These plugins contain no client data, private corpora, credentials or internal ASTUDIO procedures.
 - **Open Data Fetcher** lets people search approved official catalogs, select a dataset, review rights and size, preview bounded rows and confirm a temporary export.
 
+- **Editable Diagram Builder** creates human-reviewed flowcharts, architecture diagrams, sequence diagrams and concept maps with native editable downloads.
+
 No plugin contains client data, private corpora, credentials or internal ASTUDIO procedures.
 
 ## Public pages
@@ -36,6 +38,7 @@ npm --prefix ad-creative-lab test
 npm --prefix growth-marketing-planner test
 npm --prefix ai-crawler-readiness-auditor test
 npm --prefix open-data-fetcher test
+CHECKPOINT_SECRET=local-development-secret-at-least-32-bytes npm --prefix editable-diagram-builder test
 ```
 
 ## License
