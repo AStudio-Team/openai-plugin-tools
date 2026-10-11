@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import http from "node:http";
 import net from "node:net";
-import { approveColdEmailBrief, countCtas, createHttpServer, draftColdEmailSequence, exportColdEmailSequence, submitVariantSelection } from "../src/server.mjs";
+import { approveColdEmailBrief, CTA_OPENERS, CTA_VERBS, countCtas, createHttpServer, draftColdEmailSequence, exportColdEmailSequence, submitVariantSelection } from "../src/server.mjs";
 
 const brief={offer:"A managed design service",targetRole:"Marketing director",companyType:"B2B SaaS",painPoint:"Slow campaign production",proof:"Used by three B2B teams",callToAction:"Book a 15-minute call",senderName:"Ava",signature:"Ava, ASTUDIO",tone:"consultative",followUpCount:1};
 const email=id=>({id,subject:"A thought for {{company}}",body:"Hi {{company}}, would you be open to a short call?",personalisationTokens:["{{company}}"]});
@@ -37,7 +37,13 @@ test("countCtas implements the final sentence algorithm",()=>{for(const [body,ex
   ["Hi Sara, could you send the deck?",1],
   ["Our team ships in two weeks and your inbox stays clean.",0],
   ["Our team ships in two weeks.",0],
+  ["Could you review the outline and provide feedback?",2],
+  ["Could you review research and development?",1],
+  ["Hope you are well.",0],
+  ["Thanks for your time.",0],
+  ["Weekly reports arrive Monday.",0],
 ])assert.equal(countCtas(body),expected,body)});
+test("CTA vocabularies are exported and closed",()=>{assert.ok(CTA_VERBS.includes("provide"));assert.ok(CTA_VERBS.includes("introduce"));assert.ok(CTA_OPENERS.includes("could you"));assert.equal(countCtas("Consider this option."),0)});
 test("CTA counting follows body sentence and conjunction rules",()=>{for(const [body,subject,valid] of [
   ["Could you book a call or reply with a time?","A thought for {{company}}",false],
   ["Could you book a call and send me your budget?","A thought for {{company}}",false],
