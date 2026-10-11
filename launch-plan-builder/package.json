@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": false,
   "type": "module",
-  "description": "Human-guided MCP App for comparing and exporting practical growth marketing plans.",
+  "description": "Human-guided MCP App for approving, validating, revising and exporting phased product launch plans.",
   "scripts": {
     "start": "node src/server.mjs",
     "test": "node --test tests/*.test.mjs",

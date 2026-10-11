@@ -1,6 +1,6 @@
 # Launch Plan Builder
 
-A human-guided MCP App that turns a confirmed business brief into exactly three distinct growth strategies, supports visible revision and explicit selection, then exports one 30, 60, or 90-day plan.
+A human-guided MCP App that turns an approved product launch brief into a dated plan across pre-launch, launch week, and post-launch phases. Each task has an owner, channel, and deliverable. The plan can be revised visibly and exported as Markdown or CSV.
 
 ## Local development
 
@@ -14,8 +14,8 @@ The local server listens on port 8790 by default. Its MCP endpoint is `/mcp`, he
 
 ## Data boundary
 
-The service is stateless and closed-world. It does not access marketing accounts, make outbound network requests during tool execution, scrape, track, launch campaigns, or intentionally retain briefs and exports.
+The service is stateless and closed-world. It does not access marketing accounts, make outbound network requests during tool execution, scrape, track, launch campaigns, or intentionally retain briefs and exports. `APPROVAL_HMAC_KEY` is required to issue and verify time-limited approval receipts.
 
 ## Attribution
 
-Methodology is adapted from Marketing Skills for AI Agents by Corey Haines. See `NOTICE` and `LICENSES/corey-haines-marketingskills-MIT.txt`. No endorsement is implied.
+Launch-planning methodology is adapted from the launch-strategy skill in Marketing Skills for AI Agents by Corey Haines, under the MIT License. See `NOTICE` and `LICENSES/corey-haines-marketingskills-MIT.txt`. No endorsement is implied.
