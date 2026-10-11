@@ -30,7 +30,9 @@
             max_size 256KB
         }
         rewrite * /mcp
-        reverse_proxy __SCHEMA_MARKUP_UPSTREAM__:8790
+        reverse_proxy __SCHEMA_MARKUP_UPSTREAM__:8790 {
+            header_up X-Plugin-Client-IP {remote_host}
+        }
     }
 
     handle_path /openai-plugins/schema-markup-generator/* {

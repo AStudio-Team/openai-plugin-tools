@@ -151,6 +151,17 @@ astudio.agency, www.astudio.agency {
         self.assertIn("handle_path /tools/verified-buy-link*", block)
         self.assertLess(block.index("handle_path /tools/verified-buy-link*"), block.index("handle_path /tools/*"))
 
+    def test_every_plugin_mcp_block_forwards_client_ip(self):
+        block = BLOCK.read_text()
+        mcp_blocks = re.findall(
+            r"^    handle /openai-plugins/[^/]+/mcp \{.*?(?=^    handle |\Z)",
+            block,
+            flags=re.MULTILINE | re.DOTALL,
+        )
+        self.assertTrue(mcp_blocks, "expected OpenAI plugin MCP blocks")
+        for mcp_block in mcp_blocks:
+            self.assertIn("header_up X-Plugin-Client-IP {remote_host}", mcp_block)
+
     def test_deploy_shell_is_syntactically_valid(self):
         subprocess.run(["bash", "-n", str(ROOT / "deploy" / "deploy-production.sh")], check=True)
 
