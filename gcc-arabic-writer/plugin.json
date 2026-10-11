@@ -2,7 +2,7 @@
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "astudio-gcc-arabic-writer",
   "version": "1.1.0",
-  "description": "Write, rewrite and review MSA, GCC and pan-Arab marketing copy with deterministic fidelity and style checks.",
+  "description": "Write, rewrite and review Arabic marketing copy for the Gulf and the wider Arab world: taglines, captions, ads, product and website copy in Modern Standard Arabic, with checks that names, prices and dates stay unchanged. By ASTUDIO.",
   "author": {
     "name": "ASTUDIO",
     "url": "https://www.astudio.agency"
@@ -10,24 +10,48 @@
   "homepage": "https://www.astudio.agency/tools/gcc-arabic-writer",
   "repository": "https://github.com/AStudio-Team/openai-plugin-tools",
   "license": "MIT",
-  "keywords": ["Arabic copywriting", "Arabic marketing copy", "GCC Arabic", "Arabic localization", "Arabic transcreation", "Modern Standard Arabic", "Arabic taglines and captions", "Arabic product copy", "luxury Arabic copy", "كتابة محتوى عربي", "توطين المحتوى للخليج"],
+  "keywords": [
+    "Arabic copywriting",
+    "Arabic marketing copy",
+    "GCC Arabic",
+    "Arabic localization",
+    "Modern Standard Arabic",
+    "Arabic taglines and captions",
+    "luxury Arabic copy",
+    "كتابة محتوى عربي",
+    "Arabic copywriter",
+    "Arabic ad copy",
+    "Arabic social media captions",
+    "Saudi Arabic copy",
+    "اعلانات عربية",
+    "كتابة اعلانات",
+    "محتوى عربي"
+  ],
   "extensions": {
     "com.openai": {
       "interface": {
         "displayName": "GCC Arabic Writer",
-        "shortDescription": "GCC Arabic copy and checks",
+        "shortDescription": "Arabic marketing copy, GCC",
         "longDescription": "Write, rewrite and review Arabic marketing, advertising, brand and luxury copy for GCC and pan-Arab audiences. A focused brief builder lets you review and explicitly send the deliverable, market, surface, voice, message, facts, protected literals and constraints before ChatGPT writes. Read-only review results support revision or selection. Text fallbacks remain available. MSA is the default, and country dialect always requires native-market review.",
         "developerName": "ASTUDIO",
         "category": "Productivity",
-        "capabilities": ["Arabic marketing copywriting", "MSA copy", "GCC and pan-Arab localization", "UAE and Saudi market adaptation", "Arabic taglines and captions", "Luxury Arabic copy", "Arabic literal fidelity checks"],
+        "capabilities": [
+          "Arabic marketing copywriting",
+          "Arabic ad copy and taglines",
+          "Social media captions in Arabic",
+          "GCC and pan-Arab localization",
+          "UAE and Saudi market adaptation",
+          "Luxury and beauty Arabic copy",
+          "Checks that names, prices and dates stay unchanged"
+        ],
         "websiteURL": "https://www.astudio.agency/tools/gcc-arabic-writer",
         "supportURL": "https://www.astudio.agency/tools/support",
         "privacyPolicyURL": "https://www.astudio.agency/tools/privacy",
         "termsOfServiceURL": "https://www.astudio.agency/tools/terms",
         "defaultPrompt": [
-          "Write three Arabic campaign lines for a fragrance launch in Riyadh, using Modern Standard Arabic.",
-          "Adapt this caption for a UAE audience, using Modern Standard Arabic unless I request Emirati dialect.",
-          "Polish this Arabic luxury copy and keep every name, price, date and factual claim unchanged."
+          "Write three Arabic campaign lines for a fragrance launch in Riyadh.",
+          "Adapt this Instagram caption for a UAE audience in Modern Standard Arabic.",
+          "Review this Arabic luxury copy and keep every name, price and date unchanged."
         ],
         "brandColor": "#322625",
         "composerIcon": "./assets/icon.png",
@@ -62,7 +86,7 @@
             },
             {
               "description": "Review a GCC Arabic hospitality caption for style and dialect risk.",
-              "prompt": "Review this hotel caption for calques, unsupported claims, dialect mixing, partial diacritics and length: حيث تلتقي الفخامة بتجربة لا مثيل لها \u2014 شلونكم وشخباركم.",
+              "prompt": "Review this hotel caption for calques, unsupported claims, dialect mixing, partial diacritics and length: حيث تلتقي الفخامة بتجربة لا مثيل لها، شلونكم وشخباركم.",
               "tools_triggered": "lint_gcc_arabic_copy",
               "expected_behavior": "Return deterministic rule findings and avoid claiming native-speaker, legal or cultural certification."
             }

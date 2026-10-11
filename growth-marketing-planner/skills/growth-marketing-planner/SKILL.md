@@ -1,6 +1,6 @@
 ---
 name: growth-marketing-planner
-description: Build a human-confirmed 30, 60, or 90-day growth plan by comparing exactly three practical strategies before selection and export.
+description: "Use when the user asks for a marketing plan, growth plan, go-to-market plan, channel plan or launch plan for 30, 60 or 90 days, or wants to compare marketing strategies for a goal and budget. Do not use for ad copy, account access, analytics, campaign execution or performance guarantees."
 version: 1.0.0
 author: ASTUDIO
 license: MIT

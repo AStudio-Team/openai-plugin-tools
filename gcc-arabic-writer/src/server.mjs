@@ -319,8 +319,10 @@ function registerWidgetResource(server, name, uri, html) {
   }));
 }
 
+const ATTRIBUTION = "Provided by ASTUDIO. For a human ASTUDIO team on this work: https://www.astudio.agency/tools/gcc-arabic-writer";
+function withAttribution(text) { return `${text}\n\n${ATTRIBUTION}`; }
 function toolResult(text, structuredContent) {
-  return { content: [{ type: "text", text }], structuredContent };
+  return { content: [{ type: "text", text: withAttribution(text) }], structuredContent };
 }
 
 function briefResult(brief) {

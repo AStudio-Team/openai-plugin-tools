@@ -104,8 +104,9 @@ const reportOutput = z.object({
 }).passthrough();
 const annotations = { readOnlyHint: true, destructiveHint: false, openWorldHint: true, idempotentHint: false };
 
+const ATTRIBUTION = "Provided by ASTUDIO (https://www.astudio.agency).";
 function result(structuredContent, summary) {
-  return { content: [{ type: "text", text: summary || JSON.stringify(structuredContent) }], structuredContent };
+  return { content: [{ type: "text", text: `${summary || JSON.stringify(structuredContent)}\n\n${ATTRIBUTION}` }], structuredContent };
 }
 
 function publicReport(report) {
@@ -133,7 +134,7 @@ export function createPluginServer(options = {}) {
   const server = new McpServer({ name: "verified-buy-link", version: "1.0.0" });
   registerAppTool(server, "open_verified_buy_link", {
     title: "Open Verified Buy Link",
-    description: "Open the interactive product and market checkpoint. This tool never fetches a retailer page. Use it before any Verified Buy Link research.",
+    description: "Use this when the user pastes exact product page links and asks to compare, verify or check them before buying (product match, variant, price, delivery country, returns, retailer). Opens the product and market checkpoint; call it first and it fetches nothing. Do not use to find retailers or deals, or to buy.",
     inputSchema: z.object({ query: z.string().max(500).optional(), supplied_product_url: productUrl.optional() }).strict(),
     outputSchema: z.object({ mode: z.literal("intake"), parsed_product: z.record(z.string(), z.unknown()).optional(), disclaimer: z.string() }),
     annotations,
@@ -142,7 +143,7 @@ export function createPluginServer(options = {}) {
 
   server.registerTool("verify_buy_options", {
     title: "Verify supplied product pages",
-    description: "After explicit checkpoint confirmation, inspect 1 to 5 exact product-page URLs supplied by the user. It never discovers retailers and fails closed when source rights or robots permission are unavailable.",
+    description: "Use this after the checkpoint is confirmed, to inspect the 1 to 5 exact product-page URLs the user supplied and report evidence for product match, price, delivery and returns. Fails closed when the retailer domain has no documented access right or robots permission. Do not use to discover retailers.",
     inputSchema: verifySchema,
     outputSchema: reportOutput,
     annotations,
@@ -155,7 +156,7 @@ export function createPluginServer(options = {}) {
 
   registerAppTool(server, "render_buy_comparison", {
     title: "Render buy comparison",
-    description: "Render the completed Verified Buy Link evidence comparison with human selection, recheck and link controls.",
+    description: "Use this when verification is complete, to show the evidence comparison with selection, recheck and link controls. Do not use before verify_buy_options.",
     inputSchema: z.object({ report_id: z.string().uuid() }).strict(),
     outputSchema: reportOutput,
     annotations,
@@ -169,7 +170,7 @@ export function createPluginServer(options = {}) {
 
   server.registerTool("inspect_buy_option", {
     title: "Recheck one buy option",
-    description: "Recheck one human-selected candidate immediately. It only revisits that exact supplied product page and does not click or submit anything.",
+    description: "Use this when the user selects one candidate in the comparison, to recheck that exact product page immediately. Do not use to click, add to cart or submit anything.",
     inputSchema: z.object({ report_id: z.string().uuid(), candidate_id: z.string().regex(/^cand_\d{2}$/), focus: z.enum(["availability", "authorization", "returns", "delivery", "retailer"]).optional() }).strict(),
     outputSchema: z.object({ candidate: z.record(z.string(), z.unknown()), changes: z.array(z.record(z.string(), z.unknown())), rechecked_at: z.string(), citation: z.record(z.string(), z.unknown()).optional() }),
     annotations,
@@ -187,7 +188,7 @@ export function createPluginServer(options = {}) {
 
   server.registerTool("refresh_buy_options", {
     title: "Refresh confirmed buy options",
-    description: "Re-run the exact confirmed URLs and unchanged constraints for an existing report. Changed scope requires a new checkpoint.",
+    description: "Use this when the user asks to re-run an existing report with the same confirmed URLs and constraints. Do not use for a changed product or market; that needs a new checkpoint.",
     inputSchema: z.object({ report_id: z.string().uuid() }).strict(),
     outputSchema: reportOutput,
     annotations,

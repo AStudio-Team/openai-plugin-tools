@@ -1,6 +1,6 @@
 ---
 name: ai-crawler-readiness-auditor
-description: Audit one public HTTPS page and its crawler controls after a visible human checkpoint.
+description: "Use when the user asks whether their website or page is visible, crawlable or readable by AI crawlers and AI search (ChatGPT, GPTBot, Perplexity, Google AI), or wants a robots.txt, sitemap, llms.txt, meta tag or structured data audit for one public page. Do not use for signed-in pages, ranking reports, competitor comparisons, traffic promises or site changes."
 license: MIT
 metadata:
   version: 1.0.0

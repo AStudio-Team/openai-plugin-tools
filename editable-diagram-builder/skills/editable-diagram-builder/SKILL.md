@@ -1,6 +1,6 @@
 ---
 name: editable-diagram-builder
-description: Use when creating a flowchart, system architecture diagram, sequence diagram or concept map that the user wants to review and download as an editable .excalidraw file.
+description: "Use when the user asks for a flowchart, process flow, system architecture diagram, sequence diagram, concept map or mind map from a description, and wants to review it and download an editable .excalidraw file. Do not use for charts from data, slide decks, image generation or diagrams in other file formats."
 version: 1.0.0
 license: MIT
 ---
