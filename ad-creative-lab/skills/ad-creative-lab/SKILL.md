@@ -1,6 +1,6 @@
 ---
 name: ad-creative-lab
-description: Build, approve, compare, validate and export text-only advertising concepts through an explicit human checkpoint.
+description: "Use when the user asks for ad copy, ad headlines, ad text variations, hooks or a campaign brief for Meta (Facebook, Instagram), Google responsive search ads, LinkedIn, TikTok or X, and wants to compare concepts and check platform limits. Do not use for ad images or video, media buying, account access, publishing ads or performance forecasts."
 ---
 
 # Ad Creative Lab
