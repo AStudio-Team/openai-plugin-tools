@@ -56,7 +56,7 @@ class ManifestAndPackageTests(unittest.TestCase):
         diagram_review = self.diagram["extensions"]["com.openai"]["review"]
         self.assertEqual(len(diagram_review["test_cases"]["positive"]), 5)
         self.assertEqual(len(diagram_review["test_cases"]["negative"]), 3)
-        self.assertEqual(diagram_review["demo_recording_status"], "required-before-portal-submission")
+        self.assertNotIn("demo_recording_status", diagram_review)
 
     def test_diagram_package_is_pinned_and_closed_world(self):
         package = json.loads((ROOT / "editable-diagram-builder" / "package.json").read_text())
@@ -104,7 +104,7 @@ class ManifestAndPackageTests(unittest.TestCase):
         review = self.grounded["extensions"]["com.openai"]["review"]
         self.assertEqual(len(review["test_cases"]["positive"]), 5)
         self.assertEqual(len(review["test_cases"]["negative"]), 3)
-        self.assertEqual(review["demo_recording_status"], "required-before-portal-submission")
+        self.assertNotIn("demo_recording_status", review)
         package = ROOT / "grounded-citations" / "plugin-package"
         self.assertTrue((package / "skills" / "grounded-citations" / "SKILL.md").is_file())
         self.assertEqual(len(list((package / "assets").glob("screenshot-*.png"))), 3)
@@ -124,7 +124,7 @@ class ManifestAndPackageTests(unittest.TestCase):
         review = self.growth["extensions"]["com.openai"]["review"]
         self.assertEqual(len(review["test_cases"]["positive"]), 5)
         self.assertEqual(len(review["test_cases"]["negative"]), 3)
-        self.assertEqual(review["demo_recording_status"], "required-before-portal-submission")
+        self.assertNotIn("demo_recording_status", review)
         text = json.dumps(self.growth, ensure_ascii=False).lower()
         for phrase in ("exactly three", "your confirmation before planning", "markdown or json", "does not connect"):
             self.assertIn(phrase, text)
@@ -193,7 +193,7 @@ class ManifestAndPackageTests(unittest.TestCase):
         review = self.ad["extensions"]["com.openai"]["review"]
         self.assertEqual(len(review["test_cases"]["positive"]), 5)
         self.assertEqual(len(review["test_cases"]["negative"]), 3)
-        self.assertEqual(review["demo_recording_status"], "required-before-portal-submission")
+        self.assertNotIn("demo_recording_status", review)
         mcp = json.loads((ROOT / "ad-creative-lab" / "mcp.json").read_text())
         self.assertEqual(mcp["mcpServers"]["ad-creative-lab"]["url"], "https://www.astudio.agency/openai-plugins/ad-creative-lab/mcp")
         notice = (ROOT / "ad-creative-lab" / "THIRD_PARTY_NOTICES.md").read_text()
@@ -206,7 +206,7 @@ class ManifestAndPackageTests(unittest.TestCase):
         self.assertEqual(interface["shortDescription"], "Is my site visible to AI bots")
         self.assertEqual(len(review["test_cases"]["positive"]), 5)
         self.assertEqual(len(review["test_cases"]["negative"]), 3)
-        self.assertEqual(review["demo_recording_status"], "required-before-portal-submission")
+        self.assertNotIn("demo_recording_status", review)
         for case in review["test_cases"]["positive"]:
             self.assertIn("https://fixtures.astudio.agency/", case["prompt"])
             self.assertIn("validate_audit_target", case["tools_triggered"])
