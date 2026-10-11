@@ -400,12 +400,6 @@ check_mcp https://www.astudio.agency/openai-plugins/ad-creative-lab/mcp ad-creat
 check_health https://www.astudio.agency/openai-plugins/growth-marketing-planner/health growth-marketing-planner
 check_health https://www.astudio.agency/openai-plugins/growth-marketing-planner/ready growth-marketing-planner
 check_mcp https://www.astudio.agency/openai-plugins/growth-marketing-planner/mcp growth-marketing-planner open_growth_brief,review_growth_brief,compare_growth_strategies,finalize_growth_plan,export_growth_plan
-check_health https://www.astudio.agency/openai-plugins/launch-plan-builder/health launch-plan-builder
-check_health https://www.astudio.agency/openai-plugins/launch-plan-builder/ready launch-plan-builder
-check_mcp https://www.astudio.agency/openai-plugins/launch-plan-builder/mcp launch-plan-builder open_launch_brief,review_launch_brief,approve_launch_brief,draft_launch_plan,request_plan_revision,export_launch_plan
-check_health https://www.astudio.agency/openai-plugins/schema-markup-generator/health schema-markup-generator
-check_health https://www.astudio.agency/openai-plugins/schema-markup-generator/ready schema-markup-generator
-check_mcp https://www.astudio.agency/openai-plugins/schema-markup-generator/mcp schema-markup-generator open_schema_brief,review_schema_brief,approve_schema_brief,generate_schema_markup,check_schema_markup,export_schema_markup
 ACTUAL_OPENAI_CHALLENGE="$(curl --fail --silent --show-error https://www.astudio.agency/.well-known/openai-apps-challenge)"
 if [ "$ACTUAL_OPENAI_CHALLENGE" != "$EXPECTED_OPENAI_CHALLENGE" ]; then
   echo "OpenAI Apps challenge response mismatch" >&2
@@ -438,7 +432,7 @@ check_health https://www.astudio.agency/openai-plugins/launch-plan-builder/ready
 check_mcp https://www.astudio.agency/openai-plugins/launch-plan-builder/mcp launch-plan-builder open_launch_brief,review_launch_brief,approve_launch_brief,draft_launch_plan,request_plan_revision,export_launch_plan
 check_health https://www.astudio.agency/openai-plugins/schema-markup-generator/health schema-markup-generator
 check_health https://www.astudio.agency/openai-plugins/schema-markup-generator/ready schema-markup-generator
-check_mcp https://www.astudio.agency/openai-plugins/schema-markup-generator/mcp schema-markup-generator generate_schema_markup,validate_schema_markup
+check_mcp https://www.astudio.agency/openai-plugins/schema-markup-generator/mcp schema-markup-generator open_schema_brief,review_schema_brief,approve_schema_brief,generate_schema_markup,check_schema_markup,export_schema_markup
 check_health https://www.astudio.agency/openai-plugins/landing-page-copy-check/health landing-page-copy-check
 check_health https://www.astudio.agency/openai-plugins/landing-page-copy-check/ready landing-page-copy-check
 check_mcp https://www.astudio.agency/openai-plugins/landing-page-copy-check/mcp landing-page-copy-check open_page_brief,review_page_brief,approve_page_brief,draft_page_copy,check_page_conversion,select_page_copy_variant,export_page_copy
