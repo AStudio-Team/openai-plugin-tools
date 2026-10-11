@@ -2,7 +2,7 @@
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "ai-crawler-readiness-auditor",
   "version": "1.0.0",
-  "description": "Check whether ChatGPT, Perplexity and other AI crawlers can read your website: robots.txt, sitemap, llms.txt, meta tags and structured data for one public page, with fixes ranked by priority. By ASTUDIO.",
+  "description": "Check whether AI crawlers and AI search engines can read your website: robots.txt, sitemap, llms.txt, meta tags and structured data for one public page, with fixes ranked by priority. By ASTUDIO.",
   "author": {
     "name": "ASTUDIO",
     "url": "https://www.astudio.agency"
@@ -16,7 +16,7 @@
     "llms.txt validation",
     "sitemap audit",
     "public website audit",
-    "is my website visible to ChatGPT",
+    "is my website visible to AI search",
     "AI crawler audit",
     "robots.txt for AI bots",
     "GPTBot robots.txt",
@@ -32,11 +32,11 @@
       "interface": {
         "displayName": "AI Crawler Readiness Auditor",
         "shortDescription": "Is my site visible to AI bots",
-        "longDescription": "AI Crawler Readiness Auditor is a developer and website tool that checks whether AI crawlers and AI search (ChatGPT, GPTBot, OAI-SearchBot, Perplexity, Google AI) can read one public web page. After you confirm the target, it reviews the effective robots.txt rules for that path, page and response directives, sitemap availability, llms.txt validity, meta tags and JSON-LD structured data, and returns evidence with fixes ranked by priority. It is for website owners, marketers and SEO or GEO teams. Limits: one public HTTPS page per audit; it does not access signed-in pages, change websites, measure AI-answer rankings, compare competitors or guarantee inclusion or traffic.",
+        "longDescription": "AI Crawler Readiness Auditor is a developer and website tool that checks whether AI crawlers and AI search engines (for example GPTBot and OAI-SearchBot) can read one public web page. After you confirm the target, it reviews the effective robots.txt rules for that path, page and response directives, sitemap availability, llms.txt validity, meta tags and JSON-LD structured data, and returns evidence with fixes ranked by priority. It is for website owners, marketers and SEO or GEO teams. Limits: one public HTTPS page per audit; it does not access signed-in pages, change websites, measure AI-answer rankings, compare competitors or guarantee inclusion or traffic.",
         "developerName": "ASTUDIO",
         "category": "Developer Tools",
         "capabilities": [
-          "Check robots.txt rules for AI crawlers such as GPTBot and OAI-SearchBot",
+          "Check robots.txt rules for AI crawlers (GPTBot, OAI-SearchBot and others)",
           "Check sitemap and llms.txt",
           "Check page meta tags and directives",
           "Parse JSON-LD structured data",
@@ -48,7 +48,7 @@
         "privacyPolicyURL": "https://www.astudio.agency/tools/privacy",
         "termsOfServiceURL": "https://www.astudio.agency/tools/terms",
         "defaultPrompt": [
-          "Is my website visible to ChatGPT? Audit https://example.com.",
+          "Is my website visible to AI search? Audit https://example.com.",
           "Check robots.txt, sitemap and llms.txt for AI crawlers on https://example.com.",
           "Review the structured data and meta tags on this page for AI search."
         ],
