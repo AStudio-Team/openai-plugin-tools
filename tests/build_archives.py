@@ -10,12 +10,12 @@ ROOT = Path(__file__).resolve().parents[1]
 BUILD = ROOT / "build"
 PRODUCTS = {
     "gcc-arabic-writer": {
-        "archive": "gcc-arabic-writer-1.0.0-submission.zip",
+        "archive": "gcc-arabic-writer-1.1.0-submission.zip",
         "root_files": {"plugin.json", "mcp.json"},
         "directories": {"assets", "skills", "review"},
     },
     "pdf-table-to-excel": {
-        "archive": "pdf-table-to-excel-1.0.0-submission.zip",
+        "archive": "pdf-table-to-excel-1.1.0-submission.zip",
         "root_files": {"plugin.json", "mcp.json"},
         "directories": {"assets", "skills"},
     },

@@ -1,4 +1,5 @@
 import json
+import subprocess
 import unittest
 from pathlib import Path
 
@@ -46,7 +47,11 @@ class ManifestAndPackageTests(unittest.TestCase):
     def test_gcc_package_is_pinned_and_closed_world(self):
         package = json.loads((ROOT / "gcc-arabic-writer" / "package.json").read_text())
         self.assertEqual(package["engines"]["node"], ">=22")
-        self.assertEqual(package["dependencies"], {"@modelcontextprotocol/sdk": "1.32.1", "zod": "4.6.5"})
+        self.assertEqual(package["dependencies"], {
+            "@modelcontextprotocol/ext-apps": "2.0.3",
+            "@modelcontextprotocol/sdk": "1.32.1",
+            "zod": "4.6.5",
+        })
         source = (ROOT / "gcc-arabic-writer" / "src" / "server.mjs").read_text()
         for forbidden in ("node:http\"", "node:https", "fetch(", "axios", "openai", "anthropic"):
             if forbidden == "node:http\"":
@@ -71,6 +76,57 @@ class ManifestAndPackageTests(unittest.TestCase):
             mcp["mcpServers"]["gcc-arabic-writer"]["url"],
             "https://www.astudio.agency/openai-plugins/gcc-arabic-writer/mcp",
         )
+
+    def test_next_version_and_interaction_docs_are_consistent(self):
+        for product in ("gcc-arabic-writer", "pdf-table-to-excel"):
+            package = json.loads((ROOT / product / "package.json").read_text())
+            manifest = json.loads((ROOT / product / "plugin.json").read_text())
+            lock = json.loads((ROOT / product / "package-lock.json").read_text())
+            self.assertEqual(package["version"], "1.1.0")
+            self.assertEqual(manifest["version"], "1.1.0")
+            self.assertEqual(lock["version"], "1.1.0")
+            self.assertEqual(lock["packages"][""]["version"], "1.1.0")
+            self.assertEqual(package["dependencies"]["@modelcontextprotocol/ext-apps"], "2.0.3")
+        spec = (ROOT / "docs" / "interaction-flows-v1.1.0.md").read_text()
+        for heading in ("Entry intent", "Intake", "Human checkpoint", "Execution", "Result", "Human choice", "Follow-up", "Fallback", "Cancellation", "Privacy"):
+            self.assertIn(heading, spec)
+        for category in ("Direct", "Indirect", "Incomplete", "Follow-up", "Revision", "Cancellation", "Negative", "Boundary"):
+            self.assertIn(f"| {category} |", spec)
+        self.assertIn("does not claim that version 1.1.0 is uploaded, submitted, approved or published", spec)
+
+    def test_npm_packages_are_private_and_restrict_contents(self):
+        expected_prefixes = {
+            "gcc-arabic-writer": ("src/", "widgets/"),
+            "pdf-table-to-excel": ("src/", "widgets/", "public/"),
+        }
+        for product, prefixes in expected_prefixes.items():
+            package_dir = ROOT / product
+            package = json.loads((package_dir / "package.json").read_text())
+            self.assertIs(package["private"], True)
+            result = subprocess.run(
+                ["npm", "pack", "--dry-run", "--json", "--ignore-scripts"],
+                cwd=package_dir,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            files = {item["path"] for item in json.loads(result.stdout)[0]["files"]}
+            self.assertIn("package.json", files)
+            self.assertTrue(any(path.startswith("widgets/") for path in files))
+            self.assertTrue(any(path.startswith("src/") for path in files))
+            self.assertFalse(any(path.startswith(("node_modules/", ".venv/", "tests/", "skills/")) for path in files))
+            allowed = prefixes + ("package.json", "README.md", "requirements.lock")
+            self.assertFalse([path for path in files if not path.startswith(allowed)], files)
+
+    def test_public_pages_truthfully_describe_interactive_flows(self):
+        public = ROOT / "pdf-table-to-excel" / "public"
+        gcc_page = (public / "gcc-arabic-writer.html").read_text()
+        pdf_page = (public / "pdf-table-to-excel.html").read_text()
+        privacy = (public / "privacy.html").read_text()
+        self.assertIn("Review a focused brief before writing", gcc_page)
+        self.assertIn("worksheet previews and expiry", pdf_page)
+        self.assertIn("host mediates opening the download link", privacy)
+        self.assertIn("silently update model context", privacy)
 
 
 if __name__ == "__main__":
