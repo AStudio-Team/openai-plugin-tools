@@ -16,6 +16,7 @@ RUN python3 -m venv /opt/venv \
 
 COPY src ./src
 COPY public ./public
+COPY widgets ./widgets
 
 ENV NODE_ENV=production \
     PORT=8788 \
