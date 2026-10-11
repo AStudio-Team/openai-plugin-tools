@@ -1,0 +1,47 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "gcc-arabic-writer",
+  "version": "1.0.0",
+  "description": "Write natural Arabic brand, luxury and business copy for GCC audiences.",
+  "author": {
+    "name": "ASTUDIO",
+    "url": "https://www.astudio.agency"
+  },
+  "homepage": "https://www.astudio.agency/tools/gcc-arabic-writer",
+  "repository": "https://github.com/AStudio-Team/openai-plugin-tools",
+  "license": "MIT",
+  "keywords": ["Arabic writing", "GCC Arabic", "Saudi Arabic", "Emirati Arabic", "Arabic copywriting", "Arabic localization"],
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "GCC Arabic Writer",
+        "shortDescription": "Arabic copy for GCC markets",
+        "longDescription": "Write and refine Arabic advertising, luxury, social, product and business copy for pan-Arab or GCC audiences. Modern Standard Arabic is the default, with cautious market-specific adaptation when explicitly requested.",
+        "developerName": "ASTUDIO",
+        "category": "Productivity",
+        "capabilities": ["Arabic copywriting", "GCC localization", "Saudi-market Arabic adaptation", "UAE-market Arabic adaptation", "Luxury Arabic", "Arabic factual-preservation editing"],
+        "websiteURL": "https://www.astudio.agency/tools/gcc-arabic-writer",
+        "supportURL": "https://www.astudio.agency/tools/support",
+        "privacyPolicyURL": "https://www.astudio.agency/tools/privacy",
+        "termsOfServiceURL": "https://www.astudio.agency/tools/terms",
+        "defaultPrompt": [
+          "Write three Arabic campaign lines for a fragrance launch in Riyadh, using Modern Standard Arabic.",
+          "Adapt this caption for a UAE audience, using Modern Standard Arabic unless I request Emirati dialect.",
+          "Polish this Arabic luxury copy and keep every factual claim unchanged."
+        ],
+        "brandColor": "#322625",
+        "composerIcon": "./assets/icon.png",
+        "logo": "./assets/logo.png"
+      },
+      "publication": {
+        "release_notes": "Initial public release with pan-Arab and six-market GCC writing guidance.",
+        "translations": {
+          "ar-SA": {
+            "subtitle": "كتابة عربية لأسواق الخليج",
+            "description": "اكتب وحسّن محتوى عربيًا طبيعيًا للإعلانات والعلامات الراقية ومنصات التواصل ووصف المنتجات والأعمال، للجمهور العربي عمومًا أو لسوق خليجي محدد، مع اعتماد العربية الفصحى الحديثة أساسًا والتوطين المحلي بحذر عند طلبه."
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,104 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "pdf-table-to-excel",
+  "version": "1.0.0",
+  "description": "Convert selectable PDF tables into clean Excel workbooks.",
+  "author": {
+    "name": "ASTUDIO",
+    "url": "https://www.astudio.agency"
+  },
+  "homepage": "https://www.astudio.agency/tools/pdf-table-to-excel",
+  "repository": "https://github.com/AStudio-Team/openai-plugin-tools",
+  "license": "MIT",
+  "keywords": ["PDF to Excel", "PDF table extraction", "XLSX", "spreadsheet", "data extraction"],
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "PDF Table to Excel",
+        "shortDescription": "Convert PDF tables to XLSX",
+        "longDescription": "Convert selectable tables in a PDF into a clean Excel workbook. Each detected table gets its own worksheet, with a summary sheet for quick navigation. Supports text-based PDFs up to 20 MB and does not perform OCR on scanned image-only files.",
+        "developerName": "ASTUDIO",
+        "category": "Productivity",
+        "capabilities": ["Extract PDF tables", "Create Excel workbooks", "Split tables into worksheets"],
+        "websiteURL": "https://www.astudio.agency/tools/pdf-table-to-excel",
+        "supportURL": "https://www.astudio.agency/tools/support",
+        "privacyPolicyURL": "https://www.astudio.agency/tools/privacy",
+        "termsOfServiceURL": "https://www.astudio.agency/tools/terms",
+        "defaultPrompt": [
+          "Convert every table in this PDF to Excel.",
+          "Extract the tables from this PDF into separate worksheets.",
+          "Turn this PDF price list into an XLSX workbook."
+        ],
+        "brandColor": "#322625",
+        "composerIcon": "./assets/icon.png",
+        "logo": "./assets/logo.png"
+      },
+      "review": {
+        "test_cases": {
+          "positive": [
+            {
+              "description": "Convert one invoice table",
+              "prompt": "Convert the table in the attached invoice PDF to Excel.",
+              "tools_triggered": "convert_pdf_tables_to_excel",
+              "expected_behavior": "Return an XLSX download with one extracted table worksheet and a summary sheet.",
+              "file_attachment_urls": ["https://www.astudio.agency/tools/review/sample-invoice.pdf"],
+              "expected_output_url": "https://www.astudio.agency/tools/review/expected-invoice.xlsx"
+            },
+            {
+              "description": "Convert multiple report tables",
+              "prompt": "Extract every table from this report into separate Excel worksheets.",
+              "tools_triggered": "convert_pdf_tables_to_excel",
+              "expected_behavior": "Return an XLSX download with each detected report table in its own worksheet.",
+              "file_attachment_urls": ["https://www.astudio.agency/tools/review/sample-report.pdf"],
+              "expected_output_url": "https://www.astudio.agency/tools/review/expected-report.xlsx"
+            },
+            {
+              "description": "Convert an event schedule",
+              "prompt": "Turn this PDF schedule into an Excel workbook.",
+              "tools_triggered": "convert_pdf_tables_to_excel",
+              "expected_behavior": "Return an XLSX file preserving the schedule rows and columns.",
+              "file_attachment_urls": ["https://www.astudio.agency/tools/review/sample-schedule.pdf"],
+              "expected_output_url": "https://www.astudio.agency/tools/review/expected-schedule.xlsx"
+            },
+            {
+              "description": "Convert a product price list",
+              "prompt": "Convert this PDF price list to XLSX and name the file product-prices.xlsx.",
+              "tools_triggered": "convert_pdf_tables_to_excel",
+              "expected_behavior": "Return product-prices.xlsx with the detected table and summary worksheet.",
+              "file_attachment_urls": ["https://www.astudio.agency/tools/review/sample-price-list.pdf"],
+              "expected_output_url": "https://www.astudio.agency/tools/review/expected-price-list.xlsx"
+            },
+            {
+              "description": "Neutralize spreadsheet formulas",
+              "prompt": "Extract this table safely into Excel.",
+              "tools_triggered": "convert_pdf_tables_to_excel",
+              "expected_behavior": "Return an XLSX workbook where formula-like PDF text is stored as text and not as executable spreadsheet formulas.",
+              "file_attachment_urls": ["https://www.astudio.agency/tools/review/sample-formula-safety.pdf"],
+              "expected_output_url": "https://www.astudio.agency/tools/review/expected-formula-safety.xlsx"
+            }
+          ],
+          "negative": [
+            {
+              "description": "Scanned image-only PDFs are unsupported. The plugin should explain that OCR is not included and must not fabricate table data.",
+              "prompt": "Convert this scanned PDF to Excel even if it has no selectable text."
+            },
+            {
+              "description": "JPG input is outside the PDF-only scope. The plugin should ask for a PDF and must not invoke the conversion tool.",
+              "prompt": "Convert this JPG photograph into an Excel workbook."
+            },
+            {
+              "description": "Arabic writing is unrelated to PDF table extraction. The plugin should not activate or call any tool.",
+              "prompt": "Write an Arabic caption for a hotel launch."
+            }
+          ]
+        },
+        "demo_recording_url": "https://www.astudio.agency/tools/review/pdf-table-to-excel-demo.mp4",
+        "commerce": false,
+        "commerce_description": "This plugin does not sell products or process payments."
+      },
+      "publication": {
+        "release_notes": "Initial public release with safe PDF table extraction, separate worksheets, temporary downloads and clear limits."
+      }
+    }
+  }
+}
