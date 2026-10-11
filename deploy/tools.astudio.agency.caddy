@@ -11,6 +11,10 @@
         reverse_proxy __LAUNCH_PLAN_UPSTREAM__:8790
     }
 
+    handle_path /tools/landing-page-copy-check* {
+        reverse_proxy __LANDING_COPY_UPSTREAM__:8790
+    }
+
     redir /tools /tools/ 308
 
     handle_path /tools/* {
@@ -88,6 +92,20 @@
 
     handle_path /openai-plugins/launch-plan-builder/* {
         reverse_proxy __LAUNCH_PLAN_UPSTREAM__:8790
+    }
+
+    handle /openai-plugins/landing-page-copy-check/mcp {
+        request_body {
+            max_size 256KB
+        }
+        rewrite * /mcp
+        reverse_proxy __LANDING_COPY_UPSTREAM__:8790 {
+            header_up X-Plugin-Client-IP {remote_host}
+        }
+    }
+
+    handle_path /openai-plugins/landing-page-copy-check/* {
+        reverse_proxy __LANDING_COPY_UPSTREAM__:8790
     }
 
     handle /openai-plugins/ai-crawler-readiness-auditor/mcp {
