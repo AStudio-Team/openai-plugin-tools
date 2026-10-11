@@ -21,7 +21,7 @@ The service is stateless and closed-world. It does not publish, schedule, access
 
 ```bash
 npm ci --ignore-scripts
-export APPROVAL_HMAC_KEY=<32 or more random bytes>
+export APPROVAL_HMAC_KEY="$(openssl rand -hex 32)"
 npm test
 npm start
 ```
