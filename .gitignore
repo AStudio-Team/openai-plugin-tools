@@ -4,6 +4,7 @@ __pycache__/
 *.pyc
 .DS_Store
 build/
+**/dist/
 PROJECT.md
 PLAN.md
 reports/
