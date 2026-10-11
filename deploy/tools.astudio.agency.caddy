@@ -1,6 +1,10 @@
 # BEGIN OPENAI_PLUGIN_TOOLS
     redir /tools /tools/ 308
 
+    handle_path /tools/verified-buy-link* {
+        reverse_proxy __VERIFIED_BUY_LINK_UPSTREAM__:8790
+    }
+
     handle_path /tools/* {
         reverse_proxy __PDF_PLUGIN_UPSTREAM__:8788
     }
@@ -31,6 +35,20 @@
 
     handle_path /openai-plugins/gcc-arabic-writer/* {
         reverse_proxy __ARABIC_PLUGIN_UPSTREAM__:8789
+    }
+
+    handle /openai-plugins/verified-buy-link/mcp {
+        request_body {
+            max_size 256KB
+        }
+        rewrite * /mcp
+        reverse_proxy __VERIFIED_BUY_LINK_UPSTREAM__:8790 {
+            header_up X-Plugin-Client-IP {remote_host}
+        }
+    }
+
+    handle_path /openai-plugins/verified-buy-link/* {
+        reverse_proxy __VERIFIED_BUY_LINK_UPSTREAM__:8790
     }
 
     handle /.well-known/openai-apps-challenge {

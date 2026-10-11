@@ -49,8 +49,10 @@ astudio.agency, www.astudio.agency {
         self.assertIn('LEGACY_STATE_FILE="${STATE_DIR}/current-container"', script)
         self.assertIn('elif [ -s "$LEGACY_STATE_FILE" ]', script)
         self.assertIn('rm -f "$LEGACY_STATE_FILE"', script)
-        self.assertIn('docker rm -f "$PDF_CONTAINER" "$ARABIC_CONTAINER"', script)
-        last_external_check = script.index("check_mcp https://www.astudio.agency/openai-plugins/gcc-arabic-writer/mcp")
+        self.assertIn('docker rm -f "$PDF_CONTAINER" "$ARABIC_CONTAINER" "$BUY_LINK_CONTAINER"', script)
+        self.assertIn('docker build --pull -t "$BUY_LINK_IMAGE" verified-buy-link', script)
+        self.assertIn('SOURCE_RIGHTS_FILE=/run/config/source-rights.json', script)
+        last_external_check = script.index("check_mcp https://www.astudio.agency/openai-plugins/verified-buy-link/mcp")
         self.assertLess(last_external_check, script.index('docker rm -f "$previous"'))
         self.assertLess(script.index("SWITCHED=1"), last_external_check)
         self.assertIn("tool.get('outputSchema')", script)
@@ -60,15 +62,21 @@ astudio.agency, www.astudio.agency {
         self.assertLess(committed, script.index('rm -f "$LEGACY_STATE_FILE"'))
         self.assertLess(committed, script.index('docker rm -f "$previous"'))
 
-    def test_caddy_routes_two_isolated_upstreams_and_public_checks(self):
+    def test_caddy_routes_three_isolated_upstreams_and_public_checks(self):
         block = BLOCK.read_text()
         self.assertIn("__PDF_PLUGIN_UPSTREAM__:8788", block)
         self.assertIn("__ARABIC_PLUGIN_UPSTREAM__:8789", block)
+        self.assertIn("__VERIFIED_BUY_LINK_UPSTREAM__:8790", block)
         self.assertIn("/openai-plugins/pdf-table-to-excel/mcp", block)
         self.assertIn("/openai-plugins/gcc-arabic-writer/mcp", block)
+        self.assertIn("/openai-plugins/verified-buy-link/mcp", block)
         self.assertIn("max_size 1MB", block)
         self.assertIn("max_size 128KB", block)
+        self.assertIn("max_size 256KB", block)
         self.assertIn("handle_path /openai-plugins/gcc-arabic-writer/*", block)
+        self.assertIn("handle_path /openai-plugins/verified-buy-link/*", block)
+        self.assertIn("handle_path /tools/verified-buy-link*", block)
+        self.assertLess(block.index("handle_path /tools/verified-buy-link*"), block.index("handle_path /tools/*"))
 
     def test_deploy_shell_is_syntactically_valid(self):
         subprocess.run(["bash", "-n", str(ROOT / "deploy" / "deploy-production.sh")], check=True)

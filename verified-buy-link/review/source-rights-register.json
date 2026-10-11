@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "policy": "Exact user-supplied product pages only. A domain must have a current, named terms review before automated retrieval. Robots permission is checked for every request. Missing, expired, contradictory, or restrictive evidence fails closed without fetching the product page.",
+  "required_fields": [
+    "domain",
+    "access_basis",
+    "terms_url",
+    "reviewed_at",
+    "automated_retrieval_allowed",
+    "permitted_fields",
+    "caching_and_retention",
+    "attribution_requirement",
+    "geographic_restrictions",
+    "rate_limit",
+    "owner"
+  ],
+  "sources": []
+}
