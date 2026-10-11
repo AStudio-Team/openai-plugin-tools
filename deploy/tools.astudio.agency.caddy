@@ -33,6 +33,20 @@
         reverse_proxy __ARABIC_PLUGIN_UPSTREAM__:8789
     }
 
+    handle /openai-plugins/editable-diagram-builder/mcp {
+        request_body {
+            max_size 256KB
+        }
+        rewrite * /mcp
+        reverse_proxy __DIAGRAM_PLUGIN_UPSTREAM__:8790 {
+            header_up X-Plugin-Client-IP {remote_host}
+        }
+    }
+
+    handle_path /openai-plugins/editable-diagram-builder/* {
+        reverse_proxy __DIAGRAM_PLUGIN_UPSTREAM__:8790
+    }
+
     handle /.well-known/openai-apps-challenge {
         reverse_proxy __PDF_PLUGIN_UPSTREAM__:8788
     }

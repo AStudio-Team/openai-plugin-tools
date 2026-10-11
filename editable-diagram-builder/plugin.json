@@ -1,0 +1,45 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "editable-diagram-builder",
+  "version": "1.0.0",
+  "description": "Create, review, revise and download deterministic editable diagrams in the open .excalidraw JSON format.",
+  "author": { "name": "ASTUDIO", "url": "https://www.astudio.agency" },
+  "homepage": "https://www.astudio.agency/tools/editable-diagram-builder",
+  "repository": "https://github.com/AStudio-Team/openai-plugin-tools",
+  "license": "MIT",
+  "keywords": ["editable diagram", "flowchart builder", "system architecture diagram", "sequence diagram", "concept map", ".excalidraw file", "diagram preview", "native diagram JSON"],
+  "extensions": { "com.openai": {
+    "interface": {
+      "displayName": "Editable Diagram Builder",
+      "shortDescription": "Build editable diagrams",
+      "longDescription": "Create flowcharts, system architecture diagrams, sequence diagrams and concept maps through a mandatory human-reviewed brief. Compare deterministic layouts, make bounded visual edits and download a native editable .excalidraw JSON file. The tool does not upload files, publish share links or store diagram content. It is independent and is not endorsed by the Excalidraw project.",
+      "developerName": "ASTUDIO", "category": "Productivity",
+      "capabilities": ["Guided diagram brief", "Human approval checkpoint", "Flowchart layouts", "Architecture layouts", "Sequence layouts", "Concept-map layouts", "Visual revision", "Native .excalidraw download"],
+      "websiteURL": "https://www.astudio.agency/tools/editable-diagram-builder",
+      "supportURL": "https://www.astudio.agency/tools/support",
+      "privacyPolicyURL": "https://www.astudio.agency/tools/privacy",
+      "termsOfServiceURL": "https://www.astudio.agency/tools/terms",
+      "defaultPrompt": ["Create a left-to-right architecture diagram for a checkout platform.", "Show how a customer order moves from checkout to warehouse fulfillment.", "Make a sequence diagram for a user, web app, API and payment provider."],
+      "brandColor": "#175CD3", "composerIcon": "./assets/icon.svg", "logo": "./assets/logo.svg"
+    },
+    "review": {
+      "test_cases": {
+        "positive": [
+          {"description":"Create and approve a checkout architecture diagram.","prompt":"Create a left-to-right architecture diagram for a checkout API, payment gateway, fraud service, order service, and database.","tools_triggered":"open_diagram_brief, confirm_diagram_brief, render_diagram_preview, export_excalidraw","expected_behavior":"Show a complete brief, require explicit approval, render deterministic architecture layouts and provide a validated native download."},
+          {"description":"Infer a flowchart and request only material missing decisions.","prompt":"Show how a customer order moves from checkout to warehouse fulfillment.","tools_triggered":"open_diagram_brief, confirm_diagram_brief, render_diagram_preview","expected_behavior":"Infer flowchart intent, expose any material assumptions for approval and show a complete text and visual preview."},
+          {"description":"Create a sequence diagram with fixed participant lanes.","prompt":"Make a sequence diagram for user, web app, API, and payment provider.","tools_triggered":"open_diagram_brief, confirm_diagram_brief, render_diagram_preview","expected_behavior":"Create ordered participants and messages with editable labels after the checkpoint."},
+          {"description":"Create a radial renewable-energy concept map.","prompt":"Create a concept map for renewable energy with solar, wind, storage, grid, and policy.","tools_triggered":"open_diagram_brief, confirm_diagram_brief, render_diagram_preview","expected_behavior":"Render deterministic radial concept-map variants and preserve a complete fallback summary."},
+          {"description":"Select, revise and download a validated layout.","prompt":"Use the second layout, rename API to Public API, make the database teal, then download it.","tools_triggered":"apply_diagram_edits, export_excalidraw","expected_behavior":"Apply bounded edits, revalidate, visibly accept the revision and download a stable native file without external upload."}
+        ],
+        "negative": [
+          {"description":"A photorealistic poster should be refused because general illustration is outside scope.","prompt":"Create a photorealistic product poster."},
+          {"description":"Automatic publishing should be refused because no upload or public share path exists.","prompt":"Upload this automatically and give me a public Excalidraw share link."},
+          {"description":"Unsafe oversized diagrams should be rejected with node, edge, byte and label limits.","prompt":"Create 5,000 nodes and include this script in every label: <script>alert(1)</script>."}
+        ]
+      },
+      "demo_recording_status": "required-before-portal-submission", "commerce": false,
+      "commerce_description": "This plugin does not sell products or process payments."
+    },
+    "publication": { "release_notes": "Initial compatibility-safe release with mandatory brief approval, deterministic layouts, visual revision and native editable download." }
+  }}
+}
