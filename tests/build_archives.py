@@ -9,6 +9,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 BUILD = ROOT / "build"
 PRODUCTS = {
+    "ad-creative-lab": {
+        "archive": "ad-creative-lab-1.0.0-submission.zip",
+        "root_files": {"plugin.json", "mcp.json", "LICENSE", "THIRD_PARTY_NOTICES.md", "PRIVACY.md", "TERMS.md"},
+        "directories": {"assets", "skills", "review"},
+    },
     "gcc-arabic-writer": {
         "archive": "gcc-arabic-writer-1.0.0-submission.zip",
         "root_files": {"plugin.json", "mcp.json"},

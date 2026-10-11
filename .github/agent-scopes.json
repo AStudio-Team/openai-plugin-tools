@@ -4,7 +4,7 @@
   "scopes": {
     "application": {
       "description": "Plugin code, packages, public pages and tests.",
-      "paths": ["pdf-table-to-excel/**", "gcc-arabic-writer/**", "tests/**", "package*.json", ".planning/**"]
+      "paths": ["pdf-table-to-excel/**", "gcc-arabic-writer/**", "ad-creative-lab/**", "tests/**", "package*.json", ".planning/**"]
     },
     "architecture": {
       "description": "Plans, project records and reports.",

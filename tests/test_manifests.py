@@ -9,10 +9,11 @@ class ManifestAndPackageTests(unittest.TestCase):
     def setUp(self):
         self.gcc = json.loads((ROOT / "gcc-arabic-writer" / "plugin.json").read_text())
         self.pdf = json.loads((ROOT / "pdf-table-to-excel" / "plugin.json").read_text())
+        self.ad = json.loads((ROOT / "ad-creative-lab" / "plugin.json").read_text())
 
     def test_astudio_is_publisher_for_both_products(self):
         self.assertEqual(self.gcc["name"], "astudio-gcc-arabic-writer")
-        for manifest in (self.gcc, self.pdf):
+        for manifest in (self.gcc, self.pdf, self.ad):
             self.assertEqual(manifest["author"]["name"], "ASTUDIO")
             self.assertEqual(manifest["extensions"]["com.openai"]["interface"]["developerName"], "ASTUDIO")
 
@@ -71,6 +72,18 @@ class ManifestAndPackageTests(unittest.TestCase):
             mcp["mcpServers"]["gcc-arabic-writer"]["url"],
             "https://www.astudio.agency/openai-plugins/gcc-arabic-writer/mcp",
         )
+
+
+    def test_ad_creative_lab_public_contract(self):
+        review = self.ad["extensions"]["com.openai"]["review"]
+        self.assertEqual(len(review["test_cases"]["positive"]), 5)
+        self.assertEqual(len(review["test_cases"]["negative"]), 3)
+        self.assertEqual(review["demo_recording_status"], "required-before-portal-submission")
+        mcp = json.loads((ROOT / "ad-creative-lab" / "mcp.json").read_text())
+        self.assertEqual(mcp["mcpServers"]["ad-creative-lab"]["url"], "https://www.astudio.agency/openai-plugins/ad-creative-lab/mcp")
+        notice = (ROOT / "ad-creative-lab" / "THIRD_PARTY_NOTICES.md").read_text()
+        self.assertIn("Copyright (c) 2025 Corey Haines", notice)
+        self.assertIn("Permission is hereby granted", notice)
 
 
 if __name__ == "__main__":
