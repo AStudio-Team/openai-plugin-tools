@@ -46,6 +46,11 @@ PRODUCTS = {
         "root_files": {"plugin.json", "mcp.json", "NOTICE"},
         "directories": {"assets", "skills", "LICENSES"},
     },
+    "launch-plan-builder": {
+        "archive": "launch-plan-builder-1.0.0-submission.zip",
+        "root_files": {"plugin.json", "mcp.json", "NOTICE"},
+        "directories": {"assets", "skills", "LICENSES"},
+    },
     "open-data-fetcher": {
         "archive": "open-data-fetcher-1.0.0-submission.zip",
         "root_files": {"plugin.json", "mcp.json"},
@@ -99,6 +104,11 @@ def main() -> int:
                 missing = required.difference(names)
                 if missing:
                     raise SystemExit(f"growth planner archive missing required attribution or package files: {sorted(missing)}")
+            if product == "launch-plan-builder":
+                required = {"NOTICE", "LICENSES/corey-haines-marketingskills-MIT.txt", "skills/launch-plan-builder/SKILL.md", "assets/icon.png", "assets/logo.png"}
+                missing = required.difference(names)
+                if missing:
+                    raise SystemExit(f"launch planner archive missing required attribution or package files: {sorted(missing)}")
             if any("__MACOSX" in name or "/._" in name or "__pycache__" in name for name in names):
                 raise SystemExit(f"unclean archive: {target}")
             for name in names:
