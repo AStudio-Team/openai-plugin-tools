@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Review Arabic brief</title>
+<style>
+:root{color-scheme:light dark;--bg:#fffaf7;--panel:#fff;--text:#261d1b;--muted:#6f625e;--line:#dccfca;--accent:#7b3f2d;--accent-text:#fff;--warn-bg:#fff1d6;--warn:#6c4510;--focus:#137c8b}html.dark{--bg:#191514;--panel:#231e1c;--text:#f7efeb;--muted:#c5b8b2;--line:#554641;--accent:#d88d73;--accent-text:#1c1210;--warn-bg:#3c2e17;--warn:#ffd28c;--focus:#72d5df}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding:max(16px,var(--safe-top,0px)) max(16px,var(--safe-right,0px)) max(16px,var(--safe-bottom,0px)) max(16px,var(--safe-left,0px))}main{max-width:720px;margin:auto}header{margin-bottom:16px}h1{font-size:1.35rem;margin:0 0 4px}p{margin:0;color:var(--muted)}form{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.full{grid-column:1/-1}label,legend{font-weight:650;display:block;margin-bottom:6px}input,select,textarea{width:100%;border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--text);font:inherit;padding:10px 11px}textarea{resize:vertical;min-height:72px}[dir=auto]{text-align:start}.check{display:flex;gap:9px;align-items:flex-start;font-weight:500}.check input{width:auto;margin-top:3px}.warning{display:none;background:var(--warn-bg);color:var(--warn);border-radius:9px;padding:10px 12px}.warning.visible{display:block}.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}.primary,.secondary{border:1px solid var(--accent);border-radius:9px;padding:10px 14px;font:inherit;font-weight:700;cursor:pointer}.primary{background:var(--accent);color:var(--accent-text)}.secondary{background:transparent;color:var(--accent)}button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--focus);outline-offset:2px}button[disabled]{opacity:.6;cursor:wait}#status{min-height:1.4em;margin-top:10px;color:var(--muted)}@media(max-width:560px){body{padding:12px}.grid{grid-template-columns:1fr}.full{grid-column:auto}form{padding:13px}.actions{flex-direction:column}.actions button{width:100%}}@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<main>
+<header><h1>Review the Arabic writing brief</h1><p>Edit the brief, then send it into chat. Nothing is generated until you press Send reviewed brief.</p></header>
+<form id="brief-form">
+<div class="grid">
+<div><label for="task">Deliverable</label><select id="task" name="task"><option value="write">General copy</option><option value="rewrite">Rewrite</option><option value="localize">Localization</option><option value="proofread">Proofread</option><option value="tagline">Tagline</option><option value="caption">Caption</option><option value="product-description">Product description</option><option value="website">Website copy</option><option value="press-release">Press release</option><option value="video-script">Video script</option><option value="business-copy">Business copy</option></select></div>
+<div><label for="market">Market</label><select id="market" name="market"><option value="pan-arab">Pan-Arab</option><option value="uae">UAE</option><option value="saudi-arabia">Saudi Arabia</option><option value="kuwait">Kuwait</option><option value="qatar">Qatar</option><option value="bahrain">Bahrain</option><option value="oman">Oman</option></select></div>
+<div><label for="audience">Audience</label><input id="audience" name="audience" maxlength="500" placeholder="Who should this speak to?"></div>
+<div><label for="surface">Surface</label><input id="surface" name="surface" maxlength="500" placeholder="Instagram caption, product page, script"></div>
+<div><label for="register">Voice and register</label><select id="register" name="register"><option value="msa">Modern Standard Arabic</option><option value="formal">Formal</option><option value="luxury">Luxury</option><option value="warm">Warm</option><option value="playful">Playful</option><option value="authoritative">Authoritative</option><option value="heritage">Heritage</option><option value="modern">Modern</option><option value="dialect-sensitive">Dialect-sensitive</option></select></div>
+<div class="full"><label for="key-message">Key message</label><textarea id="key-message" name="key_message" dir="auto" maxlength="2000" placeholder="The one idea the copy must communicate"></textarea></div>
+<div class="full"><label for="source-text">Source text</label><textarea id="source-text" name="source_text" dir="auto" maxlength="12000" readonly aria-describedby="source-note"></textarea><p id="source-note">This source is immutable at approval so rewrite and localization requests preserve it exactly. Return to chat to replace the source.</p></div>
+<div><label for="facts">Mandatory facts, one per line</label><textarea id="facts" name="mandatory_facts" dir="auto" maxlength="6000"></textarea></div>
+<div><label for="literals">Protected literals, one per line</label><textarea id="literals" name="protected_literals" dir="auto" maxlength="6000" placeholder="Names, prices, dates, URLs"></textarea></div>
+<div class="full"><label for="constraints">Constraints, one per line</label><textarea id="constraints" name="constraints" dir="auto" maxlength="6000"></textarea></div>
+<div class="full"><label class="check" for="dialect"><input id="dialect" name="dialect_requested" type="checkbox"><span>I am explicitly requesting dialect-sensitive writing.</span></label></div>
+<div id="native-warning" class="warning full" role="note">Dialect-sensitive choices require review by a native speaker from the selected market before publication.</div>
+</div>
+<div class="actions"><button class="primary" type="submit">Send reviewed brief</button><button class="secondary" id="cancel" type="button">Cancel request</button></div>
+<div id="status" role="status" aria-live="polite"></div>
+</form>
+</main>
+<script type="module">
+/*__EXT_APPS_BUNDLE__*/
+const { App } = globalThis.ExtApps;
+const app = new App({ name: "GCC Arabic Brief Builder", version: "1.1.0" }, {}, { autoResize: true });
+const form = document.getElementById("brief-form");
+const status = document.getElementById("status");
+const warning = document.getElementById("native-warning");
+let immutableSourceText = "";
+const lineList = value => String(value || "").split(/\n/u).map(item => item.trim()).filter(Boolean).slice(0, 50);
+const setValue = (id, value) => { const element = document.getElementById(id); if (element && value !== undefined && value !== null) element.value = Array.isArray(value) ? value.join("\n") : value; };
+function applyTheme(context) {
+  document.documentElement.classList.toggle("dark", context?.theme === "dark");
+  const insets = context?.safeAreaInsets || {};
+  for (const side of ["top", "right", "bottom", "left"]) document.documentElement.style.setProperty(`--safe-${side}`, `${Number(insets[side] || 0)}px`);
+}
+function dataFrom(result) {
+  if (result?.structuredContent) return result.structuredContent;
+  const text = result?.content?.find(item => item.type === "text")?.text;
+  try { return JSON.parse(text); } catch { return {}; }
+}
+function render(result) {
+  const data = dataFrom(result);
+  immutableSourceText = String(data.source_text || "");
+  setValue("task", data.task); setValue("market", data.market); setValue("audience", data.audience); setValue("surface", data.surface); setValue("register", data.register);
+  setValue("key-message", data.key_message); setValue("source-text", immutableSourceText); setValue("facts", data.mandatory_facts); setValue("literals", data.protected_literals); setValue("constraints", data.constraints);
+  document.getElementById("dialect").checked = Boolean(data.dialect_requested || data.native_review_required);
+  updateWarning();
+}
+function updateWarning() {
+  const visible = document.getElementById("dialect").checked || document.getElementById("register").value === "dialect-sensitive";
+  warning.classList.toggle("visible", visible);
+}
+async function send(text, button) {
+  button.disabled = true; status.textContent = "Sending to chat...";
+  try { const response = await app.sendMessage({ role: "user", content: [{ type: "text", text }] }); status.textContent = response?.isError ? "The host did not accept the message. Copy the brief into chat instead." : "Sent to chat."; }
+  catch { status.textContent = "Could not send through the widget. Copy the reviewed brief into chat instead."; }
+  finally { button.disabled = false; }
+}
+app.ontoolresult = render;
+app.onhostcontextchanged = applyTheme;
+form.addEventListener("change", updateWarning);
+form.addEventListener("submit", event => {
+  event.preventDefault();
+  const values = new FormData(form);
+  const brief = { task: values.get("task"), market: values.get("market"), audience: String(values.get("audience") || "").trim(), surface: String(values.get("surface") || "").trim(), register: values.get("register"), key_message: String(values.get("key_message") || "").trim(), source_text: immutableSourceText, mandatory_facts: lineList(values.get("mandatory_facts")), protected_literals: lineList(values.get("protected_literals")), constraints: lineList(values.get("constraints")), dialect_requested: document.getElementById("dialect").checked };
+  const review = brief.dialect_requested || brief.register === "dialect-sensitive" ? " Native-market review is required before publication." : "";
+  send(`I reviewed and approve this GCC Arabic writing brief. Write the requested options using only these details:\n\n${JSON.stringify(brief, null, 2)}${review}`, event.submitter);
+});
+document.getElementById("cancel").addEventListener("click", event => send("Cancel this GCC Arabic writing request. Do not generate copy from the brief.", event.currentTarget));
+await app.connect();
+applyTheme(app.getHostContext?.());
+</script>
+</body>
+</html>

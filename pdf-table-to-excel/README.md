@@ -2,6 +2,8 @@
 
 A public OpenAI plugin that converts selectable tables in PDF files into downloadable XLSX workbooks for any user or organization.
 
+Version 1.1.0 preserves host file upload and adds a read-only MCP App result preview. It shows the filename, processed pages, table count, worksheet names, sample rows and expiry. Download uses the host's `openLink` action on the verified temporary URL. Visible follow-up buttons ask ChatGPT to rename, inspect a worksheet or convert another uploaded PDF. Hosts without widgets receive the same result as usable text and structured data.
+
 ## Local verification
 
 ```bash

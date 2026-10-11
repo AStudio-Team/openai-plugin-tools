@@ -1,0 +1,10 @@
+{
+  "name": "@astudio/ad-creative-lab",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {"node": ">=20"},
+  "scripts": {"build": "tsc", "test": "npm run build && node --test tests/*.test.mjs", "start": "node dist/server.js"},
+  "dependencies": {"@modelcontextprotocol/ext-apps": "1.7.5", "@modelcontextprotocol/sdk": "1.32.1", "zod": "4.6.5"},
+  "devDependencies": {"@types/node": "24.7.1", "typescript": "5.9.3"}
+}

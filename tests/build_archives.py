@@ -10,20 +10,30 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 BUILD = ROOT / "build"
 PRODUCTS = {
+    "ad-creative-lab": {
+        "archive": "ad-creative-lab-1.0.0-submission.zip",
+        "root_files": {"plugin.json", "mcp.json", "LICENSE", "THIRD_PARTY_NOTICES.md", "PRIVACY.md", "TERMS.md"},
+        "directories": {"assets", "skills", "review"},
     "ai-crawler-readiness-auditor": {
         "archive": "ai-crawler-readiness-auditor-1.0.0-submission.zip",
         "root_files": {"plugin.json", "mcp.json"},
         "directories": {"assets", "skills"},
     },
+    },
     "gcc-arabic-writer": {
-        "archive": "gcc-arabic-writer-1.0.0-submission.zip",
+        "archive": "gcc-arabic-writer-1.1.0-submission.zip",
         "root_files": {"plugin.json", "mcp.json"},
         "directories": {"assets", "skills", "review"},
     },
     "pdf-table-to-excel": {
-        "archive": "pdf-table-to-excel-1.0.0-submission.zip",
+        "archive": "pdf-table-to-excel-1.1.0-submission.zip",
         "root_files": {"plugin.json", "mcp.json"},
         "directories": {"assets", "skills"},
+    },
+    "growth-marketing-planner": {
+        "archive": "growth-marketing-planner-1.0.0-submission.zip",
+        "root_files": {"plugin.json", "mcp.json", "NOTICE"},
+        "directories": {"assets", "skills", "LICENSES"},
     },
 }
 SKIP_PARTS = {"__pycache__", "__MACOSX", ".pytest_cache", ".git", ".venv", "node_modules"}
@@ -52,6 +62,11 @@ def main() -> int:
             names = archive.namelist()
             if "plugin.json" not in names or any(name.startswith(f"{product}/") for name in names):
                 raise SystemExit(f"invalid archive root: {target}")
+            if product == "growth-marketing-planner":
+                required = {"NOTICE", "LICENSES/corey-haines-marketingskills-MIT.txt", "skills/growth-marketing-planner/SKILL.md", "assets/icon.png", "assets/logo.png"}
+                missing = required.difference(names)
+                if missing:
+                    raise SystemExit(f"growth planner archive missing required attribution or package files: {sorted(missing)}")
             if any("__MACOSX" in name or "/._" in name or "__pycache__" in name for name in names):
                 raise SystemExit(f"unclean archive: {target}")
             for name in names:
