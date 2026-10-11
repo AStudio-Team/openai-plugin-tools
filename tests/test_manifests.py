@@ -13,6 +13,7 @@ class ManifestAndPackageTests(unittest.TestCase):
         self.ad = json.loads((ROOT / "ad-creative-lab" / "plugin.json").read_text())
         self.growth = json.loads((ROOT / "growth-marketing-planner" / "plugin.json").read_text())
         self.landing_copy = json.loads((ROOT / "landing-page-copy-check" / "plugin.json").read_text())
+        self.social = json.loads((ROOT / "social-content-planner" / "plugin.json").read_text())
         self.crawler = json.loads((ROOT / "ai-crawler-readiness-auditor" / "plugin.json").read_text())
         self.data = json.loads((ROOT / "open-data-fetcher" / "plugin.json").read_text())
         self.diagram = json.loads((ROOT / "editable-diagram-builder" / "plugin.json").read_text())
@@ -21,7 +22,7 @@ class ManifestAndPackageTests(unittest.TestCase):
 
     def test_astudio_is_publisher_for_all_products(self):
         self.assertEqual(self.gcc["name"], "astudio-gcc-arabic-writer")
-        for manifest in (self.gcc, self.pdf, self.ad, self.growth, self.landing_copy, self.crawler, self.data, self.diagram, self.grounded, self.schema):
+        for manifest in (self.gcc, self.pdf, self.ad, self.growth, self.landing_copy, self.social, self.crawler, self.data, self.diagram, self.grounded, self.schema):
             self.assertEqual(manifest["author"]["name"], "ASTUDIO")
             self.assertEqual(manifest["extensions"]["com.openai"]["interface"]["developerName"], "ASTUDIO")
 
@@ -150,6 +151,14 @@ class ManifestAndPackageTests(unittest.TestCase):
         mcp = json.loads((ROOT / "schema-markup-generator" / "mcp.json").read_text())
         self.assertEqual(mcp["mcpServers"]["schema-markup-generator"]["url"], "https://www.astudio.agency/openai-plugins/schema-markup-generator/mcp")
         self.assertIn("MIT", (ROOT / "schema-markup-generator" / "NOTICE").read_text())
+
+    def test_social_content_planner_metadata_and_mcp_are_complete(self):
+        self.assertEqual(self.social["name"], "social-content-planner")
+        self.assertEqual(self.social["extensions"]["com.openai"]["interface"]["displayName"], "Social Content Planner")
+        self.assertEqual(self.social["extensions"]["com.openai"]["interface"]["developerName"], "ASTUDIO")
+        self.assertLessEqual(len(self.social["keywords"]), 15)
+        mcp = json.loads((ROOT / "social-content-planner" / "mcp.json").read_text())
+        self.assertEqual(mcp["mcpServers"]["social-content-planner"]["url"], "https://www.astudio.agency/openai-plugins/social-content-planner/mcp")
     def test_next_version_and_interaction_docs_are_consistent(self):
         for product in ("gcc-arabic-writer", "pdf-table-to-excel"):
             package = json.loads((ROOT / product / "package.json").read_text())
