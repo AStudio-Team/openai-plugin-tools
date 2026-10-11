@@ -24,6 +24,7 @@ jobs:
           cache-dependency-path: |
             pdf-table-to-excel/package-lock.json
             gcc-arabic-writer/package-lock.json
+            ad-creative-lab/package-lock.json
       - name: Install Python dependencies
         working-directory: pdf-table-to-excel
         run: |
@@ -33,6 +34,7 @@ jobs:
         run: |
           npm --prefix pdf-table-to-excel ci --ignore-scripts
           npm --prefix gcc-arabic-writer ci --ignore-scripts
+          npm --prefix ad-creative-lab ci --ignore-scripts
       - name: Test PDF MCP service
         working-directory: pdf-table-to-excel
         run: |
@@ -40,6 +42,11 @@ jobs:
           npm audit --audit-level=high
       - name: Test GCC Arabic MCP service
         working-directory: gcc-arabic-writer
+        run: |
+          npm test
+          npm audit --audit-level=high
+      - name: Test Ad Creative Lab MCP App
+        working-directory: ad-creative-lab
         run: |
           npm test
           npm audit --audit-level=high
@@ -59,6 +66,7 @@ jobs:
         run: |
           docker build -t openai-plugin-pdf:ci pdf-table-to-excel
           docker build -t openai-plugin-arabic:ci gcc-arabic-writer
+          docker build -t openai-plugin-ad-creative-lab:ci ad-creative-lab
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: openai-plugin-submission-zips

@@ -8,17 +8,21 @@ RELEASE_DIR="/opt/openai-plugin-tools/releases/${RELEASE_SHA}"
 STATE_DIR="/opt/openai-plugin-tools"
 PDF_STATE_FILE="${STATE_DIR}/current-pdf-container"
 ARABIC_STATE_FILE="${STATE_DIR}/current-arabic-container"
+AD_STATE_FILE="${STATE_DIR}/current-ad-creative-lab-container"
 LEGACY_STATE_FILE="${STATE_DIR}/current-container"
 ENV_FILE="${STATE_DIR}/openai.env"
 CADDYFILE="/opt/websites/caddy/Caddyfile"
 BACKUP="${CADDYFILE}.plugin-tools.${DEPLOY_ID}.bak"
 PDF_IMAGE="openai-plugin-pdf:${RELEASE_SHA}"
 ARABIC_IMAGE="openai-plugin-arabic:${RELEASE_SHA}"
+AD_IMAGE="openai-plugin-ad-creative-lab:${RELEASE_SHA}"
 PDF_CONTAINER="openai-plugin-pdf-${DEPLOY_ID}"
 ARABIC_CONTAINER="openai-plugin-arabic-${DEPLOY_ID}"
+AD_CONTAINER="openai-plugin-ad-creative-lab-${DEPLOY_ID}"
 RENDERED_BLOCK="/tmp/openai-plugin-tools-${DEPLOY_ID}.caddy"
 PREVIOUS_PDF_CONTAINER=""
 PREVIOUS_ARABIC_CONTAINER=""
+PREVIOUS_AD_CONTAINER=""
 CONFIG_MUTATED=0
 SWITCHED=0
 COMMITTED=0
@@ -36,6 +40,9 @@ elif [ -s "$LEGACY_STATE_FILE" ]; then
 fi
 if [ -s "$ARABIC_STATE_FILE" ]; then
   PREVIOUS_ARABIC_CONTAINER="$(tr -cd 'A-Za-z0-9_.-' < "$ARABIC_STATE_FILE")"
+fi
+if [ -s "$AD_STATE_FILE" ]; then
+  PREVIOUS_AD_CONTAINER="$(tr -cd 'A-Za-z0-9_.-' < "$AD_STATE_FILE")"
 fi
 
 write_state() {
@@ -65,13 +72,15 @@ rollback() {
   if [ "$rollback_ok" -eq 1 ]; then
     write_state "$PDF_STATE_FILE" "$PREVIOUS_PDF_CONTAINER"
     write_state "$ARABIC_STATE_FILE" "$PREVIOUS_ARABIC_CONTAINER"
-    docker rm -f "$PDF_CONTAINER" "$ARABIC_CONTAINER" >/dev/null 2>&1 || true
+    write_state "$AD_STATE_FILE" "$PREVIOUS_AD_CONTAINER"
+    docker rm -f "$PDF_CONTAINER" "$ARABIC_CONTAINER" "$AD_CONTAINER" >/dev/null 2>&1 || true
   else
     write_state "$PDF_STATE_FILE" "$PDF_CONTAINER"
     write_state "$ARABIC_STATE_FILE" "$ARABIC_CONTAINER"
+    write_state "$AD_STATE_FILE" "$AD_CONTAINER"
     echo "rollback failed; candidate containers were kept running for recovery" >&2
   fi
-  rm -f "${PDF_STATE_FILE}.tmp" "${ARABIC_STATE_FILE}.tmp" "${CADDYFILE}.rollback-${DEPLOY_ID}"
+  rm -f "${PDF_STATE_FILE}.tmp" "${ARABIC_STATE_FILE}.tmp" "${AD_STATE_FILE}.tmp" "${CADDYFILE}.rollback-${DEPLOY_ID}"
   return $((1 - rollback_ok))
 }
 
@@ -90,6 +99,7 @@ trap 'exit 129' HUP
 cd "$RELEASE_DIR"
 docker build --pull -t "$PDF_IMAGE" pdf-table-to-excel
 docker build --pull -t "$ARABIC_IMAGE" gcc-arabic-writer
+docker build --pull -t "$AD_IMAGE" ad-creative-lab
 
 ENV_FILE_ARGS=()
 if [ -s "$ENV_FILE" ]; then
@@ -127,6 +137,7 @@ run_container "$PDF_CONTAINER" "$PDF_IMAGE" 8788 \
   -e PYTHONDONTWRITEBYTECODE=1 \
   -e PUBLIC_BASE_URL=https://www.astudio.agency/openai-plugins/pdf-table-to-excel
 run_container "$ARABIC_CONTAINER" "$ARABIC_IMAGE" 8789
+run_container "$AD_CONTAINER" "$AD_IMAGE" 8790
 
 wait_healthy() {
   local container="$1"
@@ -143,14 +154,15 @@ wait_healthy() {
 }
 wait_healthy "$PDF_CONTAINER"
 wait_healthy "$ARABIC_CONTAINER"
+wait_healthy "$AD_CONTAINER"
 
-python3 - "$PDF_CONTAINER" "$ARABIC_CONTAINER" deploy/tools.astudio.agency.caddy "$RENDERED_BLOCK" <<'PY'
+python3 - "$PDF_CONTAINER" "$ARABIC_CONTAINER" "$AD_CONTAINER" deploy/tools.astudio.agency.caddy "$RENDERED_BLOCK" <<'PY'
 import sys
 from pathlib import Path
-pdf, arabic, source, target = sys.argv[1:]
+pdf, arabic, ad, source, target = sys.argv[1:]
 text = Path(source).read_text()
-text = text.replace("__PDF_PLUGIN_UPSTREAM__", pdf).replace("__ARABIC_PLUGIN_UPSTREAM__", arabic)
-if "__PDF_PLUGIN_UPSTREAM__" in text or "__ARABIC_PLUGIN_UPSTREAM__" in text:
+text = text.replace("__PDF_PLUGIN_UPSTREAM__", pdf).replace("__ARABIC_PLUGIN_UPSTREAM__", arabic).replace("__AD_CREATIVE_LAB_UPSTREAM__", ad)
+if "__PDF_PLUGIN_UPSTREAM__" in text or "__ARABIC_PLUGIN_UPSTREAM__" in text or "__AD_CREATIVE_LAB_UPSTREAM__" in text:
     raise SystemExit("unresolved upstream placeholder")
 Path(target).write_text(text)
 PY
@@ -230,6 +242,8 @@ check_health https://www.astudio.agency/openai-plugins/gcc-arabic-writer/health 
 check_health https://www.astudio.agency/openai-plugins/gcc-arabic-writer/ready gcc-arabic-writer
 check_mcp https://www.astudio.agency/openai-plugins/gcc-arabic-writer/mcp gcc-arabic-writer prepare_gcc_arabic_brief,check_arabic_factual_fidelity,lint_gcc_arabic_copy
 check_resources https://www.astudio.agency/openai-plugins/gcc-arabic-writer/mcp ui://gcc-arabic-writer/brief-builder.html,ui://gcc-arabic-writer/copy-review.html
+check_health https://www.astudio.agency/openai-plugins/ad-creative-lab/health ad-creative-lab
+check_mcp https://www.astudio.agency/openai-plugins/ad-creative-lab/mcp ad-creative-lab prepare_campaign_brief,review_campaign_brief,approve_campaign_brief,present_concept_options,submit_concept_decision,validate_platform_copy,export_creative_package
 curl --fail --silent --show-error \
   -H 'Content-Type: application/json' \
   -H 'Accept: application/json, text/event-stream' \
@@ -251,15 +265,17 @@ rm -f "$PDF_CHECK_JSON" "$PDF_CHECK_XLSX"
 
 printf '%s\n' "$PDF_CONTAINER" > "${PDF_STATE_FILE}.tmp"
 printf '%s\n' "$ARABIC_CONTAINER" > "${ARABIC_STATE_FILE}.tmp"
+printf '%s\n' "$AD_CONTAINER" > "${AD_STATE_FILE}.tmp"
 mv "${PDF_STATE_FILE}.tmp" "$PDF_STATE_FILE"
 mv "${ARABIC_STATE_FILE}.tmp" "$ARABIC_STATE_FILE"
+mv "${AD_STATE_FILE}.tmp" "$AD_STATE_FILE"
 COMMITTED=1
 rm -f "$LEGACY_STATE_FILE"
-for previous in "$PREVIOUS_PDF_CONTAINER" "$PREVIOUS_ARABIC_CONTAINER"; do
-  if [ -n "$previous" ] && [ "$previous" != "$PDF_CONTAINER" ] && [ "$previous" != "$ARABIC_CONTAINER" ]; then
+for previous in "$PREVIOUS_PDF_CONTAINER" "$PREVIOUS_ARABIC_CONTAINER" "$PREVIOUS_AD_CONTAINER"; do
+  if [ -n "$previous" ] && [ "$previous" != "$PDF_CONTAINER" ] && [ "$previous" != "$ARABIC_CONTAINER" ] && [ "$previous" != "$AD_CONTAINER" ]; then
     docker rm -f "$previous" >/dev/null 2>&1 || true
   fi
 done
 rm -f "$BACKUP" "$RENDERED_BLOCK"
 
-echo "deployed ${RELEASE_SHA} as ${PDF_CONTAINER} and ${ARABIC_CONTAINER}"
+echo "deployed ${RELEASE_SHA} as ${PDF_CONTAINER}, ${ARABIC_CONTAINER}, and ${AD_CONTAINER}"
