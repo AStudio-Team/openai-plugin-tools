@@ -86,9 +86,6 @@ jobs:
         run: |
           npm test
           npm audit --audit-level=high
-        run: |
-          npm test
-          npm audit --audit-level=high
       - name: Test Grounded Citations MCP App
         working-directory: grounded-citations/server
         run: |
