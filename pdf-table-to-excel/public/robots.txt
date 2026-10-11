@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://www.astudio.agency/tools/sitemap.xml
