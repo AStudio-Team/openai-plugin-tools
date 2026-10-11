@@ -16,11 +16,13 @@ The normal creation flow is open, review, approve, generate, then export. Checki
 
 ```bash
 npm ci --ignore-scripts
+export APPROVAL_HMAC_KEY=<32 or more random bytes>
 npm test
 npm start
 ```
 
 The local server listens on port 8790 by default. Its MCP endpoint is `/mcp`, health endpoints are `/health` and `/ready`, and public product pages start at `/`.
+The deployment supplies `APPROVAL_HMAC_KEY` through its environment file.
 
 ## Data boundary
 
