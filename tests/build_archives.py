@@ -30,6 +30,12 @@ PRODUCTS = {
         "root_files": {"plugin.json", "mcp.json"},
         "directories": {"assets", "skills", "review"},
     },
+    "grounded-citations": {
+        "archive": "grounded-citations-1.0.0-submission.zip",
+        "source_subdir": "plugin-package",
+        "root_files": {"plugin.json", "mcp.json"},
+        "directories": {"assets", "skills"},
+    },
     "pdf-table-to-excel": {
         "archive": "pdf-table-to-excel-1.1.0-submission.zip",
         "root_files": {"plugin.json", "mcp.json"},
@@ -63,7 +69,7 @@ def included(relative: Path, spec: dict) -> bool:
 def main() -> int:
     BUILD.mkdir(exist_ok=True)
     for product, spec in PRODUCTS.items():
-        source = ROOT / product
+        source = ROOT / product / spec.get("source_subdir", "")
         target = BUILD / spec["archive"]
         with zipfile.ZipFile(target, "w", zipfile.ZIP_DEFLATED) as archive:
             for path in sorted(source.rglob("*")):
@@ -73,8 +79,19 @@ def main() -> int:
                 if any(part in SKIP_PARTS for part in path.parts) or path.name == ".DS_Store" or path.name.startswith("._"):
                     continue
                 archive.write(path, relative)
+        expected_names = {
+            str(path.relative_to(source))
+            for path in source.rglob("*")
+            if path.is_file()
+            and included(path.relative_to(source), spec)
+            and not any(part in SKIP_PARTS for part in path.parts)
+            and path.name != ".DS_Store"
+            and not path.name.startswith("._")
+        }
         with zipfile.ZipFile(target) as archive:
             names = archive.namelist()
+            if set(names) != expected_names:
+                raise SystemExit(f"source-to-archive mismatch: {target}")
             if "plugin.json" not in names or any(name.startswith(f"{product}/") for name in names):
                 raise SystemExit(f"invalid archive root: {target}")
             if product == "growth-marketing-planner":
@@ -92,7 +109,7 @@ def main() -> int:
                     raise SystemExit(f"source-to-archive mismatch: {target}:{name}")
                 if b"/Users/" in source_bytes or b"/home/" in source_bytes:
                     raise SystemExit(f"local path in archive: {target}:{name}")
-                if name.lower().endswith(".png"):
+                if name.lower().endswith(".png") and ("icon" in name.lower() or "logo" in name.lower()):
                     if len(source_bytes) > 5 * 1024 * 1024 or source_bytes[:8] != b"\x89PNG\r\n\x1a\n":
                         raise SystemExit(f"invalid PNG asset: {target}:{name}")
                     width, height = struct.unpack(">II", source_bytes[16:24])

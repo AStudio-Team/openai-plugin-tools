@@ -1,0 +1,26 @@
+{
+  "name": "grounded-citations-server",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Remote MCP App for session-scoped citation ledgers and deterministic evidence checks.",
+  "scripts": {
+    "start": "node src/server.mjs",
+    "test": "node --test --test-reporter=spec tests/unit/*.test.mjs tests/integration/*.test.mjs tests/security/*.test.mjs tests/widgets/*.test.mjs",
+    "test:coverage": "node --test --experimental-test-coverage tests/unit/*.test.mjs tests/integration/*.test.mjs tests/security/*.test.mjs tests/widgets/*.test.mjs",
+    "check": "node --check src/server.mjs && node scripts/static-check.mjs",
+    "licenses": "node scripts/license-report.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/ext-apps": "2.0.3",
+    "@modelcontextprotocol/sdk": "1.32.1",
+    "fflate": "0.8.3",
+    "ipaddr.js": "2.3.0",
+    "pdfjs-dist": "6.4.299",
+    "zod": "4.6.5"
+  },
+  "license": "MIT"
+}

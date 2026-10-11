@@ -1,0 +1,17 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import path from "node:path";
+const dir=path.resolve("src/resources");const names=["scope-review.html","evidence-ledger.html","verification-report.html"];
+const pages=names.map(name=>[name,readFileSync(path.join(dir,name),"utf8")]);
+test("three widgets are complete HTML resources",()=>{assert.equal(pages.length,3);for(const [,html] of pages){assert.match(html,/<!doctype html>/i);assert.match(html,/__EXT_APPS_BUNDLE__/);assert.match(html,/ontoolresult/)}});
+test("widgets use closed CSP and no external assets",()=>{for(const [,html] of pages){assert.match(html,/default-src 'none'/);assert.match(html,/connect-src 'none'/);assert.doesNotMatch(html,/<script[^>]+src=|<link[^>]+href=|https?:\/\//)}});
+test("widgets avoid injection-prone innerHTML",()=>{for(const [,html] of pages){assert.doesNotMatch(html,/\.innerHTML\s*=/);assert.match(html,/\.textContent=/)}});
+test("widgets do not access storage cookies or host DOM",()=>{for(const [,html] of pages)assert.doesNotMatch(html,/localStorage|sessionStorage|document\.cookie|window\.parent|window\.top/)});
+test("widgets use host messaging for visible actions",()=>{for(const [,html] of pages)assert.match(html,/app\.sendMessage/)});
+test("evidence widget routes operations and links through App",()=>{const html=pages.find(x=>x[0].startsWith("evidence"))[1];assert.match(html,/app\.callServerTool/);assert.match(html,/app\.openLink/);assert.doesNotMatch(html,/window\.open|fetch\(/)});
+test("widgets request automatic resize and safe-area CSS",()=>{for(const [,html] of pages){assert.match(html,/autoResize:true/);assert.match(html,/safe-area-inset-bottom/)}});
+test("widgets honor light and dark host themes",()=>{for(const [,html] of pages){assert.match(html,/onhostcontextchanged/);assert.match(html,/getHostContext/);assert.match(html,/html\.dark/)}});
+test("widgets expose visible keyboard focus and narrow layout",()=>{for(const [,html] of pages){assert.match(html,/:focus-visible/);assert.match(html,/@media\(max-width:340px\)/)}});
+test("interactive controls have semantic labels",()=>{const scope=pages[0][1];assert.match(scope,/htmlFor=/);const evidence=pages[1][1];assert.match(evidence,/aria-label/);for(const [,html] of pages)assert.match(html,/<button/)});
+test("status text is present in addition to color",()=>{for(const [,html] of pages)assert.match(html,/status/)});

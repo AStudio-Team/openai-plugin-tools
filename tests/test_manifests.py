@@ -15,10 +15,11 @@ class ManifestAndPackageTests(unittest.TestCase):
         self.crawler = json.loads((ROOT / "ai-crawler-readiness-auditor" / "plugin.json").read_text())
         self.data = json.loads((ROOT / "open-data-fetcher" / "plugin.json").read_text())
         self.diagram = json.loads((ROOT / "editable-diagram-builder" / "plugin.json").read_text())
+        self.grounded = json.loads((ROOT / "grounded-citations" / "plugin-package" / "plugin.json").read_text())
 
     def test_astudio_is_publisher_for_all_products(self):
         self.assertEqual(self.gcc["name"], "astudio-gcc-arabic-writer")
-        for manifest in (self.gcc, self.pdf, self.ad, self.growth, self.crawler, self.data, self.diagram):
+        for manifest in (self.gcc, self.pdf, self.ad, self.growth, self.crawler, self.data, self.diagram, self.grounded):
             self.assertEqual(manifest["author"]["name"], "ASTUDIO")
             self.assertEqual(manifest["extensions"]["com.openai"]["interface"]["developerName"], "ASTUDIO")
 
@@ -98,6 +99,26 @@ class ManifestAndPackageTests(unittest.TestCase):
             mcp["mcpServers"]["gcc-arabic-writer"]["url"],
             "https://www.astudio.agency/openai-plugins/gcc-arabic-writer/mcp",
         )
+    def test_grounded_citations_package_has_complete_human_flow(self):
+        self.assertEqual(self.grounded["name"], "astudio-grounded-citations")
+        review = self.grounded["extensions"]["com.openai"]["review"]
+        self.assertEqual(len(review["test_cases"]["positive"]), 5)
+        self.assertEqual(len(review["test_cases"]["negative"]), 3)
+        self.assertEqual(review["demo_recording_status"], "required-before-portal-submission")
+        package = ROOT / "grounded-citations" / "plugin-package"
+        self.assertTrue((package / "skills" / "grounded-citations" / "SKILL.md").is_file())
+        self.assertEqual(len(list((package / "assets").glob("screenshot-*.png"))), 3)
+        mcp = json.loads((package / "mcp.json").read_text())
+        self.assertEqual(mcp["mcpServers"]["grounded-citations"]["url"], "https://www.astudio.agency/openai-plugins/grounded-citations/mcp")
+
+    def test_grounded_citations_declares_exact_file_shape_and_ui_resources(self):
+        source = (ROOT / "grounded-citations" / "server" / "src" / "server.mjs").read_text()
+        schemas = (ROOT / "grounded-citations" / "server" / "src" / "schemas.mjs").read_text()
+        self.assertIn('"openai/fileParams": ["files"]', source)
+        for field in ("download_url", "file_id", "mime_type", "file_name"):
+            self.assertIn(field, schemas)
+        for uri in ("scope-review.html", "evidence-ledger.html", "verification-report.html"):
+            self.assertIn(f"ui://grounded-citations/{uri}", source)
 
     def test_growth_planner_review_flow_and_attribution_are_complete(self):
         review = self.growth["extensions"]["com.openai"]["review"]
