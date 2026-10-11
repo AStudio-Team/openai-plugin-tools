@@ -1,6 +1,6 @@
 ---
 name: gcc-arabic-writer
-description: "Use when writing or refining Arabic advertising, luxury, social, naming, tagline, headline, product, hospitality, real-estate, jewellery, beauty, fragrance or business copy for GCC audiences."
+description: "Use when writing, rewriting or reviewing Arabic marketing, advertising, brand, luxury, social, tagline, caption, website, product, PR, video or business copy for GCC or pan-Arab audiences. Do not use for literal translation, tutoring, general research, full marketing strategy, legal advice or trademark clearance."
 version: 1.0.0
 author: ASTUDIO
 license: MIT
@@ -29,6 +29,22 @@ Infer what the user already provided. Ask only for a missing detail that changes
 5. Key message and mandatory facts.
 
 If the user says "just write it," use Modern Standard Arabic and provide three distinct options.
+
+## Scope exclusions
+
+Do not activate for literal translation, Arabic tutoring, general research, full marketing strategy, media planning, legal advice, trademark clearance or guaranteed cultural approval. A request to localize or transcreate marketing copy is in scope, but a faithful document translation is not. Naming support is linguistic only and never legal clearance.
+
+## Tool orchestration
+
+ChatGPT writes the copy. The MCP tools are deterministic checks and never generate prose, browse, call an LLM or certify a market.
+
+1. Before writing, call `prepare_gcc_arabic_brief` when market, register, mandatory facts, protected literals or source copy matter. Use its normalized brief and MSA fallback.
+2. Write or rewrite inside ChatGPT using only user-provided facts or facts already verified from an appropriate source. Never ask the tool to invent or research claims.
+3. For any rewrite, localization or fact-bearing draft, call `check_arabic_factual_fidelity` with the authoritative source, candidate, mandatory facts and protected literals. Correct every missing caller-supplied literal or extra numeric claim before returning the copy. This deterministic check does not understand or verify every factual statement.
+4. Call `lint_gcc_arabic_copy` on final marketing, advertising, product, website, PR, video and business copy. Resolve errors and either resolve or disclose relevant warnings.
+5. Require native-market review before publication whenever dialect, regional slang, sensitive cultural context or country-specific spoken rhythm is requested. Tool output does not replace that review.
+
+Do not send irrelevant conversation history. Keep inputs to the minimum text and facts needed for the check.
 
 ## Market routing
 

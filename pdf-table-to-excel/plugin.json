@@ -2,7 +2,7 @@
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "pdf-table-to-excel",
   "version": "1.0.0",
-  "description": "Convert selectable PDF tables into clean Excel workbooks.",
+  "description": "Extract selectable tables from PDFs into downloadable XLSX workbooks with one worksheet per detected table.",
   "author": {
     "name": "ASTUDIO",
     "url": "https://www.astudio.agency"
@@ -10,16 +10,16 @@
   "homepage": "https://www.astudio.agency/tools/pdf-table-to-excel",
   "repository": "https://github.com/AStudio-Team/openai-plugin-tools",
   "license": "MIT",
-  "keywords": ["PDF to Excel", "PDF table extraction", "XLSX", "spreadsheet", "data extraction"],
+  "keywords": ["PDF table to Excel", "PDF to XLSX", "invoice PDF to Excel", "statement PDF to Excel", "report tables to Excel", "schedule PDF to Excel", "rate card to Excel", "media plan to Excel", "catalogue to Excel", "price list to Excel", "multi-page PDFs"],
   "extensions": {
     "com.openai": {
       "interface": {
         "displayName": "PDF Table to Excel",
-        "shortDescription": "Convert PDF tables to XLSX",
-        "longDescription": "Convert selectable tables in a PDF into a clean Excel workbook. Each detected table gets its own worksheet, with a summary sheet for quick navigation. Supports text-based PDFs up to 20 MB and does not perform OCR on scanned image-only files.",
+        "shortDescription": "Extract PDF tables to Excel",
+        "longDescription": "Extract selectable tables from a PDF into a downloadable Excel XLSX workbook. Use it for invoices, financial or business statements, reports, schedules, rate cards, media plans, catalogues, price lists and multi-page documents. Each detected table gets its own worksheet plus a summary sheet. It supports text-based PDFs up to 20 MB and does not perform OCR on scanned image-only files.",
         "developerName": "ASTUDIO",
         "category": "Productivity",
-        "capabilities": ["Extract PDF tables", "Create Excel workbooks", "Split tables into worksheets"],
+        "capabilities": ["Extract selectable PDF tables", "Create XLSX workbooks", "Convert invoices and statements", "Convert reports and schedules", "Convert catalogues and price lists", "Split multiple tables into worksheets"],
         "websiteURL": "https://www.astudio.agency/tools/pdf-table-to-excel",
         "supportURL": "https://www.astudio.agency/tools/support",
         "privacyPolicyURL": "https://www.astudio.agency/tools/privacy",
@@ -27,7 +27,7 @@
         "defaultPrompt": [
           "Convert every table in this PDF to Excel.",
           "Extract the tables from this PDF into separate worksheets.",
-          "Turn this PDF price list into an XLSX workbook."
+          "Turn this PDF invoice, statement, catalogue or price list into an XLSX workbook."
         ],
         "brandColor": "#322625",
         "composerIcon": "./assets/icon.png",
