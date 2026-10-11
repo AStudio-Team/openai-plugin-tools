@@ -51,6 +51,17 @@ test("fidelity handles Western and Arabic-Indic numeric equivalents", () => {
   assert.match(checked.scope_note, /does not verify/);
 });
 
+test("fidelity ignores sentence punctuation after a preserved currency literal", () => {
+  const checked = checkFidelity({
+    source_text: "Maison X launches at SAR 450.",
+    candidate_text: "Maison X متاح بسعر SAR 450",
+    mandatory_facts: ["Maison X", "SAR 450"],
+    protected_literals: ["Maison X", "SAR 450"],
+  });
+  assert.equal(checked.preservation_passed, true);
+  assert.deepEqual(checked.missing_facts, []);
+});
+
 test("fidelity reports missing literals and added numeric claims", () => {
   const checked = checkFidelity({ source_text: "السعر 100 درهم يوم 2026-10-11", candidate_text: "السعر 120 درهم", protected_literals: ["SKU-X"] });
   assert.equal(checked.preservation_passed, false);

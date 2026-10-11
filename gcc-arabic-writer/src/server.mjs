@@ -76,7 +76,7 @@ function extractFacts(text) {
   const dates = normalized.match(/\b\d{4}[-/]\d{1,2}[-/]\d{1,2}\b|\b\d{1,2}[-/]\d{1,2}[-/]\d{2,4}\b|[٠-٩۰-۹]{1,4}[-/][٠-٩۰-۹]{1,2}[-/][٠-٩۰-۹]{1,4}/gu) || [];
   const percentages = normalized.match(/[0-9٠-٩۰-۹]+(?:[.,٫][0-9٠-٩۰-۹]+)?\s*(?:%|٪)/gu) || [];
   const currencyOrQuantity = normalized.match(/(?:\b(?:AED|SAR|QAR|KWD|BHD|OMR|USD|EUR)\s*[0-9٠-٩۰-۹.,٬٫]+|[0-9٠-٩۰-۹.,٬٫]+\s*(?:AED|SAR|QAR|KWD|BHD|OMR|USD|EUR|درهم|ريال|دولار|دينار|ر\.س|مل|ملل|لتر|غ|كغ|جرام|كيلوغرام|متر|سم|مم|قطعة|حبة))/giu) || [];
-  const canonical = values => unique(values.map(value => normalizeNumerals(value).replace(/\s+/g, " ").trim().toLowerCase()));
+  const canonical = values => unique(values.map(value => normalizeNumerals(value).replace(/\s+/g, " ").trim().replace(/[.,;:!?،؛]+$/u, "").toLowerCase()));
   return {
     numbers: canonical(normalized.match(numberPattern) || []),
     dates: canonical(dates),
