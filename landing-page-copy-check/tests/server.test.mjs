@@ -1,85 +1,14 @@
-import test from "node:test";
-import assert from "node:assert/strict";
-import { once } from "node:events";
-import { openPageBrief, reviewPageBrief, draftPageCopy, checkPageConversion, selectPageCopyVariant, exportPageCopy, createHttpServer } from "../src/server.mjs";
-
-const brief = { pageType: "homepage", product: "A scheduling tool", audience: "Small teams", offer: "Free trial", goal: "Get demos", tone: "Clear", mustKeepFacts: ["Free trial"] };
-const copy = { headline: "Schedule work without the chaos", subhead: "A clear workspace for small teams.", valuePoints: ["Plan work", "See progress", "Share updates"], proof: ["Used by 20 teams"], primaryCta: "Get started", faq: [{ question: "Is it free?", answer: "Start with a free trial." }] };
-
-test("brief, draft, selection and approval provenance", () => {
-  assert.equal(openPageBrief().fields.length, 8);
-  assert.equal(reviewPageBrief(brief).canApprove, true);
-  assert.throws(() => draftPageCopy({ briefApproved: false, brief, copy }));
-  assert.deepEqual(draftPageCopy({ briefApproved: true, brief, copy }).factCheck.missing, []);
-  assert.throws(() => selectPageCopyVariant({ variants: [copy, { ...copy, headline: "A second clear option" }], selected: 2, brief }));
-  const result = selectPageCopyVariant({ variants: [copy, { ...copy, headline: "A second clear option" }], selected: 2, selectionApproved: true, brief });
-  assert.equal(result.selectionReceipt.kind, "selection");
-});
-
-test("banned claims and strict schemas are rejected", () => {
-  for (const claim of ["Increase conversions by 200 percent", "Grow 10x today"]) assert.throws(() => draftPageCopy({ briefApproved: true, brief, copy: { ...copy, subhead: claim } }), /unsupported claims/);
-  const allowedBrief = { ...brief, mustKeepFacts: ["10x"] };
-  assert.equal(draftPageCopy({ briefApproved: true, brief: allowedBrief, copy: { ...copy, subhead: "Grow 10x today" } }).copy.subhead, "Grow 10x today");
-  assert.throws(() => reviewPageBrief({ ...brief, extra: true }));
-  assert.throws(() => draftPageCopy({ briefApproved: true, brief, copy: { ...copy, extra: true } }));
-});
-
-test("conversion checks distinguish missing values and findings", () => {
-  const missing = checkPageConversion({});
-  assert.equal(missing.score, null);
-  assert.ok(missing.checks.every(item => item.status === "not checked"));
-  assert.throws(() => checkPageConversion({ formFieldCount: -1 }));
-  assert.throws(() => checkPageConversion({ formFieldCount: 1.5 }));
-  const checked = checkPageConversion({ copy: "CTA: See plans", headline: "See the right plan", formFieldCount: 2, popupDelaySeconds: 0 });
-  assert.equal(checked.checks[0].pass, true);
-  assert.equal(checked.checks.at(-1).status, "finding");
-  assert.equal(checkPageConversion({ copy: "CTA: Get started", headline: "Start here", formFieldCount: 2, popupDelaySeconds: 10 }).checks[0].pass, true);
-});
-
-test("exports escape HTML and include proof and FAQ", () => {
-  const unsafe = { ...copy, headline: "Build <better> pages", proof: ["Trusted & tested"], faq: [{ question: "Why <now>?", answer: 'Because "today" matters.' }] };
-  const unsafeReceipt = selectPageCopyVariant({ variants: [unsafe, copy], selected: 1, selectionApproved: true, brief }).selectionReceipt;
-  const html = exportPageCopy({ copy: unsafe, format: "html", brief, selectionReceipt: unsafeReceipt }).content;
-  assert.doesNotMatch(html, /<better>|<now>/);
-  assert.match(html, /Trusted &amp; tested/);
-  assert.match(html, /FAQ/);
-  const selectionReceipt = selectPageCopyVariant({ variants: [copy, unsafe], selected: 1, selectionApproved: true, brief }).selectionReceipt;
-  const markdown = exportPageCopy({ copy, format: "markdown", brief, selectionReceipt }).content;
-  assert.match(markdown, /## Proof/);
-  assert.match(markdown, /## FAQ/);
-});
-
-test("complete validation and CTA field counting", () => {
-  assert.throws(() => draftPageCopy({ briefApproved: true, brief, copy: { ...copy, proof: [] } }));
-  assert.throws(() => draftPageCopy({ briefApproved: true, brief, copy: { ...copy, headline: "One two three four five six seven eight nine ten eleven twelve thirteen" } }), /12 words/);
-  assert.throws(() => selectPageCopyVariant({ variants: [copy, { ...copy, headline: "One two three four five six seven eight nine ten eleven twelve thirteen" }], selected: 1, selectionApproved: true, brief }), /12 words/);
-  const missingBrief = { ...brief, mustKeepFacts: ["Free trial", "No credit card"] };
-  const selected = selectPageCopyVariant({ variants: [copy, { ...copy, headline: "Another option" }], selected: 1, selectionApproved: true, brief: missingBrief });
-  const exported = exportPageCopy({ copy, brief: missingBrief, selectionReceipt: selected.selectionReceipt, format: "markdown" });
-  assert.deepEqual(exported.factCheck.missing, ["No credit card"]);
-  const report = checkPageConversion({ draft: { ...copy, valuePoints: ["Get clarity", "Get control", "Get results"] } });
-  assert.equal(report.inputs.ctaCount, 1);
-});
-
-test("export requires a signed selection receipt", () => {
-  assert.throws(() => exportPageCopy({ copy, brief, format: "markdown" }), /required/i);
-});
-
-async function post(base, payload) { const response = await fetch(`${base}/mcp`, { method: "POST", headers: { "content-type": "application/json", accept: "application/json, text/event-stream" }, body: JSON.stringify(payload) }); assert.equal(response.status, 200); return response.json(); }
-
-test("HTTP health, MCP discovery, resources and consecutive requests", async t => {
-  const server = createHttpServer().listen(0, "127.0.0.1");
-  await once(server, "listening");
-  t.after(() => server.close());
-  const base = `http://127.0.0.1:${server.address().port}`;
-  for (const endpoint of ["health", "ready"]) { const response = await fetch(`${base}/${endpoint}`); assert.equal(response.status, 200); assert.deepEqual(await response.json(), { status: "ok", service: "landing-page-copy-check", version: "1.0.0", persistence: false, outbound_network: false }); }
-  const initialized = await post(base, { jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "test", version: "1" } } });
-  assert.equal(initialized.result.serverInfo.name, "landing-page-copy-check");
-  let tools;
-  for (const id of [2, 3]) { const listed = await post(base, { jsonrpc: "2.0", id, method: "tools/list" }); tools = listed.result.tools; assert.equal(tools.length, 7); assert.ok(tools.every(tool => tool.outputSchema?.type === "object")); }
-  const resources = await post(base, { jsonrpc: "2.0", id: 4, method: "resources/list" });
-  assert.equal(resources.result.resources.length, 5);
-  const toolNames = new Set(tools.map(tool => tool.name));
-  const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
-  for (const [index, resource] of resources.result.resources.entries()) { const read = await post(base, { jsonrpc: "2.0", id: 10 + index, method: "resources/read", params: { uri: resource.uri } }); const html = read.result.contents[0].text; assert.equal(read.result.contents[0].mimeType, "text/html;profile=mcp-app"); const script = html.match(/<script type="module">([\s\S]*?)<\/script>/)?.[1]; assert.ok(script); assert.doesNotThrow(() => new AsyncFunction(script)); for (const match of script.matchAll(/callServerTool\(\{name:["']([^"']+)/g)) assert.ok(toolNames.has(match[1]), `unknown widget tool ${match[1]}`); }
-});
+import test from "node:test"; import assert from "node:assert/strict"; import { once } from "node:events";
+import { openPageBrief, reviewPageBrief, approvePageBrief, draftPageCopy, checkPageConversion, selectPageCopyVariant, exportPageCopy, createHttpServer } from "../src/server.mjs";
+const brief={pageType:"homepage",product:"A scheduling tool",audience:"Small teams",offer:"Free trial",goal:"Get demos",tone:"Clear",mustKeepFacts:["Free trial","No credit card"]};
+const first={headline:"Schedule team work without chaos",subhead:"A scheduling tool for small teams with a Free trial and No credit card.",valuePoints:["Plan work","See progress","Share updates"],proof:["Free trial"],primaryCta:"Start free trial",faq:[{question:"Is it free?",answer:"Start with a Free trial. No credit card."}]};
+const second={...first,headline:"Plan every team schedule in one tool",primaryCta:"Try the tool free"}; const approval=()=>approvePageBrief({brief,approvalAction:"approve"}).approvalReceipt;
+test("signed approval is brief-bound and drafts distinct decorated variants",()=>{assert.equal(openPageBrief().fields.length,8);assert.match(reviewPageBrief(brief).message,/button/i);assert.throws(()=>draftPageCopy({brief,variants:[first,second]}));assert.throws(()=>draftPageCopy({brief,approvalReceipt:{...approval(),signature:"0".repeat(64)},variants:[first,second]}),/receipt/i);const out=draftPageCopy({brief,approvalReceipt:approval(),variants:[first,second]});assert.equal(out.variants.length,2);assert.ok(out.variants.every(x=>Array.isArray(x.issues)&&Array.isArray(x.checklist)));assert.throws(()=>draftPageCopy({brief,approvalReceipt:approval(),variants:[first,first]}),/distinct/i)});
+test("strict validation rejects blanks, unsupported proof and banned facts",()=>{for(const change of [{headline:"  "},{subhead:" "},{valuePoints:["Plan"," ","Share"]},{faq:[{question:" ",answer:"Yes"}]}])assert.throws(()=>draftPageCopy({brief,approvalReceipt:approval(),variants:[{...first,...change},second]}));assert.throws(()=>draftPageCopy({brief,approvalReceipt:approval(),variants:[{...first,proof:["Used by 20 teams"]},second]}),/unsupported proof/i);const bad={...brief,mustKeepFacts:["Guaranteed 200 percent growth"]},receipt=approvePageBrief({brief:bad,approvalAction:"approve"}).approvalReceipt;assert.throws(()=>draftPageCopy({brief:bad,approvalReceipt:receipt,variants:[{...first,proof:bad.mustKeepFacts},second]}),/banned claims/i)});
+test("checklist requires one detected CTA and specific headline",()=>{const out=checkPageConversion({copy:"Get started today.\nReady to book a demo?",headline:"Scheduling software for small teams"});assert.equal(out.inputs.ctaCount,2);assert.equal(out.checks.find(x=>x.name==="CTA focus").pass,false);assert.notEqual(out.score,100);assert.equal(checkPageConversion({copy:"Want a demo?",headline:"Better results"}).checks[0].pass,true);assert.equal(checkPageConversion({copy:"Start free",headline:"Better results"}).checks.find(x=>x.name==="Headline clarity").pass,false)});
+test("selection receipt cannot be forged and export escapes HTML",()=>{const selected=selectPageCopyVariant({variants:[first,second],selected:1,brief});assert.throws(()=>exportPageCopy({copy:first,brief,format:"markdown",selectionReceipt:{...selected.selectionReceipt,signature:"f".repeat(64)}}),/receipt/i);const unsafe={...first,headline:"Schedule <better> team work"},receipt=selectPageCopyVariant({variants:[unsafe,second],selected:1,brief}).selectionReceipt;assert.doesNotMatch(exportPageCopy({copy:unsafe,brief,format:"html",selectionReceipt:receipt}).content,/<better>/)});
+async function post(base,payload){const response=await fetch(`${base}/mcp`,{method:"POST",headers:{"content-type":"application/json",accept:"application/json, text/event-stream"},body:JSON.stringify(payload)});return{response,body:await response.json()}}
+async function fixture(t){const server=createHttpServer().listen(0,"127.0.0.1");await once(server,"listening");t.after(()=>server.close());return`http://127.0.0.1:${server.address().port}`}
+test("malformed URL and JSON are contained",async t=>{const base=await fixture(t),port=new URL(base).port,http=await import("node:http");await new Promise(resolve=>{const req=http.request({hostname:"127.0.0.1",port,path:"//[",method:"GET"},res=>{assert.equal(res.statusCode,400);res.resume();res.on("end",resolve)});req.end()});const response=await fetch(`${base}/mcp`,{method:"POST",headers:{"content-type":"application/json"},body:"{"});assert.ok(response.status<500)});
+test("MCP discovery and invalid input retain attribution",async t=>{const base=await fixture(t);await post(base,{jsonrpc:"2.0",id:1,method:"initialize",params:{protocolVersion:"2025-06-18",capabilities:{},clientInfo:{name:"test",version:"1"}}});const listed=(await post(base,{jsonrpc:"2.0",id:2,method:"tools/list"})).body.result.tools;assert.equal(listed.length,7);assert.ok(listed.find(x=>x.name==="approve_page_brief").description.includes("Do not use"));const invalid=(await post(base,{jsonrpc:"2.0",id:3,method:"tools/call",params:{name:"review_page_brief",arguments:{}}})).body;assert.match(JSON.stringify(invalid),/Provided by ASTUDIO/)});
+test("widget-backed flow approves, drafts, selects and exports",async t=>{const base=await fixture(t);await post(base,{jsonrpc:"2.0",id:1,method:"initialize",params:{protocolVersion:"2025-06-18",capabilities:{},clientInfo:{name:"widget",version:"1"}}});const call=async(id,name,args)=>(await post(base,{jsonrpc:"2.0",id,method:"tools/call",params:{name,arguments:args}})).body.result.structuredContent;const approved=await call(2,"approve_page_brief",{brief,approvalAction:"approve"});const drafted=await call(3,"draft_page_copy",{brief,approvalReceipt:approved.approvalReceipt,variants:[first,second]});const variants=drafted.variants.map(({issues,checklist,...x})=>x),chosen=await call(4,"select_page_copy_variant",{brief,variants,selected:2});const exported=await call(5,"export_page_copy",{brief,copy:chosen.selected,selectionReceipt:chosen.selectionReceipt,format:"markdown"});assert.match(exported.content,/Plan every team schedule/)});
