@@ -34,7 +34,7 @@ export const briefSchema = z.object({
   confidence: confidenceSchema, power: powerSchema,
   suppliedFacts: z.array(nonBlank()).max(30).default([]), proofPoints: z.array(nonBlank()).max(30).default([]),
 }).strict();
-const eventSchema = z.object({ name: z.string(), properties: z.array(z.string()) }).strict();
+const eventSchema = z.object({ name: z.string().default(""), properties: z.array(z.string()).default([]) }).strict();
 const variantSchema = z.object({ name: nonBlank(), change: z.string() }).strict();
 const stopRuleSchema = z.object({ basis: z.enum(["sample_size", "duration"]), value: z.number().finite().positive() }).strict();
 const planSchema = z.object({ hypothesis: nonBlank(), primaryMetric: nonBlank(), guardrailMetrics: z.array(z.string()), variants: z.array(variantSchema).min(2).max(10), events: z.array(eventSchema), preLaunchChecklist: z.array(z.string()), stopRule: stopRuleSchema }).strict();
