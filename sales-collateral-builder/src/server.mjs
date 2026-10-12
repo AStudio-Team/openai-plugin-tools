@@ -124,12 +124,15 @@ export function exportPageCopy(input) {
 }
 
 const collateralProof = z.object({ text: nonBlank(), source: nonBlank() }).strict();
-const collateralBrief = z.object({ product: nonBlank(), buyerPersona: nonBlank(), buyerRole: nonBlank(), dealStage: nonBlank(), pieceType: z.enum(["sales deck outline", "one-pager", "objection handling sheet", "demo script", "case study brief"]), proofPoints: z.array(collateralProof).min(1).max(20), knownObjections: z.array(nonBlank()).max(20), tone: nonBlank() }).strict();
+const objectionCategory = z.enum(["price", "timing", "authority", "need", "trust", "competition", "implementation", "security"]);
+const collateralObjection = z.object({ category: objectionCategory, text: nonBlank() }).strict();
+const personalisationToken = z.string().trim().regex(/^\{\{[a-z][a-z0-9_]*\}\}$/u);
+const collateralBrief = z.object({ product: nonBlank(), buyerPersona: nonBlank(), buyerRole: nonBlank(), dealStage: nonBlank(), pieceType: z.enum(["sales deck outline", "one-pager", "objection handling sheet", "demo script", "case study brief"]), proofPoints: z.array(collateralProof).min(1).max(20), knownObjections: z.array(collateralObjection).max(20), personalisationTokens: z.array(personalisationToken).max(20), tone: nonBlank() }).strict();
 const collateralSection = z.object({ heading: nonBlank(), content: nonBlank() }).strict();
 const collateralPiece = z.object({ title: nonBlank(), sections: z.array(collateralSection).min(1).max(30) }).strict();
 const collateralReceipt = z.object({ kind: z.literal("brief"), deployment: z.literal("deployment"), digest: z.string().length(64), signature: z.string().length(64) }).strict();
-const collateralIssue = z.object({ code: z.enum(["banned_claim", "missing_section", "missing_outcome", "unsupported_proof"]), field: z.string(), message: z.string() }).strict();
-const collateralPrefill = z.object({ product: z.string().optional(), buyerPersona: z.string().optional(), buyerRole: z.string().optional(), dealStage: z.string().optional(), pieceType: z.enum(["sales deck outline", "one-pager", "objection handling sheet", "demo script", "case study brief"]).optional(), proofPoints: z.array(collateralProof).optional(), knownObjections: z.array(z.string()).optional(), tone: z.string().optional() }).strict();
+const collateralIssue = z.object({ code: z.enum(["banned_claim", "missing_section", "missing_outcome", "unsupported_proof", "multiple_cta", "undeclared_personalisation", "missing_objection", "missing_objection_category"]), field: z.string(), message: z.string() }).strict();
+const collateralPrefill = z.object({ product: z.string().optional(), buyerPersona: z.string().optional(), buyerRole: z.string().optional(), dealStage: z.string().optional(), pieceType: z.enum(["sales deck outline", "one-pager", "objection handling sheet", "demo script", "case study brief"]).optional(), proofPoints: z.array(collateralProof).optional(), knownObjections: z.array(collateralObjection).optional(), personalisationTokens: z.array(personalisationToken).optional(), tone: z.string().optional() }).strict();
 const collateralStructures = {
   "sales deck outline": ["Current World Problem", "Cost of the Problem", "The Shift Happening", "Your Approach", "Product Walkthrough", "Proof Points", "Case Study", "Implementation / Timeline", "ROI / Value", "Pricing Overview", "Next Steps / CTA"],
   "one-pager": ["Problem statement", "Your solution", "3 differentiators", "Proof point", "CTA"],
@@ -139,20 +142,30 @@ const collateralStructures = {
 };
 function collateralReceiptFor(value) { const unsigned = { kind: "brief", deployment: "deployment", digest: digest(value) }; return { ...unsigned, signature: sign(unsigned) }; }
 function verifyCollateralReceipt(value, subject) { const parsed = collateralReceipt.parse(value); const unsigned = { kind: parsed.kind, deployment: parsed.deployment, digest: parsed.digest }; const expected = sign(unsigned); if (parsed.digest !== digest(subject) || !timingSafeEqual(Buffer.from(expected, "hex"), Buffer.from(parsed.signature, "hex"))) throw Error("A valid signed brief receipt is required."); }
-function briefText(value) { return [value.product, value.buyerPersona, value.buyerRole, value.dealStage, value.pieceType, value.tone, ...value.knownObjections, ...value.proofPoints.flatMap(item => [item.text, item.source])]; }
+function briefText(value) { return [value.product, value.buyerPersona, value.buyerRole, value.dealStage, value.pieceType, value.tone, ...value.knownObjections.flatMap(item => [item.category, item.text]), ...value.personalisationTokens, ...value.proofPoints.flatMap(item => [item.text, item.source])]; }
 function allCollateralText(value) { return [value.title, ...value.sections.flatMap(item => [item.heading, item.content])]; }
-function proofClaimSupported(sentence, sourceBrief) { return sourceBrief.proofPoints.some(item => sourceMatch(sentence, item.text)); }
+function proofClaimSupported(sentence, sourceBrief) { return sourceBrief.proofPoints.some(item => wholeSourceMatch(sentence, item.text)); }
 function collateralIssues(piece, sourceBrief) {
   const issues = [];
-  for (const [index, value] of allCollateralText(piece).entries()) for (const claim of bannedClaims(value)) issues.push({ code: "banned_claim", field: `text.${index}`, message: `Remove banned claim: ${claim}.` });
+  const values = allCollateralText(piece);
+  for (const [index, value] of values.entries()) for (const claim of bannedClaims(value)) issues.push({ code: "banned_claim", field: `text.${index}`, message: `Remove banned claim: ${claim}.` });
+  const ctaCount = values.reduce((total, value) => total + countCtas(value), 0);
+  if (ctaCount > 1) issues.push({ code: "multiple_cta", field: "collateral", message: `Use at most one primary CTA; ${ctaCount} CTA phrases were found.` });
+  const declaredTokens = new Set(sourceBrief.personalisationTokens);
+  for (const [index, value] of values.entries()) for (const token of String(value).match(/\{\{[^{}]+\}\}/gu) || []) if (!declaredTokens.has(token)) issues.push({ code: "undeclared_personalisation", field: `text.${index}`, message: `Declare personalisation token before use: ${token}.` });
   const headings = new Set(piece.sections.map(item => normalizeSource(item.heading)));
   for (const heading of collateralStructures[sourceBrief.pieceType]) if (!headings.has(normalizeSource(heading))) issues.push({ code: "missing_section", field: "sections", message: `Missing required section: ${heading}.` });
   const body = piece.sections.map(item => item.content).join("\n");
   if (!/\b(?:revenue|efficien\w*|risk|cost|time saved|business outcome|conversion|retention|profit|productivity)\b/iu.test(body)) issues.push({ code: "missing_outcome", field: "sections", message: "Tie the collateral to a business outcome." });
-  for (const [sectionIndex, section] of piece.sections.entries()) for (const sentence of section.content.split(/[.!?\n]+/u).map(clean).filter(Boolean)) if (isProofLikeClaim(sentence) && !proofClaimSupported(sentence, sourceBrief)) issues.push({ code: "unsupported_proof", field: `sections.${sectionIndex}.content`, message: `Unsupported proof-like claim: ${sentence}.` });
+  for (const [index, value] of values.entries()) for (const sentence of String(value).split(/[.!?\n]+/u).map(clean).filter(Boolean)) if (isProofLikeClaim(sentence) && !proofClaimSupported(sentence, sourceBrief)) issues.push({ code: "unsupported_proof", field: `text.${index}`, message: `Unsupported proof-like claim: ${sentence}.` });
+  if (sourceBrief.pieceType === "objection handling sheet") for (const [index, objection] of sourceBrief.knownObjections.entries()) {
+    const section = piece.sections.find(item => wholeSourceMatch(item.content, objection.text));
+    if (!section) issues.push({ code: "missing_objection", field: `knownObjections.${index}.text`, message: `Address the supplied objection exactly: ${objection.text}.` });
+    else if (![section.heading, section.content].some(value => wholeSourceMatch(value, objection.category))) issues.push({ code: "missing_objection_category", field: `knownObjections.${index}.category`, message: `Label the objection with its declared category: ${objection.category}.` });
+  }
   return issues;
 }
-export function openCollateralBrief(input = {}) { return { fields: ["product", "buyerPersona", "buyerRole", "dealStage", "pieceType", "proofPoints", "knownObjections", "tone"], prefill: collateralPrefill.parse(input.prefill || {}), privacyNotice: "This tool works on text supplied in chat only. It does not fetch accounts or publish collateral." }; }
+export function openCollateralBrief(input = {}) { return { fields: ["product", "buyerPersona", "buyerRole", "dealStage", "pieceType", "proofPoints", "knownObjections", "personalisationTokens", "tone"], prefill: collateralPrefill.parse(input.prefill || {}), privacyNotice: "This tool works on text supplied in chat only. It does not fetch accounts or publish collateral." }; }
 export function reviewCollateralBrief(input) { const value = collateralBrief.parse(input); const issues = briefText(value).flatMap((text, index) => bannedClaims(text).map(claim => ({ code: "banned_claim", field: `brief.${index}`, message: `Remove banned claim: ${claim}.` }))); return { normalizedBrief: value, canApprove: issues.length === 0, confirmationRequired: true, issues, message: issues.length ? "Remove banned claims before approval." : "Review the visible brief, then use the Approve brief button." }; }
 export function approveCollateralBrief(input) { const value = collateralBrief.parse(input.brief); z.literal("approve").parse(input.approvalAction); const review = reviewCollateralBrief(value); if (!review.canApprove) throw Error(review.message); return { approvalReceipt: collateralReceiptFor(value), approvedBrief: value }; }
 export function draftCollateral(input) { const sourceBrief = collateralBrief.parse(input.brief); verifyCollateralReceipt(input.approvalReceipt, sourceBrief); const piece = collateralPiece.parse(input.collateral); const issues = collateralIssues(piece, sourceBrief); return { collateral: piece, pieceType: sourceBrief.pieceType, issues, requiredStructure: collateralStructures[sourceBrief.pieceType] }; }
