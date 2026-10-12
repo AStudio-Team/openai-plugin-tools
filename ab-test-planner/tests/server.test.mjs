@@ -6,11 +6,13 @@ import { fileURLToPath } from "node:url";
 import { approveTestBrief, createHttpServer, exportTestPlan, planAbTest, reviewTestBrief, sampleSize, validatePlan } from "../src/server.mjs";
 
 const brief={pageOrFeature:"Pricing page",changeIdea:"Show annual saving beside price",primaryMetric:"trial_started",baselineConversionRate:5,weeklyVisitors:4000,minimumDetectableEffect:20,variants:2,confidence:95,power:80};
-const plan={hypothesis:"Because visitors do not see the annual saving, we believe showing the annual saving will increase trials measured by trial_started.",primaryMetric:"trial_started",guardrailMetrics:["checkout_error_rate"],variants:[{name:"Control",change:"Keep current price display"},{name:"Variant",change:"Show annual saving beside price"}],events:[{name:"trial_started",properties:["variant"]}],preLaunchChecklist:["Verify event firing on both variants"],stopRule:"Do not stop early when peeking; wait for the planned sample size."};
+const plan={hypothesis:"Because visitors do not see the annual saving, we believe showing the annual saving will increase trials measured by trial_started.",primaryMetric:"trial_started",guardrailMetrics:["checkout_error_rate"],variants:[{name:"Control",change:"Keep current price display"},{name:"Variant",change:"Show annual saving beside price"}],events:[{name:"trial_started",properties:["variant"]}],preLaunchChecklist:["Verify event firing on both variants"],stopRule:{basis:"sample_size",value:8158}};
 
 test("pooled two-proportion calculation is near the known 5% / 20% lift value",()=>{
   const result=sampleSize(brief);
-  assert.ok(result.perVariant>8000&&result.perVariant<8300,result.perVariant);
+  const p1=.05,p2=.06,pooled=(p1+p2)/2,expected=Math.ceil(((1.959963985*Math.sqrt(2*pooled*(1-pooled))+.841621234*Math.sqrt(p1*(1-p1)+p2*(1-p2)))**2)/((p2-p1)**2));
+  assert.equal(result.perVariant,expected);
+  assert.equal(result.perVariant,8158);
   assert.equal(result.weeks,Math.ceil(result.total/brief.weeklyVisitors));
 });
 
@@ -31,9 +33,9 @@ test("plan validation accepts the required experiment safeguards",()=>{
 });
 
 test("plan validation reports each missing experiment safeguard",()=>{
-  const invalid={...plan,hypothesis:"Show the annual saving.",primaryMetric:"purchase_completed",guardrailMetrics:[],variants:[...plan.variants.slice(0,1),{name:"Variant",change:"Show saving and add testimonials"}],events:[{name:"TrialStarted",properties:["variant"]}],preLaunchChecklist:[],stopRule:"Review results every day."};
-  assert.throws(()=>validatePlan(brief,invalid));
-  const issues=validatePlan(brief,{...plan,hypothesis:"Show the annual saving.",primaryMetric:"purchase_completed",variants:[...plan.variants.slice(0,1),{name:"Variant",change:"Show saving and add testimonials"}],stopRule:"Review results every day."}).issues;
+  const invalid={...plan,hypothesis:"Show the annual saving.",primaryMetric:"purchase_completed",guardrailMetrics:[],variants:[...plan.variants.slice(0,1),{name:"Variant",change:"Show saving and add testimonials"}],events:[{name:"TrialStarted",properties:[]}],preLaunchChecklist:[],stopRule:{basis:"duration",value:99}};
+  assert.deepEqual(new Set(validatePlan(brief,invalid).issues.map(x=>x.code)),new Set(["unsupported_claim","hypothesis_format","primary_metric","guardrail_metric","multiple_changes","event_name","event_properties","prelaunch_checklist","stop_rule"]));
+  const issues=validatePlan(brief,{...plan,hypothesis:"Show the annual saving.",primaryMetric:"purchase_completed",variants:[...plan.variants.slice(0,1),{name:"Variant",change:"Show saving and add testimonials"}],stopRule:{basis:"duration",value:99}}).issues;
   assert.deepEqual(new Set(issues.map(x=>x.code)),new Set(["unsupported_claim","hypothesis_format","primary_metric","multiple_changes","stop_rule"]));
 });
 
@@ -44,13 +46,13 @@ test("each plan rule has a failing and passing case",()=>{
     [{primaryMetric:"purchase_completed"},"primary_metric"],
     [{variants:[...plan.variants,{name:"Third",change:"Use a blue button"}]},"variant_count"],
     [{variants:[plan.variants[0],{name:"Variant",change:"Change headline and button"}]},"multiple_changes"],
-    [{stopRule:"Check every morning and declare a winner."},"stop_rule"],
+    [{stopRule:{basis:"duration",value:99}},"stop_rule"],
   ];
   for(const [change,code] of cases)assert.ok(validatePlan(brief,{...plan,...change}).issues.some(x=>x.code===code),code);
-  assert.throws(()=>validatePlan(brief,{...plan,guardrailMetrics:[]}));
-  assert.throws(()=>validatePlan(brief,{...plan,events:[{name:"TrialStarted",properties:["variant"]}]}));
-  assert.throws(()=>validatePlan(brief,{...plan,events:[{name:"trial_started",properties:[]}]}));
-  assert.throws(()=>validatePlan(brief,{...plan,preLaunchChecklist:[]}));
+  assert.ok(validatePlan(brief,{...plan,guardrailMetrics:[]}).issues.some(x=>x.code==="guardrail_metric"));
+  assert.ok(validatePlan(brief,{...plan,events:[{name:"TrialStarted",properties:["variant"]}]}).issues.some(x=>x.code==="event_name"));
+  assert.ok(validatePlan(brief,{...plan,events:[{name:"trial_started",properties:[]}] }).issues.some(x=>x.code==="event_properties"));
+  assert.ok(validatePlan(brief,{...plan,preLaunchChecklist:[]}).issues.some(x=>x.code==="prelaunch_checklist"));
 });
 
 test("banned and unsupported claims are rejected in brief and every plan text field",()=>{
@@ -63,12 +65,14 @@ test("banned and unsupported claims are rejected in brief and every plan text fi
     {variants:[plan.variants[0],{name:"Variant",change:"Rated five-star by customers"}]},
     {events:[{name:"trial_started",properties:["98% success"]}]},
     {preLaunchChecklist:["Guarantee conversion before launch"]},
-    {stopRule:"Never stop early when peeking; guaranteed winner."},
   ]) assert.ok(validatePlan(brief,{...plan,...change}).issues.some(x=>["banned_claim","unsupported_claim"].includes(x.code)));
   const sourcedBrief={...brief,suppliedFacts:["Serving 500 teams"]};
   const sourced={...plan,guardrailMetrics:["Serving 500 teams"]};
   assert.equal(validatePlan(sourcedBrief,sourced).valid,true);
   assert.ok(validatePlan({...brief,suppliedFacts:["Serving 400 teams"]},sourced).issues.some(x=>x.code==="unsupported_claim"));
+  const unsupportedBrief={...brief,changeIdea:"Trusted by 500 teams"};
+  assert.equal(reviewTestBrief(unsupportedBrief).canApprove,false);
+  assert.throws(()=>approveTestBrief({brief:unsupportedBrief,approvalAction:"approve"}),/Proof-like claim/);
 });
 
 async function post(base,name,args,id=1){const response=await fetch(`${base}/mcp`,{method:"POST",headers:{"content-type":"application/json",accept:"application/json, text/event-stream"},body:JSON.stringify({jsonrpc:"2.0",id,method:"tools/call",params:{name,arguments:args}})});return(await response.json()).result}
@@ -91,4 +95,4 @@ test("invalid SDK calls for every tool retain attribution",async t=>{const base=
 
 test("CSV export neutralises spreadsheet formula cells",()=>{const riskyBrief={...brief,suppliedFacts:["-1"]},receipt=approveTestBrief({brief:riskyBrief,approvalAction:"approve"}).approvalReceipt;const risky={...plan,events:[["trial_started","=cmd"],["page_viewed","+sum"],["form_submitted","-1"],["button_clicked","@user"]].map(([name,property])=>({name,properties:[property]}))};const out=exportTestPlan({brief:riskyBrief,plan:risky,approvalReceipt:receipt,format:"csv"});for(const value of ["'=cmd","'+sum","'-1","'@user"])assert.ok(out.content.includes(value),value)});
 
-test("health, malformed JSON, and aborted requests are contained",async t=>{const base=await fixture(t);for(const route of ["health","ready"]){const response=await fetch(`${base}/${route}`);assert.equal(response.status,200);assert.equal(response.headers.get("cache-control"),"no-store");assert.deepEqual(await response.json(),{status:"ok",service:"ab-test-planner",version:"1.0.1",persistence:false,outbound_network:false})}const malformed=await fetch(`${base}/mcp`,{method:"POST",headers:{"content-type":"application/json"},body:"{"});assert.equal(malformed.status,400);const {request}=await import("node:http");await new Promise(resolve=>{const req=request(`${base}/mcp`,{method:"POST",headers:{"content-type":"application/json"}});req.on("error",()=>resolve());req.write('{"jsonrpc":');req.destroy();setImmediate(resolve)});assert.equal((await fetch(`${base}/health`)).status,200)});
+test("health, malformed JSON, and aborted requests are contained",async t=>{const base=await fixture(t);for(const route of ["health","ready"]){const response=await fetch(`${base}/${route}`);assert.equal(response.status,200);assert.equal(response.headers.get("cache-control"),"no-store");assert.deepEqual(await response.json(),{status:"ok",service:"ab-test-planner",version:"1.0.0",persistence:false,outbound_network:false})}const malformed=await fetch(`${base}/mcp`,{method:"POST",headers:{"content-type":"application/json"},body:"{"});assert.equal(malformed.status,400);const {request}=await import("node:http");await new Promise(resolve=>{const req=request(`${base}/mcp`,{method:"POST",headers:{"content-type":"application/json"}});req.on("error",()=>resolve());req.write('{"jsonrpc":');req.destroy();setImmediate(resolve)});assert.equal((await fetch(`${base}/health`)).status,200)});
