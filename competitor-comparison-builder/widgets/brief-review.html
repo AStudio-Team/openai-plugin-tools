@@ -1,1 +1,94 @@
-<!doctype html><meta charset="utf-8"><title>Approve comparison brief</title><body><h1>Review comparison brief</h1><pre id="brief">Waiting for a brief.</pre><button id="approve" disabled>Approve brief</button><p id="status"></p><script type="module">(()=>{/*__EXT_APPS_BUNDLE__*/})();const {App}=globalThis.ExtApps,app=new App({name:'Comparison Brief Review',version:'1.0.0'},{},{autoResize:true}),out=document.querySelector('#brief'),button=document.querySelector('#approve'),status=document.querySelector('#status');let brief;app.ontoolresult=e=>{const d=e.structuredContent||{};brief=d.normalizedBrief;out.textContent=JSON.stringify(brief||{},null,2);button.disabled=!brief||!d.canApprove;status.textContent=(d.issues||[]).join(' ')};button.onclick=async()=>{button.disabled=true;try{const r=await app.callServerTool({name:'approve_comparison_brief',arguments:{brief,approvalAction:'approve'}}),receipt=r.structuredContent?.approvalReceipt;if(!receipt)throw Error();await app.sendMessage({role:'user',content:[{type:'text',text:`I explicitly approved this comparison brief. Signed receipt: ${JSON.stringify(receipt)}`}]});status.textContent='Approved with signed receipt.'}catch{status.textContent='Approval failed.';button.disabled=false}};try{await app.connect()}catch{status.textContent='Host connection is unavailable.'}</script>
+<!doctype html><meta charset="utf-8" /><title>Approve comparison brief</title>
+<body>
+  <h1>Review comparison brief</h1>
+  <div id="brief">Waiting for a brief.</div>
+  <button id="approve" disabled>Approve brief</button>
+  <p id="status"></p>
+  <script type="module">
+    (()=>{
+      /*__EXT_APPS_BUNDLE__*/
+    })();
+    const { App } = globalThis.ExtApps,
+      app = new App(
+        { name: "Comparison Brief Review", version: "1.0.0" },
+        {},
+        { autoResize: true },
+      ),
+      out = document.querySelector("#brief"),
+      button = document.querySelector("#approve"),
+      status = document.querySelector("#status");
+    let brief;
+    const humanLabel = (key) =>
+      key
+        .replace(/([a-z0-9])([A-Z])/g, (_, first, second) =>
+          `${first} ${second.toLowerCase()}`,
+        )
+        .replace(/[_-]+/g, " ")
+        .replace(/^./, (letter) => letter.toUpperCase());
+    function addValue(parent, value) {
+      if (Array.isArray(value)) {
+        const list = document.createElement("ul");
+        for (const item of value) {
+          const row = document.createElement("li");
+          row.textContent =
+            item && typeof item === "object"
+              ? Object.values(item).join(" | ")
+              : String(item);
+          list.append(row);
+        }
+        parent.append(list);
+      } else {
+        const text = document.createElement("p");
+        text.textContent = value ?? "None";
+        parent.append(text);
+      }
+    }
+    function renderBrief(value) {
+      out.replaceChildren();
+      for (const [key, item] of Object.entries(value || {})) {
+        const section = document.createElement("section");
+        const heading = document.createElement("strong");
+        heading.textContent = humanLabel(key);
+        section.append(heading);
+        addValue(section, item);
+        out.append(section);
+      }
+    }
+    app.ontoolresult = (e) => {
+      const d = e.structuredContent || {};
+      brief = d.normalizedBrief;
+      renderBrief(brief);
+      button.disabled = !brief || !d.canApprove;
+      status.textContent = (d.issues || []).join(" ");
+    };
+    button.onclick = async () => {
+      button.disabled = true;
+      try {
+        const r = await app.callServerTool({
+            name: "approve_comparison_brief",
+            arguments: { brief, approvalAction: "approve" },
+          }),
+          receipt = r.structuredContent?.approvalReceipt;
+        if (!receipt) throw Error();
+        await app.sendMessage({
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: `I explicitly approved this comparison brief. Signed receipt: ${JSON.stringify(receipt)}`,
+            },
+          ],
+        });
+        status.textContent = "Approved with signed receipt.";
+      } catch {
+        status.textContent = "Approval failed.";
+        button.disabled = false;
+      }
+    };
+    try {
+      await app.connect();
+    } catch {
+      status.textContent = "Host connection is unavailable.";
+    }
+  </script>
+</body>
