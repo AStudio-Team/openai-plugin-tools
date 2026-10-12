@@ -1,1 +1,301 @@
-<!doctype html><meta charset="utf-8"><title>Sales collateral review</title><body><h1>Sales collateral review</h1><pre id="collateral">Waiting for collateral.</pre><label>Section <input id="section" value="solution"></label><label>Instruction <input id="instruction"></label><button id="revise" disabled>Request revision</button><button data-export="markdown" disabled>Export Markdown</button><button data-export="html" disabled>Export HTML</button><p id="status"></p><section id="export" hidden><h2 id="name"></h2><button id="copy">Copy</button><pre id="content"></pre></section><script type="module">(()=>{/*__EXT_APPS_BUNDLE__*/})();const {App}=globalThis.ExtApps,app=new App({name:'Sales Collateral Review',version:'1.0.0'},{},{autoResize:true}),out=document.querySelector('#collateral'),revise=document.querySelector('#revise'),status=document.querySelector('#status'),exportBox=document.querySelector('#export'),name=document.querySelector('#name'),content=document.querySelector('#content');let input={},data={};function ready(){return(input.brief||data.brief)&&data.collateral&&(input.approvalReceipt||data.approvalReceipt)}function render(value){if(value?.collateral){data={...data,...value};out.textContent=JSON.stringify(value.collateral,null,2)}const enabled=Boolean(ready());revise.disabled=!data.collateral;document.querySelectorAll('[data-export]').forEach(button=>button.disabled=!enabled)}const toolText=result=>result.content?.filter(item=>item.type==='text').map(item=>item.text).join('\n')||'Export failed.';function show(file){name.textContent=file.fileName;content.textContent=file.content;exportBox.hidden=false}async function exportCollateral(format){const button=document.querySelector(`[data-export="${format}"]`);button.disabled=true;const toolArgs={brief:input.brief||data.brief,collateral:data.collateral||input.collateral,approvalReceipt:input.approvalReceipt||data.approvalReceipt,format};let response;try{response=await app.callServerTool({name:'export_collateral',arguments:toolArgs})}catch{status.textContent='Export failed. Validate the collateral and receipt first.';button.disabled=false;return}if(response.isError||!response.structuredContent?.content){status.textContent=toolText(response);button.disabled=false;return}const file=response.structuredContent;show(file);status.textContent=`${file.fileName} is ready. Copy the text below.`;try{const sent=await app.sendMessage({role:'user',content:[{type:'text',text:`Exported ${file.fileName} (${file.mimeType}); the content is shown in the card.`}]});if(sent?.isError)throw Error()}catch{status.textContent+=' Chat announcement not delivered.'}try{const downloaded=await app.downloadFile({contents:[{type:'resource',resource:{uri:`file:///${file.fileName}`,mimeType:file.mimeType,text:file.content}}]});if(downloaded?.isError)throw Error('download denied')}catch{status.textContent+=' Download is not available in this host.'}button.disabled=false}revise.onclick=async()=>{revise.disabled=true;const toolArgs={section:document.querySelector('#section').value.trim(),instruction:document.querySelector('#instruction').value.trim()};try{const result=await app.callServerTool({name:'request_collateral_revision',arguments:toolArgs});if(result.isError)throw Error();const sent=await app.sendMessage({role:'user',content:[{type:'text',text:`Revise ${toolArgs.section}: ${toolArgs.instruction}`}]});if(sent?.isError)throw Error();status.textContent='Revision instruction sent.'}catch{status.textContent='Revision failed.'}revise.disabled=false};document.querySelectorAll('[data-export]').forEach(button=>button.onclick=()=>exportCollateral(button.dataset.export));document.querySelector('#copy').onclick=async()=>{try{await navigator.clipboard.writeText(content.textContent);status.textContent='Copied.'}catch{status.textContent='Copy unavailable.'}};app.ontoolinput=event=>{try{input=event.arguments||event||input;render(data)}catch{status.textContent='Invalid collateral input.'}};app.ontoolresult=event=>{try{if(event.structuredContent)render(event.structuredContent)}catch{status.textContent='The collateral could not be displayed.'}};try{await app.connect()}catch{status.textContent='Host connection is unavailable.'}</script>
+<!doctype html><meta charset="utf-8" /><title>Sales collateral review</title
+><style>
+  body {
+    font: 15px system-ui;
+    margin: 20px;
+    max-width: 840px;
+  }
+  .field {
+    border: 1px solid #888;
+    border-radius: 10px;
+    padding: 12px;
+    margin: 8px 0;
+  }
+  .field h2 {
+    font-size: 1rem;
+    margin: 0 0 6px;
+  }
+  .field p,
+  .field ul {
+    margin: 0;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+  th,
+  td {
+    border: 1px solid #888;
+    padding: 6px;
+    text-align: left;
+  }
+  label {
+    display: block;
+    margin: 8px 0;
+  }
+  button {
+    font: inherit;
+    padding: 8px 12px;
+    margin: 4px;
+  }
+</style>
+<body>
+  <h1>Sales collateral review</h1>
+  <div id="collateral">Waiting for collateral.</div>
+  <label>Section <input id="section" value="solution" /></label
+  ><label>Instruction <input id="instruction" /></label
+  ><button id="revise" disabled>Request revision</button
+  ><button data-export="markdown" disabled>Export Markdown</button
+  ><button data-export="html" disabled>Export HTML</button>
+  <p id="status"></p>
+  <section id="export" hidden>
+    <h2 id="name"></h2>
+    <button id="copy">Copy</button>
+    <pre id="content"></pre>
+  </section>
+  <script type="module">
+      (()=>{
+      /*__EXT_APPS_BUNDLE__*/
+    })();
+    const { App } = globalThis.ExtApps,
+      app = new App(
+        { name: "Sales Collateral Review", version: "1.0.0" },
+        {},
+        { autoResize: true },
+      ),
+      out = document.querySelector("#collateral"),
+      revise = document.querySelector("#revise"),
+      status = document.querySelector("#status"),
+      exportBox = document.querySelector("#export"),
+      name = document.querySelector("#name"),
+      content = document.querySelector("#content");
+    let input = {},
+      data = {};
+      const label = (key) => {
+        const words = key
+          .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+          .replace(/_/g, " ")
+          .toLowerCase();
+        return words.replace(/^./, (letter) => letter.toUpperCase());
+      };
+    function tableNode(rows) {
+      const table = document.createElement("table"),
+        head = document.createElement("tr");
+      for (const key of Object.keys(rows[0] || {})) {
+        const cell = document.createElement("th");
+        cell.textContent = label(key);
+        head.append(cell);
+      }
+      table.append(head);
+      for (const row of rows) {
+        const line = document.createElement("tr");
+        for (const value of Object.values(row)) {
+          const cell = document.createElement("td");
+          cell.textContent = String(value);
+          line.append(cell);
+        }
+        table.append(line);
+      }
+      return table;
+    }
+    function valueNode(key, value) {
+      if (Array.isArray(value)) {
+        if (
+          key === "results" &&
+          value.every((item) => item && typeof item === "object")
+        )
+          return tableNode(value);
+        const list = document.createElement("ul");
+        for (const item of value) {
+          const row = document.createElement("li");
+          row.textContent =
+            item && typeof item === "object"
+              ? Object.entries(item)
+                  .map(([name, entry]) => `${label(name)}: ${entry}`)
+                  .join("; ")
+              : String(item);
+          list.append(row);
+        }
+        return list;
+      }
+      if (value && typeof value === "object") {
+        const list = document.createElement("ul");
+        for (const [name, entry] of Object.entries(value)) {
+          const row = document.createElement("li");
+          row.textContent = `${label(name)}: ${entry}`;
+          list.append(row);
+        }
+        return list;
+      }
+      const text = document.createElement("p");
+      text.textContent =
+        value === undefined || value === null || value === ""
+          ? "None"
+          : String(value);
+      return text;
+    }
+    function renderCollateral(collateral) {
+      out.replaceChildren();
+      for (const [key, value] of Object.entries(collateral)) {
+        const field = document.createElement("section"),
+          heading = document.createElement("h2");
+        field.className = "field";
+        heading.textContent = label(key);
+        field.append(heading, valueNode(key, value));
+        out.append(field);
+      }
+    }
+    function ready() {
+      return (
+        (input.brief || data.brief) &&
+        data.collateral &&
+        (input.approvalReceipt || data.approvalReceipt)
+      );
+    }
+    function render(value) {
+      if (value?.collateral) {
+        data = { ...data, ...value };
+        renderCollateral(value.collateral);
+      }
+      const enabled = Boolean(ready());
+      revise.disabled = !data.collateral;
+      document
+        .querySelectorAll("[data-export]")
+        .forEach((button) => (button.disabled = !enabled));
+    }
+    const toolText = (result) =>
+      result.content
+        ?.filter((item) => item.type === "text")
+        .map((item) => item.text)
+        .join("\n") || "Export failed.";
+    function show(file) {
+      name.textContent = file.fileName;
+      content.textContent = file.content;
+      exportBox.hidden = false;
+    }
+    async function exportCollateral(format) {
+      const button = document.querySelector(`[data-export="${format}"]`);
+      button.disabled = true;
+      const toolArgs = {
+        brief: input.brief || data.brief,
+        collateral: data.collateral || input.collateral,
+        approvalReceipt: input.approvalReceipt || data.approvalReceipt,
+        format,
+      };
+      let response;
+      try {
+        response = await app.callServerTool({
+          name: "export_collateral",
+          arguments: toolArgs,
+        });
+      } catch {
+        status.textContent =
+          "Export failed. Validate the collateral and receipt first.";
+        button.disabled = false;
+        return;
+      }
+      if (response.isError || !response.structuredContent?.content) {
+        status.textContent = toolText(response);
+        button.disabled = false;
+        return;
+      }
+      const file = response.structuredContent;
+      show(file);
+      status.textContent = `${file.fileName} is ready. Copy the text below.`;
+      try {
+        const sent = await app.sendMessage({
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: `Exported ${file.fileName} (${file.mimeType}); the content is shown in the card.`,
+            },
+          ],
+        });
+        if (sent?.isError) throw Error();
+      } catch {
+        status.textContent += " Chat announcement not delivered.";
+      }
+      try {
+        const downloaded = await app.downloadFile({
+          contents: [
+            {
+              type: "resource",
+              resource: {
+                uri: `file:///${file.fileName}`,
+                mimeType: file.mimeType,
+                text: file.content,
+              },
+            },
+          ],
+        });
+        if (downloaded?.isError) throw Error("download denied");
+      } catch {
+        status.textContent += " Download is not available in this host.";
+      }
+      button.disabled = false;
+    }
+    revise.onclick = async () => {
+      revise.disabled = true;
+      const toolArgs = {
+        section: document.querySelector("#section").value.trim(),
+        instruction: document.querySelector("#instruction").value.trim(),
+      };
+      try {
+        const result = await app.callServerTool({
+          name: "request_collateral_revision",
+          arguments: toolArgs,
+        });
+        if (result.isError) throw Error();
+        const sent = await app.sendMessage({
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: `Revise ${toolArgs.section}: ${toolArgs.instruction}`,
+            },
+          ],
+        });
+        if (sent?.isError) throw Error();
+        status.textContent = "Revision instruction sent.";
+      } catch {
+        status.textContent = "Revision failed.";
+      }
+      revise.disabled = false;
+    };
+    document
+      .querySelectorAll("[data-export]")
+      .forEach(
+        (button) =>
+          (button.onclick = () => exportCollateral(button.dataset.export)),
+      );
+    document.querySelector("#copy").onclick = async () => {
+      try {
+        await navigator.clipboard.writeText(content.textContent);
+        status.textContent = "Copied.";
+      } catch {
+        status.textContent = "Copy unavailable.";
+      }
+    };
+    app.ontoolinput = (event) => {
+      try {
+        input = event.arguments || event || input;
+        render(data);
+      } catch {
+        status.textContent = "Invalid collateral input.";
+      }
+    };
+    app.ontoolresult = (event) => {
+      try {
+        if (event.structuredContent) render(event.structuredContent);
+      } catch {
+        status.textContent = "The collateral could not be displayed.";
+      }
+    };
+    try {
+      await app.connect();
+    } catch {
+      status.textContent = "Host connection is unavailable.";
+    }
+  </script>
+</body>
