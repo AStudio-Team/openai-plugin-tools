@@ -1,6 +1,6 @@
 ---
 name: retention-playbook
-description: Build or review a customer retention plan, cancel flow, activation checklist, failed-payment recovery, win-back sequence, or referral program.
+description: "Use when the user asks for a customer retention plan, cancel flow, activation checklist, failed-payment recovery, win-back sequence, or referral program. Do not use for sending messages, changing live customer accounts, or guaranteeing retention results."
 metadata:
   version: 1.0.0
   source: Corey Haines marketingskills, MIT
