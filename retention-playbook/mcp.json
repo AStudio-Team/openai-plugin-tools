@@ -1,0 +1,1 @@
+{"$schema":"https://static.modelcontextprotocol.io/schemas/mcp.json","servers":{"retention-playbook":{"type":"http","url":"https://www.astudio.agency/openai-plugins/retention-playbook/mcp"}}}
