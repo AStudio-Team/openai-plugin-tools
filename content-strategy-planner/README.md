@@ -1,23 +1,21 @@
-# Landing Page Copy Check
+# Content Strategy Planner
 
-A human-guided MCP App that reviews a landing page brief, validates two or three copy variants, checks conversion basics, records explicit selection, and exports the selected copy as Markdown or HTML.
+An ASTUDIO MCP App that collects an approved content brief, validates a ChatGPT-written strategy of three to five content pillars, and exports a valid plan as CSV or Markdown.
 
-## Local development
+The app works only with text and URLs the user supplies. It does not fetch sites, connect accounts, publish content, or promise traffic or rankings.
 
-```bash
-npm ci --ignore-scripts
-APPROVAL_HMAC_KEY="replace-with-at-least-32-random-characters" npm test
-APPROVAL_HMAC_KEY="replace-with-at-least-32-random-characters" npm start
+## Development
+
+Requires Node.js 22 or later and an `APPROVAL_HMAC_KEY` of at least 32 characters.
+
+```sh
+npm install
+npm test
+APPROVAL_HMAC_KEY=replace-with-a-secret-at-least-32-characters npm start
 ```
 
-`APPROVAL_HMAC_KEY` signs brief approvals and copy selections. Set it explicitly for local runs; production receives it from the deployment environment file.
-
-The local server listens on port 8790 by default. Its MCP endpoint is `/mcp`, health endpoints are `/health` and `/ready`, and public product pages start at `/`.
-
-## Data boundary
-
-The service is stateless and closed-world. It does not fetch URLs, change websites, make outbound network requests during tool execution, or intentionally retain briefs and exports.
+The server listens on port 8790 by default. Health endpoints are `/health` and `/ready`; MCP requests use `/mcp`.
 
 ## Attribution
 
-Methodology is adapted from Marketing Skills for AI Agents by Corey Haines. See `NOTICE` and `LICENSES/corey-haines-marketingskills-MIT.txt`. No endorsement is implied.
+Strategy guidance is adapted from Corey Haines' marketingskills content-strategy, programmatic-seo, and site-architecture skills under the MIT License. See `NOTICE` and `LICENSES/`.
