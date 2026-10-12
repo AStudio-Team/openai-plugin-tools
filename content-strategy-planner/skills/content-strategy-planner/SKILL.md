@@ -1,11 +1,11 @@
 ---
 name: content-strategy-planner
-description: Plan and validate content pillars, hub pages, topic clusters, and a six-month publishing plan from a user-approved brief.
+description: Plan and validate content pillars, hub pages, topic clusters, and a publishing plan from a user-approved brief.
 ---
 
 # Content Strategy Planner
 
-Collect the business, audience, product, goals, user-supplied existing content URLs and competitor sites, three to five candidate pillars, monthly publishing capacity, months one through six, and banned topics. URLs are reference text only and are never fetched.
+Collect the business, audience, product, goals, user-supplied existing content URLs and competitor sites, candidate pillars, monthly publishing capacity, months one through six, and banned topics. URLs are reference text only and are never fetched. The six-month planning window and three-to-five-pillar output are plugin limits.
 
 Ask the user to review the visible brief and approve it in the widget before drafting. Use only the signed approval receipt returned by that action.
 
