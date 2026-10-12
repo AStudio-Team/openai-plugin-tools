@@ -19,6 +19,25 @@
         reverse_proxy __COLD_EMAIL_UPSTREAM__:8790
     }
 
+    handle_path /tools/competitor-comparison-builder* {
+        reverse_proxy __COMPARISON_PAGE_UPSTREAM__:8790
+    }
+    handle_path /tools/sales-collateral-builder* {
+        reverse_proxy __SALES_COLLATERAL_UPSTREAM__:8790
+    }
+    handle_path /tools/pricing-packaging-advisor* {
+        reverse_proxy __PRICING_ADVISOR_UPSTREAM__:8790
+    }
+    handle_path /tools/content-strategy-planner* {
+        reverse_proxy __CONTENT_STRATEGY_UPSTREAM__:8790
+    }
+    handle_path /tools/ab-test-planner* {
+        reverse_proxy __AB_TEST_UPSTREAM__:8790
+    }
+    handle_path /tools/retention-playbook* {
+        reverse_proxy __RETENTION_UPSTREAM__:8790
+    }
+
     handle_path /tools/launch-plan-builder* {
         reverse_proxy __LAUNCH_PLAN_UPSTREAM__:8790
     }
@@ -132,6 +151,79 @@
 
     handle_path /openai-plugins/cold-email-writer/* {
         reverse_proxy __COLD_EMAIL_UPSTREAM__:8790
+    }
+
+    handle /openai-plugins/competitor-comparison-builder/mcp {
+        request_body {
+            max_size 256KB
+        }
+        rewrite * /mcp
+        reverse_proxy __COMPARISON_PAGE_UPSTREAM__:8790 {
+            header_up X-Plugin-Client-IP {remote_host}
+        }
+    }
+    handle_path /openai-plugins/competitor-comparison-builder/* {
+        reverse_proxy __COMPARISON_PAGE_UPSTREAM__:8790
+    }
+    handle /openai-plugins/sales-collateral-builder/mcp {
+        request_body {
+            max_size 256KB
+        }
+        rewrite * /mcp
+        reverse_proxy __SALES_COLLATERAL_UPSTREAM__:8790 {
+            header_up X-Plugin-Client-IP {remote_host}
+        }
+    }
+    handle_path /openai-plugins/sales-collateral-builder/* {
+        reverse_proxy __SALES_COLLATERAL_UPSTREAM__:8790
+    }
+    handle /openai-plugins/pricing-packaging-advisor/mcp {
+        request_body {
+            max_size 256KB
+        }
+        rewrite * /mcp
+        reverse_proxy __PRICING_ADVISOR_UPSTREAM__:8790 {
+            header_up X-Plugin-Client-IP {remote_host}
+        }
+    }
+    handle_path /openai-plugins/pricing-packaging-advisor/* {
+        reverse_proxy __PRICING_ADVISOR_UPSTREAM__:8790
+    }
+    handle /openai-plugins/content-strategy-planner/mcp {
+        request_body {
+            max_size 256KB
+        }
+        rewrite * /mcp
+        reverse_proxy __CONTENT_STRATEGY_UPSTREAM__:8790 {
+            header_up X-Plugin-Client-IP {remote_host}
+        }
+    }
+    handle_path /openai-plugins/content-strategy-planner/* {
+        reverse_proxy __CONTENT_STRATEGY_UPSTREAM__:8790
+    }
+    handle /openai-plugins/ab-test-planner/mcp {
+        request_body {
+            max_size 256KB
+        }
+        rewrite * /mcp
+        reverse_proxy __AB_TEST_UPSTREAM__:8790 {
+            header_up X-Plugin-Client-IP {remote_host}
+        }
+    }
+    handle_path /openai-plugins/ab-test-planner/* {
+        reverse_proxy __AB_TEST_UPSTREAM__:8790
+    }
+    handle /openai-plugins/retention-playbook/mcp {
+        request_body {
+            max_size 256KB
+        }
+        rewrite * /mcp
+        reverse_proxy __RETENTION_UPSTREAM__:8790 {
+            header_up X-Plugin-Client-IP {remote_host}
+        }
+    }
+    handle_path /openai-plugins/retention-playbook/* {
+        reverse_proxy __RETENTION_UPSTREAM__:8790
     }
 
     handle /openai-plugins/launch-plan-builder/mcp {
