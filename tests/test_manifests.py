@@ -15,6 +15,7 @@ class ManifestAndPackageTests(unittest.TestCase):
         self.landing_copy = json.loads((ROOT / "landing-page-copy-check" / "plugin.json").read_text())
         self.social = json.loads((ROOT / "social-content-planner" / "plugin.json").read_text())
         self.cold_email = json.loads((ROOT / "cold-email-writer" / "plugin.json").read_text())
+        self.batch_three = [json.loads((ROOT / name / "plugin.json").read_text()) for name in ("competitor-comparison-builder", "sales-collateral-builder", "pricing-packaging-advisor", "content-strategy-planner", "ab-test-planner", "retention-playbook")]
         self.crawler = json.loads((ROOT / "ai-crawler-readiness-auditor" / "plugin.json").read_text())
         self.data = json.loads((ROOT / "open-data-fetcher" / "plugin.json").read_text())
         self.diagram = json.loads((ROOT / "editable-diagram-builder" / "plugin.json").read_text())
@@ -23,7 +24,7 @@ class ManifestAndPackageTests(unittest.TestCase):
 
     def test_astudio_is_publisher_for_all_products(self):
         self.assertEqual(self.gcc["name"], "astudio-gcc-arabic-writer")
-        for manifest in (self.gcc, self.pdf, self.ad, self.growth, self.landing_copy, self.social, self.cold_email, self.crawler, self.data, self.diagram, self.grounded, self.schema):
+        for manifest in (self.gcc, self.pdf, self.ad, self.growth, self.landing_copy, self.social, self.cold_email, self.crawler, self.data, self.diagram, self.grounded, self.schema, *self.batch_three):
             self.assertEqual(manifest["author"]["name"], "ASTUDIO")
             self.assertEqual(manifest["extensions"]["com.openai"]["interface"]["developerName"], "ASTUDIO")
 

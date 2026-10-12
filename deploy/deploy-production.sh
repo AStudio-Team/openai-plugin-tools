@@ -17,6 +17,12 @@ DIAGRAM_STATE_FILE="${STATE_DIR}/current-diagram-container"
 BUY_LINK_STATE_FILE="${STATE_DIR}/current-verified-buy-link-container"
 GROUNDED_STATE_FILE="${STATE_DIR}/current-grounded-container"
 COLD_EMAIL_STATE_FILE="${STATE_DIR}/current-cold-email-container"
+COMPARISON_PAGE_STATE_FILE="${STATE_DIR}/current-comparison-page-container"
+SALES_COLLATERAL_STATE_FILE="${STATE_DIR}/current-sales-collateral-container"
+PRICING_ADVISOR_STATE_FILE="${STATE_DIR}/current-pricing-advisor-container"
+CONTENT_STRATEGY_STATE_FILE="${STATE_DIR}/current-content-strategy-container"
+AB_TEST_STATE_FILE="${STATE_DIR}/current-ab-test-container"
+RETENTION_STATE_FILE="${STATE_DIR}/current-retention-container"
 LAUNCH_PLAN_STATE_FILE="${STATE_DIR}/current-launch-plan-container"
 LANDING_COPY_STATE_FILE="${STATE_DIR}/current-landing-copy-container"
 SCHEMA_MARKUP_STATE_FILE="${STATE_DIR}/current-schema-markup-container"
@@ -48,6 +54,18 @@ SCHEMA_MARKUP_IMAGE="openai-plugin-schema-markup:${RELEASE_SHA}"
 SCHEMA_MARKUP_CONTAINER="openai-plugin-schema-markup-${DEPLOY_ID}"
 COLD_EMAIL_IMAGE="openai-plugin-cold-email:${RELEASE_SHA}"
 COLD_EMAIL_CONTAINER="openai-plugin-cold-email-${DEPLOY_ID}"
+COMPARISON_PAGE_IMAGE="openai-plugin-comparison-page:${RELEASE_SHA}"
+COMPARISON_PAGE_CONTAINER="openai-plugin-comparison-page-${DEPLOY_ID}"
+SALES_COLLATERAL_IMAGE="openai-plugin-sales-collateral:${RELEASE_SHA}"
+SALES_COLLATERAL_CONTAINER="openai-plugin-sales-collateral-${DEPLOY_ID}"
+PRICING_ADVISOR_IMAGE="openai-plugin-pricing-advisor:${RELEASE_SHA}"
+PRICING_ADVISOR_CONTAINER="openai-plugin-pricing-advisor-${DEPLOY_ID}"
+CONTENT_STRATEGY_IMAGE="openai-plugin-content-strategy:${RELEASE_SHA}"
+CONTENT_STRATEGY_CONTAINER="openai-plugin-content-strategy-${DEPLOY_ID}"
+AB_TEST_IMAGE="openai-plugin-ab-test:${RELEASE_SHA}"
+AB_TEST_CONTAINER="openai-plugin-ab-test-${DEPLOY_ID}"
+RETENTION_IMAGE="openai-plugin-retention:${RELEASE_SHA}"
+RETENTION_CONTAINER="openai-plugin-retention-${DEPLOY_ID}"
 RENDERED_BLOCK="/tmp/openai-plugin-tools-${DEPLOY_ID}.caddy"
 RENDERED_FIXTURES="/tmp/ai-crawler-fixtures-${DEPLOY_ID}.caddy"
 PREVIOUS_PDF_CONTAINER=""
@@ -68,6 +86,12 @@ PREVIOUS_LAUNCH_PLAN_CONTAINER=""
 PREVIOUS_LANDING_COPY_CONTAINER=""
 PREVIOUS_SCHEMA_MARKUP_CONTAINER=""
 PREVIOUS_COLD_EMAIL_CONTAINER=""
+PREVIOUS_COMPARISON_PAGE_CONTAINER=""
+PREVIOUS_SALES_COLLATERAL_CONTAINER=""
+PREVIOUS_PRICING_ADVISOR_CONTAINER=""
+PREVIOUS_CONTENT_STRATEGY_CONTAINER=""
+PREVIOUS_AB_TEST_CONTAINER=""
+PREVIOUS_RETENTION_CONTAINER=""
 CONFIG_MUTATED=0
 SWITCHED=0
 COMMITTED=0
@@ -122,6 +146,12 @@ fi
 if [ -s "$COLD_EMAIL_STATE_FILE" ]; then
   PREVIOUS_COLD_EMAIL_CONTAINER="$(tr -cd 'A-Za-z0-9_.-' < "$COLD_EMAIL_STATE_FILE")"
 fi
+if [ -s "$COMPARISON_PAGE_STATE_FILE" ]; then PREVIOUS_COMPARISON_PAGE_CONTAINER="$(tr -cd 'A-Za-z0-9_.-' < "$COMPARISON_PAGE_STATE_FILE")"; fi
+if [ -s "$SALES_COLLATERAL_STATE_FILE" ]; then PREVIOUS_SALES_COLLATERAL_CONTAINER="$(tr -cd 'A-Za-z0-9_.-' < "$SALES_COLLATERAL_STATE_FILE")"; fi
+if [ -s "$PRICING_ADVISOR_STATE_FILE" ]; then PREVIOUS_PRICING_ADVISOR_CONTAINER="$(tr -cd 'A-Za-z0-9_.-' < "$PRICING_ADVISOR_STATE_FILE")"; fi
+if [ -s "$CONTENT_STRATEGY_STATE_FILE" ]; then PREVIOUS_CONTENT_STRATEGY_CONTAINER="$(tr -cd 'A-Za-z0-9_.-' < "$CONTENT_STRATEGY_STATE_FILE")"; fi
+if [ -s "$AB_TEST_STATE_FILE" ]; then PREVIOUS_AB_TEST_CONTAINER="$(tr -cd 'A-Za-z0-9_.-' < "$AB_TEST_STATE_FILE")"; fi
+if [ -s "$RETENTION_STATE_FILE" ]; then PREVIOUS_RETENTION_CONTAINER="$(tr -cd 'A-Za-z0-9_.-' < "$RETENTION_STATE_FILE")"; fi
 
 write_state() {
   local path="$1"
@@ -160,7 +190,13 @@ rollback() {
     write_state "$GROUNDED_STATE_FILE" "$PREVIOUS_GROUNDED_CONTAINER"
     write_state "$LAUNCH_PLAN_STATE_FILE" "$PREVIOUS_LAUNCH_PLAN_CONTAINER"; write_state "$LANDING_COPY_STATE_FILE" "$PREVIOUS_LANDING_COPY_CONTAINER"; write_state "$SCHEMA_MARKUP_STATE_FILE" "$PREVIOUS_SCHEMA_MARKUP_CONTAINER"
     write_state "$COLD_EMAIL_STATE_FILE" "$PREVIOUS_COLD_EMAIL_CONTAINER"
-    docker rm -f "$PDF_CONTAINER" "$ARABIC_CONTAINER" "$AD_CONTAINER" "$GROWTH_CONTAINER" "$SOCIAL_PLANNER_CONTAINER" "$CRAWLER_CONTAINER" "$DATA_CONTAINER" "$DIAGRAM_CONTAINER" "$BUY_LINK_CONTAINER" "$GROUNDED_CONTAINER" "$LAUNCH_PLAN_CONTAINER" "$LANDING_COPY_CONTAINER" "$SCHEMA_MARKUP_CONTAINER" "$COLD_EMAIL_CONTAINER" >/dev/null 2>&1 || true
+    write_state "$COMPARISON_PAGE_STATE_FILE" "$PREVIOUS_COMPARISON_PAGE_CONTAINER"
+    write_state "$SALES_COLLATERAL_STATE_FILE" "$PREVIOUS_SALES_COLLATERAL_CONTAINER"
+    write_state "$PRICING_ADVISOR_STATE_FILE" "$PREVIOUS_PRICING_ADVISOR_CONTAINER"
+    write_state "$CONTENT_STRATEGY_STATE_FILE" "$PREVIOUS_CONTENT_STRATEGY_CONTAINER"
+    write_state "$AB_TEST_STATE_FILE" "$PREVIOUS_AB_TEST_CONTAINER"
+    write_state "$RETENTION_STATE_FILE" "$PREVIOUS_RETENTION_CONTAINER"
+    docker rm -f "$PDF_CONTAINER" "$ARABIC_CONTAINER" "$AD_CONTAINER" "$GROWTH_CONTAINER" "$SOCIAL_PLANNER_CONTAINER" "$CRAWLER_CONTAINER" "$DATA_CONTAINER" "$DIAGRAM_CONTAINER" "$BUY_LINK_CONTAINER" "$GROUNDED_CONTAINER" "$LAUNCH_PLAN_CONTAINER" "$LANDING_COPY_CONTAINER" "$SCHEMA_MARKUP_CONTAINER" "$COLD_EMAIL_CONTAINER" "$COMPARISON_PAGE_CONTAINER" "$SALES_COLLATERAL_CONTAINER" "$PRICING_ADVISOR_CONTAINER" "$CONTENT_STRATEGY_CONTAINER" "$AB_TEST_CONTAINER" "$RETENTION_CONTAINER" >/dev/null 2>&1 || true
   else
     write_state "$PDF_STATE_FILE" "$PDF_CONTAINER"
     write_state "$ARABIC_STATE_FILE" "$ARABIC_CONTAINER"
@@ -176,9 +212,15 @@ rollback() {
     write_state "$LANDING_COPY_STATE_FILE" "$LANDING_COPY_CONTAINER"
     write_state "$SCHEMA_MARKUP_STATE_FILE" "$SCHEMA_MARKUP_CONTAINER"
     write_state "$COLD_EMAIL_STATE_FILE" "$COLD_EMAIL_CONTAINER"
+    write_state "$COMPARISON_PAGE_STATE_FILE" "$COMPARISON_PAGE_CONTAINER"
+    write_state "$SALES_COLLATERAL_STATE_FILE" "$SALES_COLLATERAL_CONTAINER"
+    write_state "$PRICING_ADVISOR_STATE_FILE" "$PRICING_ADVISOR_CONTAINER"
+    write_state "$CONTENT_STRATEGY_STATE_FILE" "$CONTENT_STRATEGY_CONTAINER"
+    write_state "$AB_TEST_STATE_FILE" "$AB_TEST_CONTAINER"
+    write_state "$RETENTION_STATE_FILE" "$RETENTION_CONTAINER"
     echo "rollback failed; candidate containers were kept running for recovery" >&2
   fi
-  rm -f "${PDF_STATE_FILE}.tmp" "${ARABIC_STATE_FILE}.tmp" "${AD_STATE_FILE}.tmp" "${GROWTH_STATE_FILE}.tmp" "${SOCIAL_PLANNER_STATE_FILE}.tmp" "${CRAWLER_STATE_FILE}.tmp" "${DATA_STATE_FILE}.tmp" "${DIAGRAM_STATE_FILE}.tmp" "${BUY_LINK_STATE_FILE}.tmp" "${GROUNDED_STATE_FILE}.tmp" "${LAUNCH_PLAN_STATE_FILE}.tmp" "${LANDING_COPY_STATE_FILE}.tmp" "${SCHEMA_MARKUP_STATE_FILE}.tmp" "${COLD_EMAIL_STATE_FILE}.tmp" "${CADDYFILE}.rollback-${DEPLOY_ID}"
+  rm -f "${PDF_STATE_FILE}.tmp" "${ARABIC_STATE_FILE}.tmp" "${AD_STATE_FILE}.tmp" "${GROWTH_STATE_FILE}.tmp" "${SOCIAL_PLANNER_STATE_FILE}.tmp" "${CRAWLER_STATE_FILE}.tmp" "${DATA_STATE_FILE}.tmp" "${DIAGRAM_STATE_FILE}.tmp" "${BUY_LINK_STATE_FILE}.tmp" "${GROUNDED_STATE_FILE}.tmp" "${LAUNCH_PLAN_STATE_FILE}.tmp" "${LANDING_COPY_STATE_FILE}.tmp" "${SCHEMA_MARKUP_STATE_FILE}.tmp" "${COLD_EMAIL_STATE_FILE}.tmp" "${COMPARISON_PAGE_STATE_FILE}.tmp" "${SALES_COLLATERAL_STATE_FILE}.tmp" "${PRICING_ADVISOR_STATE_FILE}.tmp" "${CONTENT_STRATEGY_STATE_FILE}.tmp" "${AB_TEST_STATE_FILE}.tmp" "${RETENTION_STATE_FILE}.tmp" "${CADDYFILE}.rollback-${DEPLOY_ID}"
   return $((1 - rollback_ok))
 }
 
@@ -209,6 +251,12 @@ docker build --pull -t "$LAUNCH_PLAN_IMAGE" launch-plan-builder
 docker build --pull -t "$LANDING_COPY_IMAGE" landing-page-copy-check
 docker build --pull -t "$SCHEMA_MARKUP_IMAGE" schema-markup-generator
 docker build --pull -t "$COLD_EMAIL_IMAGE" cold-email-writer
+docker build --pull -t "$COMPARISON_PAGE_IMAGE" competitor-comparison-builder
+docker build --pull -t "$SALES_COLLATERAL_IMAGE" sales-collateral-builder
+docker build --pull -t "$PRICING_ADVISOR_IMAGE" pricing-packaging-advisor
+docker build --pull -t "$CONTENT_STRATEGY_IMAGE" content-strategy-planner
+docker build --pull -t "$AB_TEST_IMAGE" ab-test-planner
+docker build --pull -t "$RETENTION_IMAGE" retention-playbook
 
 ENV_FILE_ARGS=()
 if [ -s "$ENV_FILE" ]; then
@@ -294,6 +342,12 @@ run_container "$LAUNCH_PLAN_CONTAINER" "$LAUNCH_PLAN_IMAGE" 8790 local
 run_container "$LANDING_COPY_CONTAINER" "$LANDING_COPY_IMAGE" 8790 local
 run_container "$SCHEMA_MARKUP_CONTAINER" "$SCHEMA_MARKUP_IMAGE" 8790 local
 run_container "$COLD_EMAIL_CONTAINER" "$COLD_EMAIL_IMAGE" 8790 none
+run_container "$COMPARISON_PAGE_CONTAINER" "$COMPARISON_PAGE_IMAGE" 8790 none
+run_container "$SALES_COLLATERAL_CONTAINER" "$SALES_COLLATERAL_IMAGE" 8790 none
+run_container "$PRICING_ADVISOR_CONTAINER" "$PRICING_ADVISOR_IMAGE" 8790 none
+run_container "$CONTENT_STRATEGY_CONTAINER" "$CONTENT_STRATEGY_IMAGE" 8790 none
+run_container "$AB_TEST_CONTAINER" "$AB_TEST_IMAGE" 8790 none
+run_container "$RETENTION_CONTAINER" "$RETENTION_IMAGE" 8790 none
 
 wait_healthy() {
   local container="$1"
@@ -322,13 +376,19 @@ wait_healthy "$LAUNCH_PLAN_CONTAINER"
 wait_healthy "$LANDING_COPY_CONTAINER"
 wait_healthy "$SCHEMA_MARKUP_CONTAINER"
 wait_healthy "$COLD_EMAIL_CONTAINER"
+wait_healthy "$COMPARISON_PAGE_CONTAINER"
+wait_healthy "$SALES_COLLATERAL_CONTAINER"
+wait_healthy "$PRICING_ADVISOR_CONTAINER"
+wait_healthy "$CONTENT_STRATEGY_CONTAINER"
+wait_healthy "$AB_TEST_CONTAINER"
+wait_healthy "$RETENTION_CONTAINER"
 
-python3 - "$PDF_CONTAINER" "$ARABIC_CONTAINER" "$AD_CONTAINER" "$GROWTH_CONTAINER" "$SOCIAL_PLANNER_CONTAINER" "$CRAWLER_CONTAINER" "$DATA_CONTAINER" "$DIAGRAM_CONTAINER" "$BUY_LINK_CONTAINER" "$GROUNDED_CONTAINER" "$LAUNCH_PLAN_CONTAINER" "$LANDING_COPY_CONTAINER" "$SCHEMA_MARKUP_CONTAINER" "$COLD_EMAIL_CONTAINER" deploy/tools.astudio.agency.caddy "$RENDERED_BLOCK" <<'PY'
+python3 - "$PDF_CONTAINER" "$ARABIC_CONTAINER" "$AD_CONTAINER" "$GROWTH_CONTAINER" "$SOCIAL_PLANNER_CONTAINER" "$CRAWLER_CONTAINER" "$DATA_CONTAINER" "$DIAGRAM_CONTAINER" "$BUY_LINK_CONTAINER" "$GROUNDED_CONTAINER" "$LAUNCH_PLAN_CONTAINER" "$LANDING_COPY_CONTAINER" "$SCHEMA_MARKUP_CONTAINER" "$COLD_EMAIL_CONTAINER" "$COMPARISON_PAGE_CONTAINER" "$SALES_COLLATERAL_CONTAINER" "$PRICING_ADVISOR_CONTAINER" "$CONTENT_STRATEGY_CONTAINER" "$AB_TEST_CONTAINER" "$RETENTION_CONTAINER" deploy/tools.astudio.agency.caddy "$RENDERED_BLOCK" <<'PY'
 import sys
 from pathlib import Path
-pdf, arabic, ad, growth, social_planner, crawler, data, diagram, buy_link, grounded, launch_plan, landing_copy, schema_markup, cold_email, source, target = sys.argv[1:]
+pdf, arabic, ad, growth, social_planner, crawler, data, diagram, buy_link, grounded, launch_plan, landing_copy, schema_markup, cold_email, comparison_page, sales_collateral, pricing_advisor, content_strategy, ab_test, retention, source, target = sys.argv[1:]
 text = Path(source).read_text()
-text = text.replace("__PDF_PLUGIN_UPSTREAM__", pdf).replace("__ARABIC_PLUGIN_UPSTREAM__", arabic).replace("__AD_CREATIVE_LAB_UPSTREAM__", ad).replace("__GROWTH_PLUGIN_UPSTREAM__", growth).replace("__SOCIAL_PLANNER_UPSTREAM__", social_planner).replace("__CRAWLER_PLUGIN_UPSTREAM__", crawler).replace("__DATA_PLUGIN_UPSTREAM__", data).replace("__DIAGRAM_PLUGIN_UPSTREAM__", diagram).replace("__VERIFIED_BUY_LINK_UPSTREAM__", buy_link).replace("__GROUNDED_PLUGIN_UPSTREAM__", grounded).replace("__LAUNCH_PLAN_UPSTREAM__", launch_plan).replace("__LANDING_COPY_UPSTREAM__", landing_copy).replace("__SCHEMA_MARKUP_UPSTREAM__", schema_markup).replace("__COLD_EMAIL_UPSTREAM__", cold_email)
+text = text.replace("__PDF_PLUGIN_UPSTREAM__", pdf).replace("__ARABIC_PLUGIN_UPSTREAM__", arabic).replace("__AD_CREATIVE_LAB_UPSTREAM__", ad).replace("__GROWTH_PLUGIN_UPSTREAM__", growth).replace("__SOCIAL_PLANNER_UPSTREAM__", social_planner).replace("__CRAWLER_PLUGIN_UPSTREAM__", crawler).replace("__DATA_PLUGIN_UPSTREAM__", data).replace("__DIAGRAM_PLUGIN_UPSTREAM__", diagram).replace("__VERIFIED_BUY_LINK_UPSTREAM__", buy_link).replace("__GROUNDED_PLUGIN_UPSTREAM__", grounded).replace("__LAUNCH_PLAN_UPSTREAM__", launch_plan).replace("__LANDING_COPY_UPSTREAM__", landing_copy).replace("__SCHEMA_MARKUP_UPSTREAM__", schema_markup).replace("__COLD_EMAIL_UPSTREAM__", cold_email).replace("__COMPARISON_PAGE_UPSTREAM__", comparison_page).replace("__SALES_COLLATERAL_UPSTREAM__", sales_collateral).replace("__PRICING_ADVISOR_UPSTREAM__", pricing_advisor).replace("__CONTENT_STRATEGY_UPSTREAM__", content_strategy).replace("__AB_TEST_UPSTREAM__", ab_test).replace("__RETENTION_UPSTREAM__", retention)
 if "__" in text:
     raise SystemExit("unresolved upstream placeholder")
 Path(target).write_text(text)
@@ -431,6 +491,30 @@ check_resources https://www.astudio.agency/openai-plugins/social-content-planner
 check_health https://www.astudio.agency/openai-plugins/cold-email-writer/health cold-email-writer
 check_health https://www.astudio.agency/openai-plugins/cold-email-writer/ready cold-email-writer
 check_mcp https://www.astudio.agency/openai-plugins/cold-email-writer/mcp cold-email-writer open_cold_email_brief,review_cold_email_brief,approve_cold_email_brief,draft_cold_email_sequence,submit_variant_selection,export_cold_email_sequence
+check_health https://www.astudio.agency/openai-plugins/competitor-comparison-builder/health competitor-comparison-builder
+check_health https://www.astudio.agency/openai-plugins/competitor-comparison-builder/ready competitor-comparison-builder
+check_mcp https://www.astudio.agency/openai-plugins/competitor-comparison-builder/mcp competitor-comparison-builder open_comparison_brief,review_comparison_brief,approve_comparison_brief,draft_comparison_page,request_page_revision,export_comparison_page
+check_resources https://www.astudio.agency/openai-plugins/competitor-comparison-builder/mcp ui://competitor-comparison-builder/brief-builder.html,ui://competitor-comparison-builder/brief-review.html,ui://competitor-comparison-builder/copy-comparison.html,ui://competitor-comparison-builder/export-panel.html
+check_health https://www.astudio.agency/openai-plugins/sales-collateral-builder/health sales-collateral-builder
+check_health https://www.astudio.agency/openai-plugins/sales-collateral-builder/ready sales-collateral-builder
+check_mcp https://www.astudio.agency/openai-plugins/sales-collateral-builder/mcp sales-collateral-builder open_collateral_brief,review_collateral_brief,approve_collateral_brief,draft_collateral,request_collateral_revision,export_collateral
+check_resources https://www.astudio.agency/openai-plugins/sales-collateral-builder/mcp ui://sales-collateral-builder/brief-builder.html,ui://sales-collateral-builder/brief-review.html,ui://sales-collateral-builder/collateral-preview.html,ui://sales-collateral-builder/export-panel.html
+check_health https://www.astudio.agency/openai-plugins/pricing-packaging-advisor/health pricing-packaging-advisor
+check_health https://www.astudio.agency/openai-plugins/pricing-packaging-advisor/ready pricing-packaging-advisor
+check_mcp https://www.astudio.agency/openai-plugins/pricing-packaging-advisor/mcp pricing-packaging-advisor open_pricing_brief,review_pricing_brief,approve_pricing_brief,compare_pricing_options,select_pricing_option,export_pricing_plan
+check_resources https://www.astudio.agency/openai-plugins/pricing-packaging-advisor/mcp ui://pricing-packaging-advisor/brief-builder.html,ui://pricing-packaging-advisor/brief-review.html,ui://pricing-packaging-advisor/options.html,ui://pricing-packaging-advisor/export-panel.html
+check_health https://www.astudio.agency/openai-plugins/content-strategy-planner/health content-strategy-planner
+check_health https://www.astudio.agency/openai-plugins/content-strategy-planner/ready content-strategy-planner
+check_mcp https://www.astudio.agency/openai-plugins/content-strategy-planner/mcp content-strategy-planner open_content_brief,review_content_brief,approve_content_brief,draft_content_strategy,request_strategy_revision,export_content_strategy
+check_resources https://www.astudio.agency/openai-plugins/content-strategy-planner/mcp ui://content-strategy-planner/brief-builder.html,ui://content-strategy-planner/brief-review.html,ui://content-strategy-planner/strategy-preview.html,ui://content-strategy-planner/export-panel.html
+check_health https://www.astudio.agency/openai-plugins/ab-test-planner/health ab-test-planner
+check_health https://www.astudio.agency/openai-plugins/ab-test-planner/ready ab-test-planner
+check_mcp https://www.astudio.agency/openai-plugins/ab-test-planner/mcp ab-test-planner open_test_brief,review_test_brief,approve_test_brief,plan_ab_test,request_test_revision,export_test_plan
+check_resources https://www.astudio.agency/openai-plugins/ab-test-planner/mcp ui://ab-test-planner/brief-builder.html,ui://ab-test-planner/brief-review.html,ui://ab-test-planner/plan-options.html,ui://ab-test-planner/export-panel.html
+check_health https://www.astudio.agency/openai-plugins/retention-playbook/health retention-playbook
+check_health https://www.astudio.agency/openai-plugins/retention-playbook/ready retention-playbook
+check_mcp https://www.astudio.agency/openai-plugins/retention-playbook/mcp retention-playbook open_retention_brief,review_retention_brief,approve_retention_brief,draft_retention_playbook,request_playbook_revision,export_retention_playbook
+check_resources https://www.astudio.agency/openai-plugins/retention-playbook/mcp ui://retention-playbook/brief-builder.html,ui://retention-playbook/brief-review.html,ui://retention-playbook/playbook-preview.html,ui://retention-playbook/export-panel.html
 ACTUAL_OPENAI_CHALLENGE="$(curl --fail --silent --show-error https://www.astudio.agency/.well-known/openai-apps-challenge)"
 if [ "$ACTUAL_OPENAI_CHALLENGE" != "$EXPECTED_OPENAI_CHALLENGE" ]; then
   echo "OpenAI Apps challenge response mismatch" >&2
@@ -500,6 +584,12 @@ printf '%s\n' "$LAUNCH_PLAN_CONTAINER" > "${LAUNCH_PLAN_STATE_FILE}.tmp"
 printf '%s\n' "$LANDING_COPY_CONTAINER" > "${LANDING_COPY_STATE_FILE}.tmp"
 printf '%s\n' "$SCHEMA_MARKUP_CONTAINER" > "${SCHEMA_MARKUP_STATE_FILE}.tmp"
 printf '%s\n' "$COLD_EMAIL_CONTAINER" > "${COLD_EMAIL_STATE_FILE}.tmp"
+printf '%s\n' "$COMPARISON_PAGE_CONTAINER" > "${COMPARISON_PAGE_STATE_FILE}.tmp"
+printf '%s\n' "$SALES_COLLATERAL_CONTAINER" > "${SALES_COLLATERAL_STATE_FILE}.tmp"
+printf '%s\n' "$PRICING_ADVISOR_CONTAINER" > "${PRICING_ADVISOR_STATE_FILE}.tmp"
+printf '%s\n' "$CONTENT_STRATEGY_CONTAINER" > "${CONTENT_STRATEGY_STATE_FILE}.tmp"
+printf '%s\n' "$AB_TEST_CONTAINER" > "${AB_TEST_STATE_FILE}.tmp"
+printf '%s\n' "$RETENTION_CONTAINER" > "${RETENTION_STATE_FILE}.tmp"
 mv "${PDF_STATE_FILE}.tmp" "$PDF_STATE_FILE"
 mv "${ARABIC_STATE_FILE}.tmp" "$ARABIC_STATE_FILE"
 mv "${AD_STATE_FILE}.tmp" "$AD_STATE_FILE"
@@ -514,13 +604,19 @@ mv "${LAUNCH_PLAN_STATE_FILE}.tmp" "$LAUNCH_PLAN_STATE_FILE"
 mv "${LANDING_COPY_STATE_FILE}.tmp" "$LANDING_COPY_STATE_FILE"
 mv "${SCHEMA_MARKUP_STATE_FILE}.tmp" "$SCHEMA_MARKUP_STATE_FILE"
 mv "${COLD_EMAIL_STATE_FILE}.tmp" "$COLD_EMAIL_STATE_FILE"
+mv "${COMPARISON_PAGE_STATE_FILE}.tmp" "$COMPARISON_PAGE_STATE_FILE"
+mv "${SALES_COLLATERAL_STATE_FILE}.tmp" "$SALES_COLLATERAL_STATE_FILE"
+mv "${PRICING_ADVISOR_STATE_FILE}.tmp" "$PRICING_ADVISOR_STATE_FILE"
+mv "${CONTENT_STRATEGY_STATE_FILE}.tmp" "$CONTENT_STRATEGY_STATE_FILE"
+mv "${AB_TEST_STATE_FILE}.tmp" "$AB_TEST_STATE_FILE"
+mv "${RETENTION_STATE_FILE}.tmp" "$RETENTION_STATE_FILE"
 COMMITTED=1
 rm -f "$LEGACY_STATE_FILE"
-for previous in "$PREVIOUS_PDF_CONTAINER" "$PREVIOUS_ARABIC_CONTAINER" "$PREVIOUS_AD_CONTAINER" "$PREVIOUS_GROWTH_CONTAINER" "$PREVIOUS_SOCIAL_PLANNER_CONTAINER" "$PREVIOUS_CRAWLER_CONTAINER" "$PREVIOUS_DATA_CONTAINER" "$PREVIOUS_DIAGRAM_CONTAINER" "$PREVIOUS_BUY_LINK_CONTAINER" "$PREVIOUS_GROUNDED_CONTAINER" "$PREVIOUS_LAUNCH_PLAN_CONTAINER" "$PREVIOUS_LANDING_COPY_CONTAINER" "$PREVIOUS_SCHEMA_MARKUP_CONTAINER" "$PREVIOUS_COLD_EMAIL_CONTAINER"; do
-  if [ -n "$previous" ] && [ "$previous" != "$PDF_CONTAINER" ] && [ "$previous" != "$ARABIC_CONTAINER" ] && [ "$previous" != "$AD_CONTAINER" ] && [ "$previous" != "$GROWTH_CONTAINER" ] && [ "$previous" != "$SOCIAL_PLANNER_CONTAINER" ] && [ "$previous" != "$CRAWLER_CONTAINER" ] && [ "$previous" != "$DATA_CONTAINER" ] && [ "$previous" != "$DIAGRAM_CONTAINER" ] && [ "$previous" != "$BUY_LINK_CONTAINER" ] && [ "$previous" != "$GROUNDED_CONTAINER" ] && [ "$previous" != "$LAUNCH_PLAN_CONTAINER" ] && [ "$previous" != "$LANDING_COPY_CONTAINER" ] && [ "$previous" != "$SCHEMA_MARKUP_CONTAINER" ] && [ "$previous" != "$COLD_EMAIL_CONTAINER" ]; then
+for previous in "$PREVIOUS_PDF_CONTAINER" "$PREVIOUS_ARABIC_CONTAINER" "$PREVIOUS_AD_CONTAINER" "$PREVIOUS_GROWTH_CONTAINER" "$PREVIOUS_SOCIAL_PLANNER_CONTAINER" "$PREVIOUS_CRAWLER_CONTAINER" "$PREVIOUS_DATA_CONTAINER" "$PREVIOUS_DIAGRAM_CONTAINER" "$PREVIOUS_BUY_LINK_CONTAINER" "$PREVIOUS_GROUNDED_CONTAINER" "$PREVIOUS_LAUNCH_PLAN_CONTAINER" "$PREVIOUS_LANDING_COPY_CONTAINER" "$PREVIOUS_SCHEMA_MARKUP_CONTAINER" "$PREVIOUS_COLD_EMAIL_CONTAINER" "$PREVIOUS_COMPARISON_PAGE_CONTAINER" "$PREVIOUS_SALES_COLLATERAL_CONTAINER" "$PREVIOUS_PRICING_ADVISOR_CONTAINER" "$PREVIOUS_CONTENT_STRATEGY_CONTAINER" "$PREVIOUS_AB_TEST_CONTAINER" "$PREVIOUS_RETENTION_CONTAINER"; do
+  if [ -n "$previous" ] && [ "$previous" != "$PDF_CONTAINER" ] && [ "$previous" != "$ARABIC_CONTAINER" ] && [ "$previous" != "$AD_CONTAINER" ] && [ "$previous" != "$GROWTH_CONTAINER" ] && [ "$previous" != "$SOCIAL_PLANNER_CONTAINER" ] && [ "$previous" != "$CRAWLER_CONTAINER" ] && [ "$previous" != "$DATA_CONTAINER" ] && [ "$previous" != "$DIAGRAM_CONTAINER" ] && [ "$previous" != "$BUY_LINK_CONTAINER" ] && [ "$previous" != "$GROUNDED_CONTAINER" ] && [ "$previous" != "$LAUNCH_PLAN_CONTAINER" ] && [ "$previous" != "$LANDING_COPY_CONTAINER" ] && [ "$previous" != "$SCHEMA_MARKUP_CONTAINER" ] && [ "$previous" != "$COLD_EMAIL_CONTAINER" ] && [ "$previous" != "$COMPARISON_PAGE_CONTAINER" ] && [ "$previous" != "$SALES_COLLATERAL_CONTAINER" ] && [ "$previous" != "$PRICING_ADVISOR_CONTAINER" ] && [ "$previous" != "$CONTENT_STRATEGY_CONTAINER" ] && [ "$previous" != "$AB_TEST_CONTAINER" ] && [ "$previous" != "$RETENTION_CONTAINER" ]; then
     docker rm -f "$previous" >/dev/null 2>&1 || true
   fi
 done
 rm -f "$BACKUP" "$RENDERED_BLOCK" "$RENDERED_FIXTURES"
 
-echo "deployed ${RELEASE_SHA} as ${PDF_CONTAINER}, ${ARABIC_CONTAINER}, ${AD_CONTAINER}, ${GROWTH_CONTAINER}, ${SOCIAL_PLANNER_CONTAINER}, ${CRAWLER_CONTAINER}, ${DATA_CONTAINER}, ${DIAGRAM_CONTAINER}, ${BUY_LINK_CONTAINER}, ${GROUNDED_CONTAINER}, ${LAUNCH_PLAN_CONTAINER}, ${LANDING_COPY_CONTAINER}, ${SCHEMA_MARKUP_CONTAINER} and ${COLD_EMAIL_CONTAINER}"
+echo "deployed ${RELEASE_SHA} as ${PDF_CONTAINER}, ${ARABIC_CONTAINER}, ${AD_CONTAINER}, ${GROWTH_CONTAINER}, ${SOCIAL_PLANNER_CONTAINER}, ${CRAWLER_CONTAINER}, ${DATA_CONTAINER}, ${DIAGRAM_CONTAINER}, ${BUY_LINK_CONTAINER}, ${GROUNDED_CONTAINER}, ${LAUNCH_PLAN_CONTAINER}, ${LANDING_COPY_CONTAINER}, ${SCHEMA_MARKUP_CONTAINER}, ${COLD_EMAIL_CONTAINER}, ${COMPARISON_PAGE_CONTAINER}, ${SALES_COLLATERAL_CONTAINER}, ${PRICING_ADVISOR_CONTAINER}, ${CONTENT_STRATEGY_CONTAINER}, ${AB_TEST_CONTAINER} and ${RETENTION_CONTAINER}"
