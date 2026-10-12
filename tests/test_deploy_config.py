@@ -115,7 +115,7 @@ astudio.agency, www.astudio.agency {
                 self.assertEqual(len(servers), 1, f"{package_dir} needs one src/server file")
                 source = servers[0].read_text()
                 self.assertTrue(
-                    f'service:"{service}"' in source or f'service: "{service}"' in source,
+                    f'service:"{service}"' in source or f'service: "{service}"' in source or (f'SERVICE="{service}"' in source and "service:SERVICE" in source),
                     f"{service} health response must identify its service",
                 )
 
