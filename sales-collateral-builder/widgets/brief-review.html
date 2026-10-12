@@ -1,1 +1,129 @@
-<!doctype html><meta charset="utf-8"><title>Approve sales collateral brief</title><body><h1>Review sales collateral brief</h1><pre id="brief">Waiting for a brief.</pre><button id="approve" disabled>Approve brief</button><p id="status"></p><script type="module">(()=>{/*__EXT_APPS_BUNDLE__*/})();const {App}=globalThis.ExtApps,app=new App({name:'Sales Collateral Brief Review',version:'1.0.0'},{},{autoResize:true}),out=document.querySelector('#brief'),button=document.querySelector('#approve'),status=document.querySelector('#status');let brief;app.ontoolresult=e=>{const d=e.structuredContent||{};brief=d.normalizedBrief;out.textContent=JSON.stringify(brief||{},null,2);button.disabled=!brief||!d.canApprove;status.textContent=(d.issues||[]).map(issue=>issue.message||String(issue)).join(' ')};button.onclick=async()=>{button.disabled=true;try{const r=await app.callServerTool({name:'approve_collateral_brief',arguments:{brief,approvalAction:'approve'}}),receipt=r.structuredContent?.approvalReceipt;if(r.isError||!receipt)throw Error();const sent=await app.sendMessage({role:'user',content:[{type:'text',text:`I explicitly approved this sales collateral brief. Signed receipt: ${JSON.stringify(receipt)}`}]});if(sent?.isError)throw Error();status.textContent='Approved with signed receipt.'}catch{status.textContent='Approval failed.';button.disabled=false}};try{await app.connect()}catch{status.textContent='Host connection is unavailable.'}</script>
+<!doctype html><meta charset="utf-8" /><title>
+  Approve sales collateral brief</title
+><style>
+  body {
+    font: 15px system-ui;
+    margin: 20px;
+    max-width: 760px;
+  }
+  .field {
+    border: 1px solid #888;
+    border-radius: 10px;
+    padding: 12px;
+    margin: 8px 0;
+  }
+  .field h2 {
+    font-size: 1rem;
+    margin: 0 0 6px;
+  }
+  .field p,
+  .field ul {
+    margin: 0;
+  }
+  button {
+    font: inherit;
+    padding: 10px 16px;
+    font-weight: 700;
+  }
+</style>
+<body>
+  <h1>Review sales collateral brief</h1>
+  <div id="brief">Waiting for a brief.</div>
+  <button id="approve" disabled>Approve brief</button>
+  <p id="status"></p>
+  <script type="module">
+      (()=>{
+      /*__EXT_APPS_BUNDLE__*/
+    })();
+    const { App } = globalThis.ExtApps,
+      app = new App(
+        { name: "Sales Collateral Brief Review", version: "1.0.0" },
+        {},
+        { autoResize: true },
+      ),
+      out = document.querySelector("#brief"),
+      button = document.querySelector("#approve"),
+      status = document.querySelector("#status");
+    let brief;
+      const label = (key) => {
+        const words = key
+          .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+          .replace(/_/g, " ")
+          .toLowerCase();
+        return words.replace(/^./, (letter) => letter.toUpperCase());
+      };
+      const display = (value) => String(value).replace(/^\{\{(.+)\}\}$/, "$1");
+    function valueNode(value) {
+      if (Array.isArray(value)) {
+        const list = document.createElement("ul");
+        for (const item of value) {
+          const row = document.createElement("li");
+          row.textContent =
+            item && typeof item === "object"
+              ? Object.entries(item)
+                  .map(([key, entry]) => `${label(key)}: ${display(entry)}`)
+                  .join("; ")
+              : display(item);
+          list.append(row);
+        }
+        return list;
+      }
+      const text = document.createElement("p");
+      text.textContent =
+        value === undefined || value === null || value === ""
+          ? "None"
+          : display(value);
+      return text;
+    }
+    function render(value) {
+      out.replaceChildren();
+      for (const [key, entry] of Object.entries(value || {})) {
+        const field = document.createElement("section"),
+          heading = document.createElement("h2");
+        field.className = "field";
+        heading.textContent = label(key);
+        field.append(heading, valueNode(entry));
+        out.append(field);
+      }
+    }
+    app.ontoolresult = (e) => {
+      const d = e.structuredContent || {};
+      brief = d.normalizedBrief;
+      render(brief);
+      button.disabled = !brief || !d.canApprove;
+      status.textContent = (d.issues || [])
+        .map((issue) => issue.message || String(issue))
+        .join(" ");
+    };
+    button.onclick = async () => {
+      button.disabled = true;
+      try {
+        const r = await app.callServerTool({
+            name: "approve_collateral_brief",
+            arguments: { brief, approvalAction: "approve" },
+          }),
+          receipt = r.structuredContent?.approvalReceipt;
+        if (r.isError || !receipt) throw Error();
+        const sent = await app.sendMessage({
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: `I explicitly approved this sales collateral brief. Signed receipt: ${JSON.stringify(receipt)}`,
+            },
+          ],
+        });
+        if (sent?.isError) throw Error();
+        status.textContent = "Approved with signed receipt.";
+      } catch {
+        status.textContent = "Approval failed.";
+        button.disabled = false;
+      }
+    };
+    try {
+      await app.connect();
+    } catch {
+      status.textContent = "Host connection is unavailable.";
+    }
+  </script>
+</body>
