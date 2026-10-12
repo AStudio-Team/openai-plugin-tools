@@ -4,6 +4,7 @@ COPY package.json package-lock.json ./
 RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
 COPY src ./src
 COPY widgets ./widgets
+COPY skills ./skills
 COPY public ./public
 COPY NOTICE ./NOTICE
 COPY LICENSES ./LICENSES
