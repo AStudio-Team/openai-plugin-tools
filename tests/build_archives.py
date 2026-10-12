@@ -56,6 +56,12 @@ PRODUCTS = {
         "root_files": {"plugin.json", "mcp.json", "NOTICE"},
         "directories": {"assets", "skills", "LICENSES"},
     },
+    "competitor-comparison-builder": {"archive": "competitor-comparison-builder-1.0.0-submission.zip", "root_files": {"plugin.json", "mcp.json", "NOTICE"}, "directories": {"assets", "skills", "LICENSES"}},
+    "sales-collateral-builder": {"archive": "sales-collateral-builder-1.0.0-submission.zip", "root_files": {"plugin.json", "mcp.json", "NOTICE"}, "directories": {"assets", "skills", "LICENSES"}},
+    "pricing-packaging-advisor": {"archive": "pricing-packaging-advisor-1.0.0-submission.zip", "root_files": {"plugin.json", "mcp.json", "NOTICE"}, "directories": {"assets", "skills", "LICENSES"}},
+    "content-strategy-planner": {"archive": "content-strategy-planner-1.0.0-submission.zip", "root_files": {"plugin.json", "mcp.json", "NOTICE"}, "directories": {"assets", "skills", "LICENSES"}},
+    "ab-test-planner": {"archive": "ab-test-planner-1.0.0-submission.zip", "root_files": {"plugin.json", "mcp.json", "NOTICE"}, "directories": {"assets", "skills", "LICENSES"}},
+    "retention-playbook": {"archive": "retention-playbook-1.0.0-submission.zip", "root_files": {"plugin.json", "mcp.json", "NOTICE"}, "directories": {"assets", "skills", "LICENSES"}},
     "launch-plan-builder": {
         "archive": "launch-plan-builder-1.0.0-submission.zip",
         "root_files": {"plugin.json", "mcp.json", "NOTICE"},

@@ -55,6 +55,9 @@ astudio.agency, www.astudio.agency {
         self.assertIn('docker build --pull -t "$GROWTH_IMAGE" growth-marketing-planner', script)
         self.assertIn('docker build --pull -t "$SOCIAL_PLANNER_IMAGE" social-content-planner', script)
         self.assertIn('docker build --pull -t "$COLD_EMAIL_IMAGE" cold-email-writer', script)
+        for variable, package in (("COMPARISON_PAGE", "competitor-comparison-builder"), ("SALES_COLLATERAL", "sales-collateral-builder"), ("PRICING_ADVISOR", "pricing-packaging-advisor"), ("CONTENT_STRATEGY", "content-strategy-planner"), ("AB_TEST", "ab-test-planner"), ("RETENTION", "retention-playbook")):
+            self.assertIn(f'docker build --pull -t "${variable}_IMAGE" {package}', script)
+            self.assertIn(f'wait_healthy "${variable}_CONTAINER"', script)
         self.assertIn('docker build --pull -t "$CRAWLER_IMAGE" ai-crawler-readiness-auditor', script)
         self.assertIn('docker build --pull -t "$DATA_IMAGE" open-data-fetcher', script)
         self.assertIn('docker build --pull -t "$DIAGRAM_IMAGE" editable-diagram-builder', script)
