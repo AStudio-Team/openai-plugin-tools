@@ -1,6 +1,6 @@
 # Pricing and Packaging Advisor
 
-A human-guided MCP App that reviews a landing page brief, validates two or three copy variants, checks conversion basics, records explicit selection, and exports the selected copy as Markdown or HTML.
+A human-guided MCP App for pricing and packaging planning. It collects a pasted pricing brief, validates two or three tier options, records explicit app-based approval and selection, and exports a selected plan as Markdown or CSV. It is planning help, not financial advice, and makes no revenue promise.
 
 ## Local development
 
