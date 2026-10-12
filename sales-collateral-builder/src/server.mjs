@@ -157,7 +157,8 @@ function collateralIssues(piece, sourceBrief) {
   for (const heading of collateralStructures[sourceBrief.pieceType]) if (!headings.has(normalizeSource(heading))) issues.push({ code: "missing_section", field: "sections", message: `Missing required section: ${heading}.` });
   const body = piece.sections.map(item => item.content).join("\n");
   if (!/\b(?:revenue|efficien\w*|risk|cost|time saved|business outcome|conversion|retention|profit|productivity)\b/iu.test(body)) issues.push({ code: "missing_outcome", field: "sections", message: "Tie the collateral to a business outcome." });
-  for (const [index, value] of values.entries()) for (const sentence of String(value).split(/[.!?\n]+/u).map(clean).filter(Boolean)) if (isProofLikeClaim(sentence) && !proofClaimSupported(sentence, sourceBrief)) issues.push({ code: "unsupported_proof", field: `text.${index}`, message: `Unsupported proof-like claim: ${sentence}.` });
+  const structuralHeadings = new Set(collateralStructures[sourceBrief.pieceType].map(normalizeSource));
+  for (const [index, value] of values.entries()) for (const sentence of String(value).split(/[.!?\n]+/u).map(clean).filter(Boolean)) if (!structuralHeadings.has(normalizeSource(sentence)) && isProofLikeClaim(sentence) && !proofClaimSupported(sentence, sourceBrief)) issues.push({ code: "unsupported_proof", field: `text.${index}`, message: `Unsupported proof-like claim: ${sentence}.` });
   if (sourceBrief.pieceType === "objection handling sheet") for (const [index, objection] of sourceBrief.knownObjections.entries()) {
     const section = piece.sections.find(item => wholeSourceMatch(item.content, objection.text));
     if (!section) issues.push({ code: "missing_objection", field: `knownObjections.${index}.text`, message: `Address the supplied objection exactly: ${objection.text}.` });
