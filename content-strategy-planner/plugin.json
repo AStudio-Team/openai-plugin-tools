@@ -13,11 +13,13 @@
         "longDescription": "Plan a practical content roadmap from pasted information. It writes and checks text only, never posts, sends, publishes, or connects to any account or tool, and makes no traffic or ranking promises.",
         "developerName": "ASTUDIO",
         "category": "Business & Operations",
+        "capabilities": ["Guided content brief", "Brief review before planning", "Content pillars", "Topic clusters", "Text exports"],
         "websiteURL": "https://www.astudio.agency/tools/content-strategy-planner",
         "privacyPolicyURL": "https://www.astudio.agency/tools/privacy",
         "termsOfServiceURL": "https://www.astudio.agency/tools/terms",
         "supportURL": "https://www.astudio.agency/tools/support",
         "defaultPrompt": ["Plan my content pillars.", "Create a blog content plan.", "Review my topic clusters."],
+        "brandColor": "#12694f",
         "composerIcon": "./assets/icon.png",
         "logo": "./assets/logo.png"
       },
@@ -35,10 +37,10 @@
             { "description": "No publishing", "prompt": "Publish content.", "tools_triggered": "none", "expected_behavior": "Does not publish." },
             { "description": "No promises", "prompt": "Guarantee rankings.", "tools_triggered": "draft_content_strategy", "expected_behavior": "Rejects promises." }
           ]
-        }
+        },
+        "demo_recording_url": "https://www.astudio.agency/tools/review/content-strategy-planner-demo.mp4"
       },
-      "demo_recording_url": "https://www.astudio.agency/tools/review/content-strategy-planner-demo.mp4"
-    },
-    "commerce": false
+      "commerce": false
+    }
   }
 }
