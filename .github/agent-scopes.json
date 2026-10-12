@@ -4,7 +4,7 @@
   "scopes": {
     "application": {
       "description": "Plugin code, packages, public pages and tests.",
-      "paths": ["pdf-table-to-excel/**", "gcc-arabic-writer/**", "ad-creative-lab/**", "grounded-citations/**", "verified-buy-link/**", "editable-diagram-builder/**", "open-data-fetcher/**", "ai-crawler-readiness-auditor/**", "growth-marketing-planner/**", "launch-plan-builder/**", "landing-page-copy-check/**", "schema-markup-generator/**", "social-content-planner/**", "cold-email-writer/**", "tests/**", "package*.json", ".planning/**"]
+      "paths": ["pdf-table-to-excel/**", "gcc-arabic-writer/**", "ad-creative-lab/**", "grounded-citations/**", "verified-buy-link/**", "editable-diagram-builder/**", "open-data-fetcher/**", "ai-crawler-readiness-auditor/**", "growth-marketing-planner/**", "launch-plan-builder/**", "landing-page-copy-check/**", "schema-markup-generator/**", "social-content-planner/**", "cold-email-writer/**", "competitor-comparison-builder/**", "sales-collateral-builder/**", "pricing-packaging-advisor/**", "content-strategy-planner/**", "ab-test-planner/**", "retention-playbook/**", "tests/**", "package*.json", ".planning/**"]
     },
     "architecture": {
       "description": "Plans, project records and reports.",
