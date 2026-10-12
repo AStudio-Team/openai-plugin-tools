@@ -1,6 +1,6 @@
-# Competitor Comparison Page Builder
+# Comparison Page Builder
 
-A human-guided MCP App that reviews a competitor comparison page brief, validates two or three copy variants, checks conversion basics, records explicit selection, and exports the selected copy as Markdown or HTML.
+A human-guided MCP App that creates honest competitor comparison and alternative pages from sourced facts, reviews the brief before drafting, and exports approved copy as Markdown or HTML.
 
 ## Local development
 
@@ -20,4 +20,4 @@ The service is stateless and closed-world. It does not fetch URLs, change websit
 
 ## Attribution
 
-Methodology is adapted from Marketing Skills for AI Agents by Corey Haines. See `NOTICE` and `LICENSES/corey-haines-marketingskills-MIT.txt`. No endorsement is implied.
+Methodology is adapted from the competitor-alternatives skill in Marketing Skills for AI Agents by Corey Haines. See `NOTICE` and `LICENSES/corey-haines-marketingskills-MIT.txt`. No endorsement is implied.
