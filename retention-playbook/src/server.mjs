@@ -135,7 +135,7 @@ function retentionUnsigned(value) { return { kind: "brief", deployment: "deploym
 function makeRetentionReceipt(value) { const unsigned = retentionUnsigned(value); return { ...unsigned, signature: sign(unsigned) }; }
 function verifyRetentionReceipt(value, subject) { const parsed = retentionReceipt.parse(value), unsigned = { kind: parsed.kind, deployment: parsed.deployment, digest: parsed.digest }, expected = sign(unsigned); if (parsed.digest !== digest(subject) || !timingSafeEqual(Buffer.from(expected, "hex"), Buffer.from(parsed.signature, "hex"))) throw Error("A valid signed brief receipt is required."); }
 const numericOrCurrency = /(?:\d|%|\p{Sc}|\b(?:AED|USD|EUR|GBP|SAR|JPY|CAD|AUD|CHF|QAR|KWD|BHD|OMR)\b)/iu;
-const blockedCancelTerms = ["impossible", "cannot cancel", "can't cancel", "block", "blocked", "hide", "hidden", "require a call", "call to cancel", "phone to cancel", "contact support to cancel", "chat to cancel"];
+const blockedCancelTerms = ["impossible", "cannot cancel", "can't cancel", "block", "blocked", "hide", "hidden", "require a call", "call to cancel", "phone to cancel", "contact support to cancel", "chat to cancel", "support call", "omit", "remove the cancel", "no cancel"];
 const blockedCancelPattern = new RegExp(`(^|[^\\p{L}\\p{N}])(?:${blockedCancelTerms.map(escapeRegex).join("|")})(?=$|[^\\p{L}\\p{N}])`, "iu");
 function retentionSources(value) { return [value.productType, value.billingModel, value.currentChurnRate, value.activationEvent, ...value.knownCancelReasons, value.constraints].filter(source => source && numericOrCurrency.test(source)); }
 function retentionBannedClaims(value) { return bannedClaims(value).filter(claim => !/^\d+(?:\.\d+)?\s*(?:%|percent)$/iu.test(claim)); }
