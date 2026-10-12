@@ -6,16 +6,22 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { ATTRIBUTION, approveRetentionBrief, createHttpServer, validateRetentionPlaybook } from "../src/server.mjs";
 const brief={productType:"SaaS",billingModel:"monthly",activationEvent:"first project",knownCancelReasons:["price"],channelsAvailable:["email","in-app"],offersAllowed:["pause","none"],constraints:"Keep cancellation clear"};
-const plays=["onboarding and activation","proactive retention","cancel flow","failed payment recovery","win-back","referral"].map(area=>({area,trigger:"Customer signal",audience:"Active customer",channel:"email",message:area==="cancel flow"?"Offer pause and continue to cancellation":"Helpful message",ownerRole:"Customer success",successMetric:"Completion rate",saveOffer:"none"}));
+const plays=["onboarding and activation","proactive retention","cancel flow","failed payment recovery","win-back","referral"].map(area=>({area,trigger:"Customer signal",audience:"Active customer",channel:"email",message:area==="cancel flow"?"Offer pause and continue to cancellation":"Helpful message",ownerRole:"Customer success",successMetric:"Completion rate",saveOffer:"none",...(area==="cancel flow"?{cancelPath:"Cancel button in account settings, one click"}:{})}));
 test("accepts valid required plays",()=>{const x=approveRetentionBrief({brief,approvalAction:"approve"});assert.equal(validateRetentionPlaybook({brief,plays,approvalReceipt:x.approvalReceipt}).valid,true)});
 test("rejects blocked cancel flow",()=>{const x=approveRetentionBrief({brief,approvalAction:"approve"}),blocked=plays.map(p=>({...p}));blocked[2]={...blocked[2],message:"Hide cancel option"};assert.match(validateRetentionPlaybook({brief,plays:blocked,approvalReceipt:x.approvalReceipt}).issues.map(x=>x.message).join(" "),/clear path/)});
+test("enforces cancel paths and whole-phrase numeric sourcing",()=>{const sourced={...brief,currentChurnRate:"churn was 4% last quarter"},receipt=approveRetentionBrief({brief:sourced,approvalAction:"approve"}).approvalReceipt,check=changed=>validateRetentionPlaybook({brief:sourced,plays:changed,approvalReceipt:receipt});
+for(const message of ["Make cancellation impossible","Require a support call to cancel"]){const changed=plays.map(p=>({...p}));changed[2].message=message;assert.equal(check(changed).valid,false)}
+const missing=plays.map(p=>({...p}));delete missing[2].cancelPath;assert.equal(check(missing).valid,false);
+assert.equal(check(plays).valid,true);
+const invented=plays.map(p=>({...p}));invented[0].message="SaaS will cut churn by 10%";assert.equal(check(invented).valid,false);
+const quoted=plays.map(p=>({...p}));quoted[0].message="Remember: churn was 4% last quarter";assert.equal(check(quoted).valid,true)});
 test("applies every retention playbook rule with passing and failing cases",()=>{const approvalReceipt=approveRetentionBrief({brief,approvalAction:"approve"}).approvalReceipt,check=changed=>validateRetentionPlaybook({brief,plays:changed,approvalReceipt});
 assert.equal(check(plays).valid,true,"all six required areas, declared channels, allowed offers, clear cancellation and non-guaranteed metrics pass");
 const missing=plays.slice(1);assert.throws(()=>check(missing),/Too small/);
 const unavailable=plays.map(p=>({...p}));unavailable[0].channel="SMS";assert.match(check(unavailable).issues.map(x=>x.message).join(" "),/channel is not available/);
 const offer=plays.map(p=>({...p}));offer[0].saveOffer="discount";assert.match(check(offer).issues.map(x=>x.message).join(" "),/save offer is not allowed/);
 const claim=plays.map(p=>({...p}));claim[0].successMetric="Guaranteed 100% churn reduction";assert.match(check(claim).issues.map(x=>x.message).join(" "),/banned claim/);
-const blocked=plays.map(p=>({...p}));blocked[2].message="Prevent customers from cancelling";assert.match(check(blocked).issues.map(x=>x.message).join(" "),/clear path to cancel/);
+const blocked=plays.map(p=>({...p}));blocked[2].message="Block cancellation";assert.match(check(blocked).issues.map(x=>x.message).join(" "),/clear path to cancel/);
 assert.throws(()=>validateRetentionPlaybook({brief,plays:[{...plays[0],message:"   "},...plays.slice(1)],approvalReceipt}),/Too small/)});
 
 async function fixture(t){const server=createHttpServer().listen(0,"127.0.0.1");await once(server,"listening");t.after(()=>server.close());return`http://127.0.0.1:${server.address().port}`}
