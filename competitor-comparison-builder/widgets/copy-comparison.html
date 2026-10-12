@@ -1,1 +1,250 @@
-<!doctype html><meta charset="utf-8"><title>Comparison page review</title><body><h1>Comparison page review</h1><pre id="page">Waiting for a page.</pre><label>Section <input id="section" value="TL;DR"></label><label>Instruction <input id="instruction"></label><button id="revise" disabled>Request revision</button><button data-export="markdown" disabled>Export Markdown</button><button data-export="html" disabled>Export HTML</button><p id="status"></p><section id="export" hidden><h2 id="name"></h2><button id="copy">Copy</button><pre id="content"></pre></section><script type="module">(()=>{/*__EXT_APPS_BUNDLE__*/})();const {App}=globalThis.ExtApps,app=new App({name:'Comparison Page Review',version:'1.0.0'},{},{autoResize:true}),out=document.querySelector('#page'),revise=document.querySelector('#revise'),status=document.querySelector('#status'),exportBox=document.querySelector('#export'),name=document.querySelector('#name'),content=document.querySelector('#content');let input={},data={};function ready(){return data.brief&&data.page&&(input.approvalReceipt||data.approvalReceipt)}function render(value){if(value?.page){data=value;const preview={...value.page,whoItsFor:value.page.whoItsFor.map(entry=>`${entry.product}: ${entry.betterFitWhen}`)};out.textContent=JSON.stringify(preview,null,2)}const enabled=Boolean(ready());revise.disabled=!data.brief||!data.page;document.querySelectorAll('[data-export]').forEach(button=>button.disabled=!enabled)}const toolText=result=>result.content?.filter(item=>item.type==='text').map(item=>item.text).join('\n')||'Export failed.';function show(file){name.textContent=file.fileName;content.textContent=file.content;exportBox.hidden=false}async function exportPage(format){const button=document.querySelector(`[data-export="${format}"]`);button.disabled=true;const toolArgs={brief:data.brief||input.brief,page:data.page||input.page,approvalReceipt:input.approvalReceipt||data.approvalReceipt,format};let response;try{response=await app.callServerTool({name:'export_comparison_page',arguments:toolArgs})}catch{status.textContent='Export failed. Validate the page and receipt first.';button.disabled=false;return}if(response.isError||!response.structuredContent?.content){status.textContent=toolText(response);button.disabled=false;return}const file=response.structuredContent;show(file);status.textContent=`${file.fileName} is ready. Copy the text below.`;try{await app.sendMessage({role:'user',content:[{type:'text',text:`Exported ${file.fileName} (${file.mimeType}); the content is shown in the card.`}]})}catch{status.textContent+=' Chat announcement not delivered.'}try{const downloaded=await app.downloadFile({contents:[{type:'resource',resource:{uri:`file:///${file.fileName}`,mimeType:file.mimeType,text:file.content}}]});if(downloaded?.isError)throw Error('download denied')}catch{status.textContent+=' Download is not available in this host.'}button.disabled=false}revise.onclick=async()=>{revise.disabled=true;const toolArgs={brief:data.brief,page:data.page,section:document.querySelector('#section').value.trim(),instruction:document.querySelector('#instruction').value.trim()};try{const result=await app.callServerTool({name:'request_page_revision',arguments:toolArgs});if(result.isError)throw Error();await app.sendMessage({role:'user',content:[{type:'text',text:`Revise ${toolArgs.section}: ${toolArgs.instruction}`}]});status.textContent='Revision instruction sent.'}catch{status.textContent='Revision failed.'}revise.disabled=false};document.querySelectorAll('[data-export]').forEach(button=>button.onclick=()=>exportPage(button.dataset.export));document.querySelector('#copy').onclick=async()=>{try{await navigator.clipboard.writeText(content.textContent);status.textContent='Copied.'}catch{status.textContent='Copy unavailable.'}};app.ontoolinput=event=>{try{input=event.arguments||event||input;render(data)}catch{status.textContent='Invalid page input.'}};app.ontoolresult=event=>{try{if(event.structuredContent)render(event.structuredContent)}catch{status.textContent='The page could not be displayed.'}};try{await app.connect()}catch{status.textContent='Host connection is unavailable.'}</script>
+<!doctype html><meta charset="utf-8" /><title>Comparison page review</title>
+<body>
+  <h1>Comparison page review</h1>
+  <div id="page">Waiting for a page.</div>
+  <label>Section <input id="section" value="TL;DR" /></label
+  ><label>Instruction <input id="instruction" /></label
+  ><button id="revise" disabled>Request revision</button
+  ><button data-export="markdown" disabled>Export Markdown</button
+  ><button data-export="html" disabled>Export HTML</button>
+  <p id="status"></p>
+  <section id="export" hidden>
+    <h2 id="name"></h2>
+    <button id="copy">Copy</button>
+    <pre id="content"></pre>
+  </section>
+  <script type="module">
+    (()=>{
+      /*__EXT_APPS_BUNDLE__*/
+    })();
+    const { App } = globalThis.ExtApps,
+      app = new App(
+        { name: "Comparison Page Review", version: "1.0.0" },
+        {},
+        { autoResize: true },
+      ),
+      out = document.querySelector("#page"),
+      revise = document.querySelector("#revise"),
+      status = document.querySelector("#status"),
+      exportBox = document.querySelector("#export"),
+      name = document.querySelector("#name"),
+      content = document.querySelector("#content");
+    let input = {},
+      data = {};
+    function ready() {
+      return (
+        data.brief &&
+        data.page &&
+        (input.approvalReceipt || data.approvalReceipt)
+      );
+    }
+    const humanLabel = (key) =>
+      ({
+        tldr: "TL;DR",
+        paragraphComparisons: "Sections",
+        featureTable: "Feature table",
+        pricingComparison: "Pricing",
+        whoItsFor: "Who it is for",
+        body: "Body",
+      })[key] ||
+      key
+        .replace(/([a-z0-9])([A-Z])/g, (_, first, second) =>
+          `${first} ${second.toLowerCase()}`,
+        )
+        .replace(/^./, (letter) => letter.toUpperCase());
+    function addList(parent, values) {
+      const list = document.createElement("ul");
+      for (const value of values || []) {
+        const item = document.createElement("li");
+        item.textContent = String(value);
+        list.append(item);
+      }
+      parent.append(list);
+    }
+    function renderPage(page) {
+      out.replaceChildren();
+      for (const [key, value] of Object.entries(page)) {
+        const section = document.createElement("section");
+        const heading = document.createElement(key === "title" ? "h2" : "h3");
+        heading.textContent = humanLabel(key);
+        section.append(heading);
+        if (key === "featureTable") {
+          const table = document.createElement("table");
+          const headings = document.createElement("tr");
+          for (const label of ["Product", "Feature", "Value", "Verification"]) {
+            const cell = document.createElement("th");
+            cell.textContent = label;
+            headings.append(cell);
+          }
+          table.append(headings);
+          for (const entry of value) {
+            const row = document.createElement("tr");
+            for (const field of ["product", "attribute", "value", "verification"]) {
+              const cell = document.createElement("td");
+              cell.textContent = entry[field] ?? "";
+              row.append(cell);
+            }
+            table.append(row);
+          }
+          section.append(table);
+        } else if (Array.isArray(value)) addList(section, value);
+        else {
+          const paragraph = document.createElement("p");
+          paragraph.textContent = value ?? "None";
+          section.append(paragraph);
+        }
+        out.append(section);
+      }
+    }
+    function render(value) {
+      if (value?.page) {
+        data = value;
+        const preview = {
+          ...value.page,
+          whoItsFor: value.page.whoItsFor.map(
+            (entry) => `${entry.product}: ${entry.betterFitWhen}`,
+          ),
+        };
+        renderPage(preview);
+      }
+      const enabled = Boolean(ready());
+      revise.disabled = !data.brief || !data.page;
+      document
+        .querySelectorAll("[data-export]")
+        .forEach((button) => (button.disabled = !enabled));
+    }
+    const toolText = (result) =>
+      result.content
+        ?.filter((item) => item.type === "text")
+        .map((item) => item.text)
+        .join("\n") || "Export failed.";
+    function show(file) {
+      name.textContent = file.fileName;
+      content.textContent = file.content;
+      exportBox.hidden = false;
+    }
+    async function exportPage(format) {
+      const button = document.querySelector(`[data-export="${format}"]`);
+      button.disabled = true;
+      const toolArgs = {
+        brief: data.brief || input.brief,
+        page: data.page || input.page,
+        approvalReceipt: input.approvalReceipt || data.approvalReceipt,
+        format,
+      };
+      let response;
+      try {
+        response = await app.callServerTool({
+          name: "export_comparison_page",
+          arguments: toolArgs,
+        });
+      } catch {
+        status.textContent =
+          "Export failed. Validate the page and receipt first.";
+        button.disabled = false;
+        return;
+      }
+      if (response.isError || !response.structuredContent?.content) {
+        status.textContent = toolText(response);
+        button.disabled = false;
+        return;
+      }
+      const file = response.structuredContent;
+      show(file);
+      status.textContent = `${file.fileName} is ready. Copy the text below.`;
+      try {
+        await app.sendMessage({
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: `Exported ${file.fileName} (${file.mimeType}); the content is shown in the card.`,
+            },
+          ],
+        });
+      } catch {
+        status.textContent += " Chat announcement not delivered.";
+      }
+      try {
+        const downloaded = await app.downloadFile({
+          contents: [
+            {
+              type: "resource",
+              resource: {
+                uri: `file:///${file.fileName}`,
+                mimeType: file.mimeType,
+                text: file.content,
+              },
+            },
+          ],
+        });
+        if (downloaded?.isError) throw Error("download denied");
+      } catch {
+        status.textContent += " Download is not available in this host.";
+      }
+      button.disabled = false;
+    }
+    revise.onclick = async () => {
+      revise.disabled = true;
+      const toolArgs = {
+        brief: data.brief,
+        page: data.page,
+        section: document.querySelector("#section").value.trim(),
+        instruction: document.querySelector("#instruction").value.trim(),
+      };
+      try {
+        const result = await app.callServerTool({
+          name: "request_page_revision",
+          arguments: toolArgs,
+        });
+        if (result.isError) throw Error();
+        await app.sendMessage({
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: `Revise ${toolArgs.section}: ${toolArgs.instruction}`,
+            },
+          ],
+        });
+        status.textContent = "Revision instruction sent.";
+      } catch {
+        status.textContent = "Revision failed.";
+      }
+      revise.disabled = false;
+    };
+    document
+      .querySelectorAll("[data-export]")
+      .forEach(
+        (button) => (button.onclick = () => exportPage(button.dataset.export)),
+      );
+    document.querySelector("#copy").onclick = async () => {
+      try {
+        await navigator.clipboard.writeText(content.textContent);
+        status.textContent = "Copied.";
+      } catch {
+        status.textContent = "Copy unavailable.";
+      }
+    };
+    app.ontoolinput = (event) => {
+      try {
+        input = event.arguments || event || input;
+        render(data);
+      } catch {
+        status.textContent = "Invalid page input.";
+      }
+    };
+    app.ontoolresult = (event) => {
+      try {
+        if (event.structuredContent) render(event.structuredContent);
+      } catch {
+        status.textContent = "The page could not be displayed.";
+      }
+    };
+    try {
+      await app.connect();
+    } catch {
+      status.textContent = "Host connection is unavailable.";
+    }
+  </script>
+</body>
