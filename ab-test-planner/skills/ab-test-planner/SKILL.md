@@ -12,7 +12,7 @@ Use this skill to turn a supplied experiment brief into a practical A/B test pla
 1. Capture the page or feature, one proposed change, a primary metric, baseline conversion rate, weekly visitors, relative minimum detectable effect, variants, confidence, and power.
 2. State the hypothesis as: Because [insight], we believe [change] will [expected effect], measured by [primary metric].
 3. Name at least one guardrail metric. Give every tracking event an `object_action` name and its properties.
-4. Include pre-launch checks and a stop rule that forbids stopping early because interim results look favourable or unfavourable.
+4. Include at least three pre-launch checks and this stop rule verbatim: "Do not stop early because interim results look good or bad; stop early only if a guardrail metric shows significant harm."
 5. Use the two-proportion sample-size calculation and the supplied traffic to estimate whole weeks. Treat the output as planning guidance, not a promised result.
 
 ## Attribution
