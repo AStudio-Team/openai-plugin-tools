@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { approveTestBrief, planAbTest, sampleSize } from "../src/server.mjs";
+import { approveTestBrief, planAbTest, sampleSize, validatePlan } from "../src/server.mjs";
 
 const brief={pageOrFeature:"Pricing page",changeIdea:"Show annual saving beside price",primaryMetric:"trial_started",baselineConversionRate:5,weeklyVisitors:4000,minimumDetectableEffect:20,variants:2,confidence:95,power:80};
 const plan={hypothesis:"Because visitors do not see the annual saving, we believe showing the annual saving will increase trials measured by trial_started.",primaryMetric:"trial_started",guardrailMetrics:["checkout_error_rate"],variants:[{name:"Control",change:"Keep current price display"},{name:"Variant",change:"Show annual saving beside price"}],events:[{name:"trial_started",properties:["variant"]}],preLaunchChecklist:["Verify event firing on both variants"],stopRule:"Do not stop early when peeking; wait for the planned sample size."};
@@ -21,4 +21,15 @@ test("planning requires a signed widget approval receipt",()=>{
 
 test("impossible rates and zero traffic are rejected",()=>{
   for(const change of [{baselineConversionRate:0},{baselineConversionRate:100},{weeklyVisitors:0}])assert.throws(()=>approveTestBrief({brief:{...brief,...change},approvalAction:"approve"}));
+});
+
+test("plan validation accepts the required experiment safeguards",()=>{
+  assert.equal(validatePlan(brief,plan).valid,true);
+});
+
+test("plan validation reports each missing experiment safeguard",()=>{
+  const invalid={...plan,hypothesis:"Show the annual saving.",primaryMetric:"purchase_completed",guardrailMetrics:[],variants:[...plan.variants.slice(0,1),{name:"Variant",change:"Show saving and add testimonials"}],events:[{name:"TrialStarted",properties:["variant"]}],preLaunchChecklist:[],stopRule:"Review results every day."};
+  assert.throws(()=>validatePlan(brief,invalid));
+  const issues=validatePlan(brief,{...plan,hypothesis:"Show the annual saving.",primaryMetric:"purchase_completed",variants:[...plan.variants.slice(0,1),{name:"Variant",change:"Show saving and add testimonials"}],stopRule:"Review results every day."}).issues;
+  assert.equal(issues.length,4);
 });
