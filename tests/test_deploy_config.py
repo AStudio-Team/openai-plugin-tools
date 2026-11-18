@@ -155,7 +155,7 @@ astudio.agency, www.astudio.agency {
         self.assertIn("/openai-plugins/ai-crawler-readiness-auditor/mcp", block)
         fixtures = (ROOT / "deploy" / "fixtures.astudio.agency.caddy").read_text()
         self.assertIn("fixtures.astudio.agency", fixtures)
-        self.assertIn("sitemap-timeout.fixtures.astudio.agency", fixtures)
+        self.assertIn("fixtures-sitemap-timeout.astudio.agency", fixtures)
         self.assertIn("handle_path /openai-plugins/verified-buy-link/*", block)
         self.assertIn("handle_path /tools/verified-buy-link*", block)
         self.assertLess(block.index("handle_path /tools/verified-buy-link*"), block.index("handle_path /tools/*"))
