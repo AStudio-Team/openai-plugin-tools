@@ -1,3 +1,4 @@
+import os
 import subprocess
 import tempfile
 import unittest
@@ -19,25 +20,27 @@ class DeployConfigTests(unittest.TestCase):
         self.assertEqual(inline_blocks, [], "Caddy blocks must place braces on separate lines")
 
     def test_inserts_and_replaces_managed_block_inside_main_site(self):
+        anchor = "    reverse_proxy main-site:80 {"
         original = """{
     email test@example.com
 }
 
 astudio.agency, www.astudio.agency {
     import security_headers
-    reverse_proxy nginx-ae-interim:80 {
+""" + anchor + """
         flush_interval -1
     }
 }
 """
+        env = dict(os.environ, CADDY_ANCHOR_LINE=anchor)
         with tempfile.TemporaryDirectory() as temporary:
             caddyfile = Path(temporary) / "Caddyfile"
             caddyfile.write_text(original)
-            subprocess.run(["python3", str(UPDATER), str(caddyfile), str(BLOCK)], check=True)
+            subprocess.run(["python3", str(UPDATER), str(caddyfile), str(BLOCK)], check=True, env=env)
             first = caddyfile.read_text()
             self.assertEqual(first.count("# BEGIN OPENAI_PLUGIN_TOOLS"), 1)
-            self.assertLess(first.index("# BEGIN OPENAI_PLUGIN_TOOLS"), first.index("reverse_proxy nginx-ae-interim"))
-            subprocess.run(["python3", str(UPDATER), str(caddyfile), str(BLOCK)], check=True)
+            self.assertLess(first.index("# BEGIN OPENAI_PLUGIN_TOOLS"), first.index(anchor))
+            subprocess.run(["python3", str(UPDATER), str(caddyfile), str(BLOCK)], check=True, env=env)
             second = caddyfile.read_text()
             self.assertEqual(second.count("# BEGIN OPENAI_PLUGIN_TOOLS"), 1)
             self.assertEqual(first, second)
@@ -173,6 +176,15 @@ astudio.agency, www.astudio.agency {
 
     def test_deploy_shell_is_syntactically_valid(self):
         subprocess.run(["bash", "-n", str(ROOT / "deploy" / "deploy-production.sh")], check=True)
+
+    def test_deploy_scripts_carry_no_hardcoded_server_names(self):
+        for path in (ROOT / "deploy" / "deploy-production.sh", ROOT / "deploy" / "update-caddy.py"):
+            source = path.read_text()
+            self.assertNotIn("/opt/", source, f"{path} must not hardcode a server path")
+        script = (ROOT / "deploy" / "deploy-production.sh").read_text()
+        for line in script.splitlines():
+            if "docker exec" in line:
+                self.assertIn('docker exec "$CADDY_CONTAINER"', line, line)
 
 
 if __name__ == "__main__":
