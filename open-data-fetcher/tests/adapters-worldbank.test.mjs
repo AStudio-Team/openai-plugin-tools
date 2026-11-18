@@ -146,9 +146,10 @@ test("a partial load (page failure) is cached for only 5 minutes", async () => {
   assert.ok(page2Attempts > attemptsAfterFirst, "past 5 minute partial ttl, expected a refetch");
 });
 
-test("page 1 failure falls back to a plain single-page request for that search", async () => {
+test("page 1 failure fails fast, suppresses retries for 60s across concurrent waiters, then recovers", async () => {
   resetWorldBankIndicatorCacheForTests();
   let page1Attempts = 0;
+  let currentTime = 1000;
   const fetchImpl = async url => {
     const value = String(url);
     const pageNumber = Number(/[?&]page=(\d+)/.exec(value)[1]);
@@ -159,10 +160,46 @@ test("page 1 failure falls back to a plain single-page request for that search",
     }
     throw new Error(`unexpected page ${pageNumber}`);
   };
+  const options = { fetchImpl, lookup, now: () => currentTime };
+
+  const [firstA, firstB] = await Promise.allSettled([
+    searchSource("world_bank", "matching indicator", 1, options),
+    searchSource("world_bank", "matching indicator", 1, options),
+  ]);
+  assert.equal(firstA.status, "rejected");
+  assert.equal(firstB.status, "rejected");
+  assert.equal(page1Attempts, 1, "concurrent waiters share the single page 1 fetch and both reject");
+
+  currentTime += 60 * 1000 - 1000;
+  const third = await searchSource("world_bank", "matching indicator", 1, options).then(() => null, error => error);
+  assert.ok(third instanceof Error);
+  assert.equal(page1Attempts, 1, "still within the 60s suppression window, no refetch");
+
+  currentTime += 2000;
+  const result = await searchSource("world_bank", "matching indicator", 1, options);
+  assert.equal(page1Attempts, 2, "past the 60s window, a retry is attempted");
+  assert.equal(result.results.length, 1);
+  assert.equal(result.results[0].dataset_ref, "world_bank:IND.001");
+});
+
+test("results keep World Bank response order (page order, then order within page), never sorted by ID", async () => {
+  resetWorldBankIndicatorCacheForTests();
+  const fetchImpl = async url => {
+    const value = String(url);
+    const pageNumber = Number(/[?&]page=(\d+)/.exec(value)[1]);
+    if (pageNumber === 1) {
+      return new Response(JSON.stringify(pagePayload(1, 1, [
+        { id: "ZZZ.MATCH.3", name: "Matching indicator third", source: { value: "World Bank" }, sourceNote: "n" },
+        { id: "AAA.MATCH.1", name: "Matching indicator first", source: { value: "World Bank" }, sourceNote: "n" },
+        { id: "MMM.MATCH.2", name: "Matching indicator second", source: { value: "World Bank" }, sourceNote: "n" },
+      ])), { headers: { "content-type": "application/json" } });
+    }
+    throw new Error(`unexpected page ${pageNumber}`);
+  };
   const options = { fetchImpl, lookup };
 
   const result = await searchSource("world_bank", "matching indicator", 1, options);
-  assert.equal(page1Attempts, 2, "expected the full-index attempt and the fallback single-page attempt");
-  assert.equal(result.results.length, 1);
-  assert.equal(result.results[0].dataset_ref, "world_bank:IND.001");
+  assert.deepEqual(result.results.map(item => item.dataset_ref), [
+    "world_bank:ZZZ.MATCH.3", "world_bank:AAA.MATCH.1", "world_bank:MMM.MATCH.2",
+  ]);
 });
