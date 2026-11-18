@@ -111,6 +111,22 @@ class ManifestAndPackageTests(unittest.TestCase):
         server = (ROOT / "pdf-table-to-excel" / "src" / "server.mjs").read_text()
         self.assertIn("setInterval(pruneDownloads", server)
 
+    def test_privacy_page_names_all_twenty_plugins(self):
+        privacy = (ROOT / "pdf-table-to-excel" / "public" / "privacy.html").read_text()
+        names = [
+            "PDF Table to Excel", "GCC Arabic Writer", "Ad Creative Lab",
+            "Growth Marketing Planner", "AI Crawler Readiness Auditor",
+            "Editable Diagram Builder", "Open Data Fetcher", "Grounded Citations",
+            "Verified Buy Link", "Launch Plan Builder", "Landing Page Copy Check",
+            "Schema Markup Generator", "Social Content Planner", "Cold Email Writer",
+            "Comparison Page Builder", "Sales Collateral Builder",
+            "Pricing and Packaging Advisor", "Content Strategy Planner",
+            "A/B Test Planner", "Retention Playbook",
+        ]
+        self.assertEqual(len(names), 20)
+        for name in names:
+            self.assertIn(name, privacy)
+
     def test_arabic_mcp_public_prefix_is_exact(self):
         mcp = json.loads((ROOT / "gcc-arabic-writer" / "mcp.json").read_text())
         self.assertEqual(
