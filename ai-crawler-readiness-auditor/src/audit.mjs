@@ -161,6 +161,7 @@ function llmsCheck(id, response) {
 }
 function sitemapCheck(response, declared) {
   if (!response) return check("sitemap", "error", "medium", "The sitemap could not be tested.", [], ["The sitemap request failed."]);
+  if (response.status >= 500 || response.status === 408) return check("sitemap", "not_tested", "medium", `The sitemap could not be tested because the server answered HTTP ${response.status}.`, [evidence(response, `HTTP ${response.status}`, "Readable sitemap XML")], ["The sitemap was unreachable or timed out, so this check is untested."]);
   if (!successful(response)) return check("sitemap", "warn", "medium", `The sitemap returned HTTP ${response.status}.`, [evidence(response, `HTTP ${response.status}`, "Readable sitemap XML")]);
   const xml = response.body.toString("utf8");
   if (/<!DOCTYPE|<!ENTITY/i.test(xml)) return check("sitemap", "warn", "medium", "The sitemap contains a DTD or entity declaration and was not parsed.", [evidence(response, "DTD or entity declaration present", "XML without DTDs or external entities")]);
@@ -222,7 +223,7 @@ export async function runAudit({ url, scope, checks }, dependencies = {}) {
     if (!selected.has(id)) continue;
     if (scope === "site_controls_only" && PAGE_CHECKS.has(id)) { results.push(check(id, "not_tested", "info", "This page check was not run because site-controls-only scope was selected.", [], ["Select page-and-site-controls scope to run this check."])); continue; }
     if (id === "target_fetch") results.push(targetCheck(responses.page));
-    else if (id === "robots_access") results.push(robotsCheck(responses.robots, new URL(url).pathname || "/"));
+    else if (id === "robots_access") results.push(robotsCheck(responses.robots, new URL(finalUrl).pathname || "/"));
     else if (id === "page_directives") results.push(directivesCheck(responses.page));
     else if (id === "page_metadata") results.push(metadataCheck(responses.page));
     else if (id === "structured_data") results.push(structuredDataCheck(responses.page));
@@ -242,6 +243,9 @@ export async function runAudit({ url, scope, checks }, dependencies = {}) {
       challenge_signals: "Allow the intended public page response through the challenge layer for the relevant public crawler traffic.",
     };
     remediations.push(remediation(`REM-${suffix}-001`, [finding.id], priority, `Address ${finding.title.toLowerCase()}`, actions[finding.id], `Run the same ${finding.id} check again after independently updating the site.`));
+  }
+  for (const finding of results.filter(item => item.id === "sitemap" && item.outcome === "not_tested")) {
+    remediations.push(remediation("REM-SITEMAP-RETRY-001", [finding.id], "p2", "Retry the sitemap check later", "Confirm the sitemap address is correct and that the server answers it without a 5xx error or timeout, then retry the sitemap check later.", "Run the sitemap check again once the sitemap responds normally."));
   }
   const counts = { blockers: results.filter(item => item.outcome === "block").length, warnings: results.filter(item => item.outcome === "warn").length, passed: results.filter(item => item.outcome === "pass").length, notTested: results.filter(item => ["not_tested", "error"].includes(item.outcome)).length };
   const partial = errors.length > 0 || counts.notTested > 0;
