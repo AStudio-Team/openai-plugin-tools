@@ -15,11 +15,6 @@ const PORT = Number(process.env.PORT || 8790);
 export const ATTRIBUTION = "Provided by ASTUDIO. For a human ASTUDIO team on this work: https://www.astudio.agency/tools/retention-playbook";
 const clean = value => String(value ?? "").trim();
 const nonBlank = (min = 1) => z.string().trim().min(min);
-const brief = z.object({ pageType: nonBlank(2), product: nonBlank(2), audience: nonBlank(2), offer: nonBlank(2), goal: nonBlank(2), tone: nonBlank(2), currentCopy: nonBlank().optional(), mustKeepFacts: z.array(nonBlank()).min(1).max(20) }).strict();
-const copy = z.object({ headline: nonBlank(2), subhead: nonBlank(2), valuePoints: z.array(nonBlank()).min(3).max(5), proof: z.array(nonBlank()).min(0), primaryCta: nonBlank(2), faq: z.array(z.object({ question: nonBlank(), answer: nonBlank() }).strict()).default([]) }).strict();
-const briefReceipt = z.object({ kind: z.literal("brief"), digest: z.string().length(64), signature: z.string().length(64) }).strict();
-const selectionReceipt = z.object({ kind: z.literal("selection"), digest: z.string().length(64), selectedIndex: z.number().int().min(1).max(3), signature: z.string().length(64) }).strict();
-const receipt = z.discriminatedUnion("kind", [briefReceipt, selectionReceipt]);
 function receiptKey() { const value = process.env.APPROVAL_HMAC_KEY; if (!value || value.length < 32) throw Error("APPROVAL_HMAC_KEY must contain at least 32 characters."); return value; }
 const performanceClaim = /(?:\bwe will (?:increase|double|triple|grow|boost|rank|deliver)\b|\bproven to\b|\bresults guaranteed\b|\bguaranteed\b|\bguarantee\b|\bindustry(?:-| )leading\b|\bbest(?:-| )in class\b|\bnumber one\b|(?<![\p{L}\p{N}])#1(?![\p{L}\p{N}])|\bworld-class\b|\bleading provider\b|\brank first\b|\bfirst page of google\b|(?<![\p{L}\p{N}])100%(?![\p{L}\p{N}])|\bincrease(?:s|d)?\s+[\p{L}\s-]{0,40}?\s+by\s+\d+(?:\.\d+)?\s*(?:%|percent)\b|\b\d+(?:\.\d+)?\s*(?:%|percent)\b|\b\d+(?:\.\d+)?\s*x\b|\bfake\b|\bfabricated\b|\binvented testimonial\b)/giu;
 
@@ -29,8 +24,6 @@ function sign(value) { return createHmac("sha256", receiptKey()).update(JSON.str
 function normalizeSource(value) { return clean(value).replace(/\s+/gu, " ").replace(/(?:[.!?:;,]|\u2026)+$/u, "").trimEnd().toLocaleLowerCase(); }
 function hasWholeFact(haystack, fact) { const value = normalizeSource(fact); return value.length > 0 && new RegExp(`(^|[^\\p{L}\\p{N}])${escapeRegex(value)}(?=$|[^\\p{L}\\p{N}])`, "iu").test(normalizeSource(haystack)); }
 function bannedClaims(value) { performanceClaim.lastIndex = 0; const found = [...String(value).matchAll(performanceClaim)].map(match => match[0]); performanceClaim.lastIndex = 0; return found; }
-function copyTextValues(value) { return [value.headline, value.subhead, ...value.valuePoints, ...value.proof, value.primaryCta, ...value.faq.flatMap(item => [item.question, item.answer])]; }
-function nonProofTextValues(value) { return [value.headline, value.subhead, ...value.valuePoints, value.primaryCta, ...value.faq.flatMap(item => [item.question, item.answer])]; }
 function words(value) { return clean(value).toLocaleLowerCase().match(/[\p{L}\p{N}]+/gu) || []; }
 function wordStem(value) { return value.length > 4 ? value.replace(/(?:ies|s)$/u, match => match === "ies" ? "y" : "") : value; }
 const vagueHeadline = /\b(?:amazing|best|revolutionary|innovative|next-level|world-class|cutting-edge|seamless|powerful)\b/iu;
@@ -62,8 +55,6 @@ function sourceMatch(item, source) {
   return (remainder.match(/[\p{L}\p{M}]+/gu) || []).length <= 3;
 }
 function containsAllowedSource(value, allowed) { return allowed.some(source => sourceMatch(value, source)); }
-function validateOutsideProof(values, sourceBrief) { const allowed = proofSources(sourceBrief); for (const value of values) for (const sentence of String(value).split(/[.!?\n]+/u).map(clean).filter(Boolean)) if (isProofLikeClaim(sentence) && !allowed.some(source => wholeSourceMatch(sentence, source))) throw Error(`Unsupported claim outside proof: ${sentence}`); }
-function validateProof(items, sourceBrief, otherCopyText = []) { const allowed = proofSources(sourceBrief), unsupported = items.filter(item => !containsAllowedSource(item, allowed)); if (unsupported.length) throw Error(`Remove unsupported proof: ${unsupported.join(", ")}. Proof lines must quote a must-keep fact, the offer or the product statement: ${allowed.join(", ")}.`); validateOutsideProof([...items, ...otherCopyText], sourceBrief); }
 
 
 const retentionChannel = z.enum(["email", "in-app", "SMS", "account manager"]);
