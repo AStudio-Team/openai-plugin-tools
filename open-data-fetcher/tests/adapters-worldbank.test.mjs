@@ -38,6 +38,26 @@ test("searchWorldBank finds a match on a later page, caches, and survives a fail
   assert.equal(callCounts.length, callsAfterFirstSearch, "second search must not refetch any indicator page");
 });
 
+test("searchWorldBank ignores punctuation in the query", async () => {
+  resetWorldBankIndicatorCacheForTests();
+  const options = { fetchImpl: makeFetchImpl([]), lookup };
+
+  const full = await searchSource("world_bank", "International tourism, number of arrivals (ST.INT.ARVL)", 1, options);
+  assert.equal(full.results.length, 1);
+  assert.equal(full.results[0].dataset_ref, "world_bank:ST.INT.ARVL");
+
+  resetWorldBankIndicatorCacheForTests();
+  const tourismOnly = await searchSource("world_bank", "tourism", 1, { fetchImpl: makeFetchImpl([]), lookup });
+  assert.equal(tourismOnly.results.length, 1);
+  assert.equal(tourismOnly.results[0].dataset_ref, "world_bank:ST.INT.ARVL");
+
+  resetWorldBankIndicatorCacheForTests();
+  const punctuationOnly = await searchSource("world_bank", "!!! ,,, ---", 1, { fetchImpl: makeFetchImpl([]), lookup });
+  resetWorldBankIndicatorCacheForTests();
+  const empty = await searchSource("world_bank", "", 1, { fetchImpl: makeFetchImpl([]), lookup });
+  assert.deepEqual(punctuationOnly.results.map(item => item.dataset_ref), empty.results.map(item => item.dataset_ref));
+});
+
 function bigIndicatorItem(index) {
   const id = `IND.${String(index).padStart(3, "0")}`;
   return { id, name: `Matching indicator ${id}`, source: { value: "World Bank" }, sourceNote: "note" };
