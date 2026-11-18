@@ -201,7 +201,12 @@ async function loadAllWorldBankIndicators(options) {
 async function searchWorldBank(query, page, options) {
   const pageNumber = Number.isInteger(page) && page > 0 ? page : 1;
   const items = await loadAllWorldBankIndicators(options);
-  const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
+  const terms = query
+    .toLowerCase()
+    .replace(/[^a-z0-9._-]+/g, " ")
+    .split(/\s+/)
+    .map(term => term.replace(/^[.-]+|[.-]+$/g, ""))
+    .filter(Boolean);
   const matches = items.filter(item => terms.every(term => `${item.id} ${item.name} ${item.source?.value || ""}`.toLowerCase().includes(term)));
   const start = (pageNumber - 1) * 20;
   const pageItems = matches.slice(start, start + 20);
