@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import http from "node:http";
 import { createHttpServer } from "../src/server.mjs";
-import { classifyRights, issueFlowToken, verifyFlowToken, parseRows, summarizeRows } from "../src/data.mjs";
+import { classifyRights, issueFlowToken, verifyFlowToken, parseRows, summarizeRows, createExport } from "../src/data.mjs";
 import { isBlockedAddress, validatePublicUrl, assertSafeArchive } from "../src/security.mjs";
 import { SOURCE_REGISTRY, decodeRef } from "../src/adapters.mjs";
 
@@ -78,6 +78,52 @@ test("bounded parsing handles quoted CSV and reports quality", () => {
   assert.equal(summary.quality.sample_size, 3);
   assert.equal(summary.quality.duplicate_rows_sample, 1);
   assert.equal(summary.columns.find(column => column.name === "value").nullable, true);
+});
+
+test("nested World Bank fields flatten into plain columns", () => {
+  const payload = [
+    { page: 1 },
+    [{
+      indicator: { id: "ST.INT.ARVL", value: "International tourism, number of arrivals" },
+      country: { id: "ZH", value: "Africa Eastern and Southern" },
+      countryiso3code: "AFE", date: "2019", value: 39826701.4, unit: "", obs_status: "", decimal: 0,
+    }],
+  ];
+  const [row] = parseRows(Buffer.from(JSON.stringify(payload)), "JSON", 10);
+  assert.equal(row.indicator, "International tourism, number of arrivals");
+  assert.equal(row.indicator_id, "ST.INT.ARVL");
+  assert.equal(row.country, "Africa Eastern and Southern");
+  assert.equal(row.country_id, "ZH");
+  assert.deepEqual(Object.keys(row).slice(0, 4), ["indicator", "indicator_id", "country", "country_id"]);
+  assert.doesNotMatch(JSON.stringify(row), /\[object Object\]/);
+});
+
+test("World Bank export CSV has no [object Object] text", async () => {
+  const id = "ST.INT.ARVL";
+  const detail = [{ page: 1 }, [{ id, name: "International tourism, number of arrivals", source: { value: "World Bank" }, sourceNote: "note" }]];
+  const data = [
+    { page: 1 },
+    [{
+      indicator: { id, value: "International tourism, number of arrivals" },
+      country: { id: "ZH", value: "Africa Eastern and Southern" },
+      countryiso3code: "AFE", date: "2019", value: 39826701.4, unit: "", obs_status: "", decimal: 0,
+    }],
+  ];
+  const fetchImpl = async url => {
+    const value = String(url);
+    if (value.includes(`/v2/indicator/${id}`)) return new Response(JSON.stringify(detail), { headers: { "content-type": "application/json" } });
+    if (value.includes(`/v2/country/all/indicator/${id}`)) return new Response(JSON.stringify(data), { headers: { "content-type": "application/json" } });
+    throw new Error(`unexpected URL ${value}`);
+  };
+  const exported = await createExport({
+    dataset_ref: `world_bank:${id}`, resource_ref: `world_bank:${id}`, format: "csv",
+    selected_columns: ["indicator", "indicator_id", "country", "country_id", "date", "value"],
+    filters: [], row_limit: 10, license_acknowledged: true, export_confirmed: true,
+  }, { fetchImpl, lookup });
+  const csv = exported.content.toString("utf8");
+  assert.doesNotMatch(csv, /\[object Object\]/);
+  assert.match(csv, /International tourism, number of arrivals/);
+  assert.match(csv, /ST\.INT\.ARVL/);
 });
 
 test("MCP lists app tools and closed resources", async context => {

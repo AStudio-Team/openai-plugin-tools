@@ -72,6 +72,21 @@ function parseCsv(text, maxRows = 200) {
   return rows.slice(0, maxRows).map(values => Object.fromEntries(uniqueHeaders.map((header, index) => [header, values[index] ?? ""])));
 }
 
+function flattenRow(item) {
+  const result = {};
+  for (const [key, value] of Object.entries(item)) {
+    if (value && typeof value === "object" && !Array.isArray(value) && "value" in value) {
+      result[key] = value.value;
+      if ("id" in value) result[`${key}_id`] = value.id;
+    } else if (value && typeof value === "object") {
+      result[key] = JSON.stringify(value);
+    } else {
+      result[key] = value;
+    }
+  }
+  return result;
+}
+
 export function parseRows(buffer, format, maxRows = 200) {
   const archive = assertSafeArchive(buffer);
   if (archive.archive) throw new Error("ARCHIVE_EXPORT_DISABLED");
@@ -82,7 +97,7 @@ export function parseRows(buffer, format, maxRows = 200) {
   else value = JSON.parse(text);
   if (Array.isArray(value) && Array.isArray(value[1]) && value[0]?.page !== undefined) value = value[1];
   if (!Array.isArray(value)) value = Array.isArray(value?.data) ? value.data : [value];
-  return value.slice(0, maxRows).map(item => item && typeof item === "object" && !Array.isArray(item) ? item : { value: item });
+  return value.slice(0, maxRows).map(item => flattenRow(item && typeof item === "object" && !Array.isArray(item) ? item : { value: item }));
 }
 
 function inferType(values) {
