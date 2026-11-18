@@ -138,9 +138,35 @@ async function resolveCkanResource(source, compoundId, options) {
   return { url: resource.url, format: clean(resource.format, 30).toUpperCase(), name: clean(resource.name || resourceId, 200), dataset: inspected };
 }
 
+const WORLD_BANK_INDICATOR_CACHE_MS = 24 * 60 * 60 * 1000;
+const WORLD_BANK_INDICATOR_PAGE_BATCH = 4;
+let worldBankIndicatorCache = null;
+
+async function fetchWorldBankIndicatorPage(pageNumber, options) {
+  return jsonFetch(`https://api.worldbank.org/v2/indicator?format=json&per_page=1000&page=${pageNumber}`, SOURCE_REGISTRY.world_bank.catalogOrigins, options);
+}
+
+async function loadAllWorldBankIndicators(options) {
+  if (worldBankIndicatorCache && Date.now() - worldBankIndicatorCache.fetchedAt < WORLD_BANK_INDICATOR_CACHE_MS) return worldBankIndicatorCache.items;
+  const first = await fetchWorldBankIndicatorPage(1, options);
+  const items = Array.isArray(first) && Array.isArray(first[1]) ? [...first[1]] : [];
+  const totalPages = Number(first?.[0]?.pages) || 1;
+  for (let start = 2; start <= totalPages; start += WORLD_BANK_INDICATOR_PAGE_BATCH) {
+    const batch = [];
+    for (let pageNumber = start; pageNumber < start + WORLD_BANK_INDICATOR_PAGE_BATCH && pageNumber <= totalPages; pageNumber += 1) batch.push(pageNumber);
+    const settled = await Promise.allSettled(batch.map(pageNumber => fetchWorldBankIndicatorPage(pageNumber, options)));
+    for (const outcome of settled) {
+      if (outcome.status !== "fulfilled") continue;
+      const payload = outcome.value;
+      if (Array.isArray(payload) && Array.isArray(payload[1])) items.push(...payload[1]);
+    }
+  }
+  worldBankIndicatorCache = { items, fetchedAt: Date.now() };
+  return items;
+}
+
 async function searchWorldBank(query, page, options) {
-  const payload = await jsonFetch(`https://api.worldbank.org/v2/indicator?format=json&per_page=1000&page=${page}`, SOURCE_REGISTRY.world_bank.catalogOrigins, options);
-  const items = Array.isArray(payload) && Array.isArray(payload[1]) ? payload[1] : [];
+  const items = await loadAllWorldBankIndicators(options);
   const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
   const matches = items.filter(item => terms.every(term => `${item.id} ${item.name} ${item.source?.value || ""}`.toLowerCase().includes(term))).slice(0, 20);
   return {
@@ -161,6 +187,10 @@ async function inspectWorldBank(id, options) {
     dataset: { dataset_ref: ref("world_bank", id), title: clean(item.name, 300), publisher: clean(item.source?.value || "World Bank", 160), description: clean(item.sourceNote, 600), updated_at: null, license_label: "CC BY 4.0", official_page: `${SOURCE_REGISTRY.world_bank.publisherBase}${encodeURIComponent(id)}` },
     resources: [{ resource_ref: ref("world_bank", id), name: `${clean(item.name, 160)} API data`, source_format: "JSON", declared_bytes: null, estimated_rows: null, exportable: true, blocked_reason: null }],
   };
+}
+
+export function resetWorldBankIndicatorCacheForTests() {
+  worldBankIndicatorCache = null;
 }
 
 export async function searchSource(source, query, page, options = {}) {
