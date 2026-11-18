@@ -98,6 +98,24 @@ test("nested World Bank fields flatten into plain columns", () => {
   assert.doesNotMatch(JSON.stringify(row), /\[object Object\]/);
 });
 
+test("a source id column always wins over a generated one", () => {
+  const [row] = parseRows(Buffer.from(JSON.stringify([{ country_id: "SRC", country: { id: "ZH", value: "Africa" } }])), "JSON", 10);
+  assert.equal(row.country_id, "SRC");
+  assert.equal(row.country, "Africa");
+});
+
+test("a source id column wins even when it comes after the object key", () => {
+  const [row] = parseRows(Buffer.from(JSON.stringify([{ country: { id: "ZH", value: "Africa" }, country_id: "SRC" }])), "JSON", 10);
+  assert.equal(row.country_id, "SRC");
+  assert.equal(row.country, "Africa");
+});
+
+test("an object with a value but no id gets a null id column", () => {
+  const [row] = parseRows(Buffer.from(JSON.stringify([{ indicator: { value: "X" } }])), "JSON", 10);
+  assert.equal(row.indicator, "X");
+  assert.equal(row.indicator_id, null);
+});
+
 test("World Bank export CSV has no [object Object] text", async () => {
   const id = "ST.INT.ARVL";
   const detail = [{ page: 1 }, [{ id, name: "International tourism, number of arrivals", source: { value: "World Bank" }, sourceNote: "note" }]];

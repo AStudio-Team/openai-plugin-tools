@@ -77,7 +77,8 @@ function flattenRow(item) {
   for (const [key, value] of Object.entries(item)) {
     if (value && typeof value === "object" && !Array.isArray(value) && "value" in value) {
       result[key] = value.value;
-      if ("id" in value) result[`${key}_id`] = value.id;
+      const idKey = `${key}_id`;
+      if (!(idKey in item)) result[idKey] = "id" in value ? value.id : null;
     } else if (value && typeof value === "object") {
       result[key] = JSON.stringify(value);
     } else {
