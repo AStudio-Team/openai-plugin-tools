@@ -182,9 +182,21 @@ astudio.agency, www.astudio.agency {
             source = path.read_text()
             self.assertNotIn("/opt/", source, f"{path} must not hardcode a server path")
         script = (ROOT / "deploy" / "deploy-production.sh").read_text()
-        for line in script.splitlines():
-            if "docker exec" in line:
-                self.assertIn('docker exec "$CADDY_CONTAINER"', line, line)
+        docker_exec_lines = [line for line in script.splitlines() if "docker exec" in line]
+        self.assertTrue(docker_exec_lines, "expected at least one docker exec line")
+        for line in docker_exec_lines:
+            self.assertIn('docker exec "$CADDY_CONTAINER"', line, line)
+        network_lines = [line for line in script.splitlines() if "--network" in line]
+        self.assertTrue(network_lines, "expected at least one --network line")
+        for line in network_lines:
+            self.assertIn('--network "$PLUGIN_DOCKER_NETWORK"', line, line)
+
+        caddy_source = (ROOT / "deploy" / "update-caddy.py").read_text()
+        self.assertNotIn(
+            "reverse_proxy ",
+            caddy_source,
+            "update-caddy.py must read the proxy anchor from CADDY_ANCHOR_LINE only",
+        )
 
 
 if __name__ == "__main__":

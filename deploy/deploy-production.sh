@@ -5,6 +5,8 @@ set -euo pipefail
 : "${CADDYFILE:?CADDYFILE is required}"
 : "${CADDY_CONTAINER:?CADDY_CONTAINER is required}"
 : "${PLUGIN_DOCKER_NETWORK:?PLUGIN_DOCKER_NETWORK is required}"
+: "${CADDY_ANCHOR_LINE:?CADDY_ANCHOR_LINE is required}"
+export CADDY_ANCHOR_LINE
 
 RELEASE_SHA="${1:?release SHA required}"
 SHORT_SHA="${RELEASE_SHA:0:12}"
