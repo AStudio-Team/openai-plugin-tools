@@ -37,3 +37,132 @@ test("searchWorldBank finds a match on a later page, caches, and survives a fail
   assert.equal(second.results[0].dataset_ref, "world_bank:NY.GDP.MKTP.CD");
   assert.equal(callCounts.length, callsAfterFirstSearch, "second search must not refetch any indicator page");
 });
+
+function bigIndicatorItem(index) {
+  const id = `IND.${String(index).padStart(3, "0")}`;
+  return { id, name: `Matching indicator ${id}`, source: { value: "World Bank" }, sourceNote: "note" };
+}
+
+function makeConcurrencyFetchImpl(state) {
+  return async url => {
+    const value = String(url);
+    const pageNumber = Number(/[?&]page=(\d+)/.exec(value)[1]);
+    state.inFlight += 1;
+    state.maxInFlight = Math.max(state.maxInFlight, state.inFlight);
+    state.calls.push(pageNumber);
+    await new Promise(resolve => setTimeout(resolve, 5));
+    state.inFlight -= 1;
+    const startIndex = (pageNumber - 1) * 4 + 1;
+    const items = pageNumber <= 5 ? [bigIndicatorItem(startIndex), bigIndicatorItem(startIndex + 1), bigIndicatorItem(startIndex + 2), bigIndicatorItem(startIndex + 3)] : [];
+    return new Response(JSON.stringify(pagePayload(pageNumber, 5, items)), { headers: { "content-type": "application/json" } });
+  };
+}
+
+test("concurrent searches share one load, stay within the 4-request batch and fetch each page once", async () => {
+  resetWorldBankIndicatorCacheForTests();
+  const state = { calls: [], inFlight: 0, maxInFlight: 0 };
+  const options = { fetchImpl: makeConcurrencyFetchImpl(state), lookup };
+
+  const [first, second] = await Promise.all([
+    searchSource("world_bank", "matching indicator", 1, options),
+    searchSource("world_bank", "matching indicator", 1, options),
+  ]);
+
+  assert.ok(state.maxInFlight <= 4, `concurrency exceeded 4: ${state.maxInFlight}`);
+  assert.deepEqual([...state.calls].sort((a, b) => a - b), [1, 2, 3, 4, 5]);
+  assert.equal(first.results.length, 20);
+  assert.deepEqual(first.results.map(result => result.dataset_ref), second.results.map(result => result.dataset_ref));
+});
+
+function makeWidePagesFetchImpl() {
+  return async url => {
+    const value = String(url);
+    const pageNumber = Number(/[?&]page=(\d+)/.exec(value)[1]);
+    const startIndex = (pageNumber - 1) * 4 + 1;
+    const items = pageNumber <= 10 ? [bigIndicatorItem(startIndex), bigIndicatorItem(startIndex + 1), bigIndicatorItem(startIndex + 2), bigIndicatorItem(startIndex + 3)] : [];
+    return new Response(JSON.stringify(pagePayload(pageNumber, 10, items)), { headers: { "content-type": "application/json" } });
+  };
+}
+
+test("page 2 returns the next twenty matches, sorted, distinct from page 1", async () => {
+  resetWorldBankIndicatorCacheForTests();
+  const options = { fetchImpl: makeWidePagesFetchImpl(), lookup };
+
+  const pageOne = await searchSource("world_bank", "matching indicator", 1, options);
+  const pageTwo = await searchSource("world_bank", "matching indicator", 2, options);
+
+  assert.equal(pageOne.page, 1);
+  assert.equal(pageTwo.page, 2);
+  assert.equal(pageOne.results.length, 20);
+  assert.equal(pageOne.has_more, true);
+  assert.equal(pageTwo.results.length, 20);
+  assert.equal(pageTwo.has_more, false);
+  const overlap = pageOne.results.filter(result => pageTwo.results.some(other => other.dataset_ref === result.dataset_ref));
+  assert.equal(overlap.length, 0);
+});
+
+test("cache is reused before 24 hours and refetched after", async () => {
+  resetWorldBankIndicatorCacheForTests();
+  const state = { calls: [], inFlight: 0, maxInFlight: 0 };
+  let currentTime = 1000;
+  const options = { fetchImpl: makeConcurrencyFetchImpl(state), lookup, now: () => currentTime };
+
+  await searchSource("world_bank", "matching indicator", 1, options);
+  const callsAfterFirst = state.calls.length;
+
+  currentTime += 24 * 60 * 60 * 1000 - 1000;
+  await searchSource("world_bank", "matching indicator", 1, options);
+  assert.equal(state.calls.length, callsAfterFirst, "still within 24h ttl, no refetch expected");
+
+  currentTime += 2000;
+  await searchSource("world_bank", "matching indicator", 1, options);
+  assert.ok(state.calls.length > callsAfterFirst, "past 24h ttl, expected a refetch");
+});
+
+test("a partial load (page failure) is cached for only 5 minutes", async () => {
+  resetWorldBankIndicatorCacheForTests();
+  let page2Attempts = 0;
+  let currentTime = 1000;
+  const fetchImpl = async url => {
+    const value = String(url);
+    const pageNumber = Number(/[?&]page=(\d+)/.exec(value)[1]);
+    if (pageNumber === 2) { page2Attempts += 1; throw new Error("UPSTREAM_ERROR"); }
+    const startIndex = (pageNumber - 1) * 4 + 1;
+    const items = pageNumber <= 3 ? [bigIndicatorItem(startIndex), bigIndicatorItem(startIndex + 1), bigIndicatorItem(startIndex + 2), bigIndicatorItem(startIndex + 3)] : [];
+    return new Response(JSON.stringify(pagePayload(pageNumber, 3, items)), { headers: { "content-type": "application/json" } });
+  };
+  const options = { fetchImpl, lookup, now: () => currentTime };
+
+  const first = await searchSource("world_bank", "matching indicator", 1, options);
+  assert.ok(first.results.length > 0, "partial load still returns what did load");
+  const attemptsAfterFirst = page2Attempts;
+
+  currentTime += 5 * 60 * 1000 - 1000;
+  await searchSource("world_bank", "matching indicator", 1, options);
+  assert.equal(page2Attempts, attemptsAfterFirst, "still within 5 minute partial ttl, no refetch expected");
+
+  currentTime += 2000;
+  await searchSource("world_bank", "matching indicator", 1, options);
+  assert.ok(page2Attempts > attemptsAfterFirst, "past 5 minute partial ttl, expected a refetch");
+});
+
+test("page 1 failure falls back to a plain single-page request for that search", async () => {
+  resetWorldBankIndicatorCacheForTests();
+  let page1Attempts = 0;
+  const fetchImpl = async url => {
+    const value = String(url);
+    const pageNumber = Number(/[?&]page=(\d+)/.exec(value)[1]);
+    if (pageNumber === 1) {
+      page1Attempts += 1;
+      if (page1Attempts === 1) throw new Error("UPSTREAM_ERROR");
+      return new Response(JSON.stringify(pagePayload(1, 1, [bigIndicatorItem(1)])), { headers: { "content-type": "application/json" } });
+    }
+    throw new Error(`unexpected page ${pageNumber}`);
+  };
+  const options = { fetchImpl, lookup };
+
+  const result = await searchSource("world_bank", "matching indicator", 1, options);
+  assert.equal(page1Attempts, 2, "expected the full-index attempt and the fallback single-page attempt");
+  assert.equal(result.results.length, 1);
+  assert.equal(result.results[0].dataset_ref, "world_bank:IND.001");
+});
