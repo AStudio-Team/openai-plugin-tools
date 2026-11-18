@@ -497,7 +497,7 @@ check_mcp https://www.astudio.agency/openai-plugins/competitor-comparison-builde
 check_resources https://www.astudio.agency/openai-plugins/competitor-comparison-builder/mcp ui://competitor-comparison-builder/brief-builder.html,ui://competitor-comparison-builder/brief-review.html,ui://competitor-comparison-builder/copy-comparison.html,ui://competitor-comparison-builder/export-panel.html
 check_health https://www.astudio.agency/openai-plugins/sales-collateral-builder/health sales-collateral-builder
 check_health https://www.astudio.agency/openai-plugins/sales-collateral-builder/ready sales-collateral-builder
-check_mcp https://www.astudio.agency/openai-plugins/sales-collateral-builder/mcp sales-collateral-builder open_collateral_brief,review_collateral_brief,approve_collateral_brief,draft_collateral,request_collateral_revision,export_collateral
+check_mcp https://www.astudio.agency/openai-plugins/sales-collateral-builder/mcp sales-collateral-builder open_collateral_brief,review_collateral_brief,approve_collateral_brief,check_collateral,request_collateral_revision,export_collateral
 check_resources https://www.astudio.agency/openai-plugins/sales-collateral-builder/mcp ui://sales-collateral-builder/brief-builder.html,ui://sales-collateral-builder/brief-review.html,ui://sales-collateral-builder/collateral-preview.html,ui://sales-collateral-builder/export-panel.html
 check_health https://www.astudio.agency/openai-plugins/pricing-packaging-advisor/health pricing-packaging-advisor
 check_health https://www.astudio.agency/openai-plugins/pricing-packaging-advisor/ready pricing-packaging-advisor
@@ -505,7 +505,7 @@ check_mcp https://www.astudio.agency/openai-plugins/pricing-packaging-advisor/mc
 check_resources https://www.astudio.agency/openai-plugins/pricing-packaging-advisor/mcp ui://pricing-packaging-advisor/brief-builder.html,ui://pricing-packaging-advisor/brief-review.html,ui://pricing-packaging-advisor/options.html,ui://pricing-packaging-advisor/export-panel.html
 check_health https://www.astudio.agency/openai-plugins/content-strategy-planner/health content-strategy-planner
 check_health https://www.astudio.agency/openai-plugins/content-strategy-planner/ready content-strategy-planner
-check_mcp https://www.astudio.agency/openai-plugins/content-strategy-planner/mcp content-strategy-planner open_content_brief,review_content_brief,approve_content_brief,draft_content_strategy,request_strategy_revision,export_content_strategy
+check_mcp https://www.astudio.agency/openai-plugins/content-strategy-planner/mcp content-strategy-planner open_content_brief,review_content_brief,approve_content_brief,check_content_strategy,request_strategy_revision,export_content_strategy
 check_resources https://www.astudio.agency/openai-plugins/content-strategy-planner/mcp ui://content-strategy-planner/brief-builder.html,ui://content-strategy-planner/brief-review.html,ui://content-strategy-planner/strategy-preview.html,ui://content-strategy-planner/export-panel.html
 check_health https://www.astudio.agency/openai-plugins/ab-test-planner/health ab-test-planner
 check_health https://www.astudio.agency/openai-plugins/ab-test-planner/ready ab-test-planner
@@ -513,7 +513,7 @@ check_mcp https://www.astudio.agency/openai-plugins/ab-test-planner/mcp ab-test-
 check_resources https://www.astudio.agency/openai-plugins/ab-test-planner/mcp ui://ab-test-planner/brief-builder.html,ui://ab-test-planner/brief-review.html,ui://ab-test-planner/plan-options.html,ui://ab-test-planner/export-panel.html
 check_health https://www.astudio.agency/openai-plugins/retention-playbook/health retention-playbook
 check_health https://www.astudio.agency/openai-plugins/retention-playbook/ready retention-playbook
-check_mcp https://www.astudio.agency/openai-plugins/retention-playbook/mcp retention-playbook open_retention_brief,review_retention_brief,approve_retention_brief,draft_retention_playbook,request_playbook_revision,export_retention_playbook
+check_mcp https://www.astudio.agency/openai-plugins/retention-playbook/mcp retention-playbook open_retention_brief,review_retention_brief,approve_retention_brief,check_retention_playbook,request_playbook_revision,export_retention_playbook
 check_resources https://www.astudio.agency/openai-plugins/retention-playbook/mcp ui://retention-playbook/brief-builder.html,ui://retention-playbook/brief-review.html,ui://retention-playbook/playbook-preview.html,ui://retention-playbook/export-panel.html
 ACTUAL_OPENAI_CHALLENGE="$(curl --fail --silent --show-error https://www.astudio.agency/.well-known/openai-apps-challenge)"
 if [ "$ACTUAL_OPENAI_CHALLENGE" != "$EXPECTED_OPENAI_CHALLENGE" ]; then
