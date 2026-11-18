@@ -85,6 +85,33 @@ test("fidelity ignores sentence punctuation after a preserved currency literal",
   assert.deepEqual(checked.missing_facts, []);
 });
 
+test("fidelity does not treat a bare comma before a currency code as an amount", () => {
+  const checked = checkFidelity({
+    source_text: "Maison X Oud Noir, AED 450",
+    candidate_text: "Maison X Oud Noir السعر: AED 450",
+  });
+  assert.deepEqual(checked.missing_facts, []);
+  assert.deepEqual(checked.compared.source.currency_quantities, ["aed 450"]);
+});
+
+test("fidelity keeps a thousands-separated currency amount with decimals", () => {
+  const checked = checkFidelity({
+    source_text: "Price, SAR 1,250.50 today",
+    candidate_text: "السعر SAR 1,250.50",
+  });
+  assert.equal(checked.preservation_passed, true);
+  assert.deepEqual(checked.missing_facts, []);
+});
+
+test("fidelity still extracts an Arabic-Indic currency quantity", () => {
+  const checked = checkFidelity({
+    source_text: "السعر ٤٥٠ درهم",
+    candidate_text: "٤٥٠ درهم",
+  });
+  assert.equal(checked.preservation_passed, true);
+  assert.deepEqual(checked.missing_facts, []);
+});
+
 test("fidelity reports missing literals and added numeric claims", () => {
   const checked = checkFidelity({ source_text: "السعر 100 درهم يوم 2026-10-11", candidate_text: "السعر 120 درهم", protected_literals: ["SKU-X"] });
   assert.equal(checked.preservation_passed, false);
