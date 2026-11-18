@@ -1,11 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+: "${PLUGIN_TOOLS_ROOT:?PLUGIN_TOOLS_ROOT is required}"
+: "${CADDYFILE:?CADDYFILE is required}"
+: "${CADDY_CONTAINER:?CADDY_CONTAINER is required}"
+: "${PLUGIN_DOCKER_NETWORK:?PLUGIN_DOCKER_NETWORK is required}"
+
 RELEASE_SHA="${1:?release SHA required}"
 SHORT_SHA="${RELEASE_SHA:0:12}"
 DEPLOY_ID="${SHORT_SHA}-$$"
-RELEASE_DIR="/opt/openai-plugin-tools/releases/${RELEASE_SHA}"
-STATE_DIR="/opt/openai-plugin-tools"
+RELEASE_DIR="${PLUGIN_TOOLS_ROOT}/releases/${RELEASE_SHA}"
+STATE_DIR="${PLUGIN_TOOLS_ROOT}"
 PDF_STATE_FILE="${STATE_DIR}/current-pdf-container"
 ARABIC_STATE_FILE="${STATE_DIR}/current-arabic-container"
 AD_STATE_FILE="${STATE_DIR}/current-ad-creative-lab-container"
@@ -28,7 +33,6 @@ LANDING_COPY_STATE_FILE="${STATE_DIR}/current-landing-copy-container"
 SCHEMA_MARKUP_STATE_FILE="${STATE_DIR}/current-schema-markup-container"
 LEGACY_STATE_FILE="${STATE_DIR}/current-container"
 ENV_FILE="${STATE_DIR}/openai.env"
-CADDYFILE="/opt/websites/caddy/Caddyfile"
 BACKUP="${CADDYFILE}.plugin-tools.${DEPLOY_ID}.bak"
 PDF_IMAGE="openai-plugin-pdf:${RELEASE_SHA}"
 ARABIC_IMAGE="openai-plugin-arabic:${RELEASE_SHA}"
@@ -171,9 +175,9 @@ rollback() {
     # Write into the existing file: the Caddy container bind-mounts this path and follows the inode, so a rename would leave it reading the old content.
     if ! cp "$BACKUP" "$CADDYFILE"; then
       rollback_ok=0
-    elif ! docker exec websites-caddy-1 caddy validate --config /etc/caddy/Caddyfile; then
+    elif ! docker exec "$CADDY_CONTAINER" caddy validate --config /etc/caddy/Caddyfile; then
       rollback_ok=0
-    elif [ "$SWITCHED" -eq 1 ] && ! docker exec websites-caddy-1 caddy reload --config /etc/caddy/Caddyfile; then
+    elif [ "$SWITCHED" -eq 1 ] && ! docker exec "$CADDY_CONTAINER" caddy reload --config /etc/caddy/Caddyfile; then
       rollback_ok=0
     fi
   fi
@@ -303,7 +307,7 @@ run_container() {
   docker run -d \
     --name "$name" \
     --restart unless-stopped \
-    --network websites_web \
+    --network "$PLUGIN_DOCKER_NETWORK" \
     --memory 512m \
     --memory-swap 512m \
     --cpus 1.0 \
@@ -407,11 +411,11 @@ cp "$CADDYFILE" "$BACKUP"
 python3 deploy/update-caddy.py "$CADDYFILE" "$RENDERED_BLOCK"
 python3 deploy/update-fixture-caddy.py "$CADDYFILE" "$RENDERED_FIXTURES"
 CONFIG_MUTATED=1
-if ! docker exec websites-caddy-1 caddy validate --config /etc/caddy/Caddyfile; then
+if ! docker exec "$CADDY_CONTAINER" caddy validate --config /etc/caddy/Caddyfile; then
   exit 1
 fi
 SWITCHED=1
-docker exec websites-caddy-1 caddy reload --config /etc/caddy/Caddyfile
+docker exec "$CADDY_CONTAINER" caddy reload --config /etc/caddy/Caddyfile
 
 check_health() {
   local url="$1"

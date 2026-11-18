@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
@@ -21,8 +22,8 @@ def main() -> int:
         _, after = rest.split(END, 1)
         updated = before.rstrip() + "\n" + block + "\n" + after.lstrip("\n")
     else:
-        needle = "    reverse_proxy nginx-ae-interim:80 {"
-        if needle not in text:
+        needle = os.environ.get("CADDY_ANCHOR_LINE")
+        if not needle or needle not in text:
             raise SystemExit("main ASTUDIO reverse proxy marker not found")
         updated = text.replace(needle, block + "\n" + needle, 1)
     caddyfile.write_text(updated)
