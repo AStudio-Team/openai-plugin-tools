@@ -91,7 +91,7 @@ class ManifestAndPackageTests(unittest.TestCase):
         self.assertEqual(package["dependencies"], {
             "@modelcontextprotocol/ext-apps": "2.0.3",
             "@modelcontextprotocol/sdk": "1.32.1",
-            "zod": "4.6.5",
+            "zod": "4.6.7",
         })
         source = (ROOT / "gcc-arabic-writer" / "src" / "server.mjs").read_text()
         for forbidden in ("node:http\"", "node:https", "fetch(", "axios", "openai", "anthropic"):
