@@ -22,12 +22,15 @@ def rpc(identifier: int, method: str, params: dict | None = None) -> dict:
             with urllib.request.urlopen(request, timeout=45) as response:
                 return json.load(response)
         except urllib.error.HTTPError as error:
-            if error.code != 429 or attempt == MAX_TRIES:
-                raise
             try:
-                retry_after = int(error.headers.get("retry-after", DEFAULT_RETRY_AFTER))
-            except (TypeError, ValueError):
-                retry_after = DEFAULT_RETRY_AFTER
+                if error.code != 429 or attempt == MAX_TRIES:
+                    raise
+                try:
+                    retry_after = int(error.headers.get("retry-after", DEFAULT_RETRY_AFTER))
+                except (TypeError, ValueError):
+                    retry_after = DEFAULT_RETRY_AFTER
+            finally:
+                error.close()
             time.sleep(min(retry_after, MAX_RETRY_AFTER))
     raise AssertionError("unreachable")
 
