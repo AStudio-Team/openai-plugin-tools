@@ -43,14 +43,14 @@ test("synthetic review fixtures redirect to isolated origins and expose determin
   const server = createHttpServer({ request }); await new Promise(resolve => server.listen(0, "127.0.0.1", resolve)); t.after(() => server.close());
   const port = server.address().port;
   const redirect = await fixtureRequest(port, "fixtures.astudio.agency", "/robots-blocked/article");
-  assert.equal(redirect.status, 302); assert.equal(redirect.headers.location, "https://robots-blocked.fixtures.astudio.agency/article");
-  const robots = await fixtureRequest(port, "robots-blocked.fixtures.astudio.agency", "/robots.txt");
+  assert.equal(redirect.status, 302); assert.equal(redirect.headers.location, "https://fixtures-robots-blocked.astudio.agency/article");
+  const robots = await fixtureRequest(port, "fixtures-robots-blocked.astudio.agency", "/robots.txt");
   assert.equal(robots.status, 200); assert.ok(robots.body.includes("Disallow: /article"));
-  const llms = await fixtureRequest(port, "llms-html.fixtures.astudio.agency", "/llms.txt");
+  const llms = await fixtureRequest(port, "fixtures-llms-html.astudio.agency", "/llms.txt");
   assert.match(llms.headers["content-type"], /text\/html/);
-  const jsonLd = await fixtureRequest(port, "invalid-jsonld.fixtures.astudio.agency", "/product");
+  const jsonLd = await fixtureRequest(port, "fixtures-invalid-jsonld.astudio.agency", "/product");
   assert.ok(jsonLd.body.includes("{invalid"));
-  const sitemap = await fixtureRequest(port, "sitemap-timeout.fixtures.astudio.agency", "/sitemap.xml");
+  const sitemap = await fixtureRequest(port, "fixtures-sitemap-timeout.astudio.agency", "/sitemap.xml");
   assert.equal(sitemap.status, 504);
 });
 

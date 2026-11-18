@@ -19,7 +19,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const PORT = Number(process.env.PORT || 8790);
 const MAX_BODY_BYTES = Number(process.env.MAX_BODY_BYTES || 128 * 1024);
 const MAX_CONCURRENT = Number(process.env.MAX_CONCURRENT_AUDITS || 4);
-const ALLOWED_HOSTS = new Set((process.env.ALLOWED_HOSTS || "127.0.0.1,localhost,www.astudio.agency,astudio.agency,fixtures.astudio.agency,ready.fixtures.astudio.agency,robots-blocked.fixtures.astudio.agency,llms-html.fixtures.astudio.agency,invalid-jsonld.fixtures.astudio.agency,sitemap-timeout.fixtures.astudio.agency").split(",").map(value => value.trim().toLowerCase()).filter(Boolean));
+const ALLOWED_HOSTS = new Set((process.env.ALLOWED_HOSTS || "127.0.0.1,localhost,www.astudio.agency,astudio.agency,fixtures.astudio.agency,fixtures-ready.astudio.agency,fixtures-robots-blocked.astudio.agency,fixtures-llms-html.astudio.agency,fixtures-invalid-jsonld.astudio.agency,fixtures-sitemap-timeout.astudio.agency").split(",").map(value => value.trim().toLowerCase()).filter(Boolean));
 const RATE_WINDOW_MS = 60_000;
 const RATE_LIMIT_PER_CLIENT = Number(process.env.RATE_LIMIT_PER_CLIENT || 20);
 const RATE_LIMIT_GLOBAL = Number(process.env.RATE_LIMIT_GLOBAL || 200);
@@ -141,14 +141,14 @@ function serveFixture(req, res, url) {
     const fixture = url.pathname.split("/").filter(Boolean)[0];
     if (!["ready", "robots-blocked", "llms-html", "invalid-jsonld", "sitemap-timeout"].includes(fixture)) return false;
     const suffix = url.pathname.slice(fixture.length + 1) || "/";
-    res.writeHead(302, { location: `https://${fixture}.fixtures.astudio.agency${suffix}`, "cache-control": "no-store" }).end();
+    res.writeHead(302, { location: `https://fixtures-${fixture}.astudio.agency${suffix}`, "cache-control": "no-store" }).end();
     return true;
   }
-  if (!host.endsWith(".fixtures.astudio.agency")) return false;
-  const fixture = host.slice(0, -".fixtures.astudio.agency".length);
+  if (!host.startsWith("fixtures-") || !host.endsWith(".astudio.agency")) return false;
+  const fixture = host.slice("fixtures-".length, -".astudio.agency".length);
   const common = { "cache-control": "no-store", "x-content-type-options": "nosniff" };
   if (url.pathname === "/robots.txt") {
-    const body = fixture === "robots-blocked" ? "User-agent: *\nDisallow: /article\nSitemap: https://robots-blocked.fixtures.astudio.agency/sitemap.xml\n" : `User-agent: *\nAllow: /\nSitemap: https://${host}/sitemap.xml\n`;
+    const body = fixture === "robots-blocked" ? "User-agent: *\nDisallow: /article\nSitemap: https://fixtures-robots-blocked.astudio.agency/sitemap.xml\n" : `User-agent: *\nAllow: /\nSitemap: https://${host}/sitemap.xml\n`;
     res.writeHead(200, { ...common, "content-type": "text/plain; charset=utf-8" }).end(body); return true;
   }
   if (url.pathname === "/sitemap.xml") {
