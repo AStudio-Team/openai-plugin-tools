@@ -32,7 +32,9 @@ export const decodeRef = value => {
 };
 
 async function jsonFetch(url, origins, options = {}) {
-  const result = await safeFetch(url, { allowedOrigins: origins, maxBytes: options.maxBytes || 8 * 1024 * 1024, fetchImpl: options.fetchImpl, lookup: options.lookup });
+  const fetchOptions = { allowedOrigins: origins, maxBytes: options.maxBytes || 8 * 1024 * 1024, fetchImpl: options.fetchImpl, lookup: options.lookup };
+  if (options.timeoutMs != null) fetchOptions.timeoutMs = options.timeoutMs;
+  const result = await safeFetch(url, fetchOptions);
   try { return JSON.parse(result.buffer.toString("utf8")); } catch { throw new Error("INVALID_UPSTREAM_JSON"); }
 }
 
