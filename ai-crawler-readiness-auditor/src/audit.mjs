@@ -244,6 +244,9 @@ export async function runAudit({ url, scope, checks }, dependencies = {}) {
     };
     remediations.push(remediation(`REM-${suffix}-001`, [finding.id], priority, `Address ${finding.title.toLowerCase()}`, actions[finding.id], `Run the same ${finding.id} check again after independently updating the site.`));
   }
+  for (const finding of results.filter(item => item.id === "sitemap" && item.outcome === "not_tested")) {
+    remediations.push(remediation("REM-SITEMAP-RETRY-001", [finding.id], "p2", "Retry the sitemap check later", "Confirm the sitemap address is correct and that the server answers it without a 5xx error or timeout, then retry the sitemap check later.", "Run the sitemap check again once the sitemap responds normally."));
+  }
   const counts = { blockers: results.filter(item => item.outcome === "block").length, warnings: results.filter(item => item.outcome === "warn").length, passed: results.filter(item => item.outcome === "pass").length, notTested: results.filter(item => ["not_tested", "error"].includes(item.outcome)).length };
   const partial = errors.length > 0 || counts.notTested > 0;
   const status = partial ? "incomplete" : counts.blockers ? "blocking_issues_found" : counts.warnings ? "warnings_only" : "no_issues_detected_within_scope";

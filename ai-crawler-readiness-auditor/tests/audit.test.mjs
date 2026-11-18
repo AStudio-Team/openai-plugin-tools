@@ -115,7 +115,10 @@ test("the five submitted fixture cases give the documented results", async () =>
   assert.ok(bad.checks.filter(item => item.outcome === "pass").length >= 5);
   const slow = await run("sitemap-timeout", "/page");
   assert.equal(slow.status, "incomplete");
-  assert.ok(slow.remediations.length === 0 || slow.partial);
+  assert.equal(slow.partial, true);
+  assert.equal(slow.checks.find(item => item.id === "sitemap").outcome, "not_tested");
+  assert.ok(slow.remediations.length > 0);
+  assert.ok(slow.remediations.some(item => item.id === "REM-SITEMAP-RETRY-001"));
 });
 
 test("result payload drops passing evidence before warning evidence", () => {
