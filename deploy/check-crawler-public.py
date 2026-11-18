@@ -3,17 +3,33 @@
 from __future__ import annotations
 import json
 import sys
+import time
+import urllib.error
 import urllib.request
 
 endpoint = sys.argv[1]
+MAX_TRIES = 5
+DEFAULT_RETRY_AFTER = 15
+MAX_RETRY_AFTER = 30
 
 def rpc(identifier: int, method: str, params: dict | None = None) -> dict:
     payload = {"jsonrpc": "2.0", "id": identifier, "method": method}
     if params is not None:
         payload["params"] = params
     request = urllib.request.Request(endpoint, data=json.dumps(payload).encode(), headers={"Content-Type": "application/json", "Accept": "application/json, text/event-stream", "User-Agent": "astudio-plugin-tools-deploy-check/1.0"})
-    with urllib.request.urlopen(request, timeout=45) as response:
-        return json.load(response)
+    for attempt in range(1, MAX_TRIES + 1):
+        try:
+            with urllib.request.urlopen(request, timeout=45) as response:
+                return json.load(response)
+        except urllib.error.HTTPError as error:
+            if error.code != 429 or attempt == MAX_TRIES:
+                raise
+            try:
+                retry_after = int(error.headers.get("retry-after", DEFAULT_RETRY_AFTER))
+            except (TypeError, ValueError):
+                retry_after = DEFAULT_RETRY_AFTER
+            time.sleep(min(retry_after, MAX_RETRY_AFTER))
+    raise AssertionError("unreachable")
 
 initialized = rpc(1, "initialize", {"protocolVersion": "2025-06-18", "capabilities": {}, "clientInfo": {"name": "deploy-check", "version": "1"}})
 assert initialized["result"]["serverInfo"]["name"] == "ai-crawler-readiness-auditor"
