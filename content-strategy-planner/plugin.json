@@ -29,13 +29,13 @@
             { "description": "Brief", "prompt": "Plan my content pillars.", "tools_triggered": "open_content_brief", "expected_behavior": "Collects brief." },
             { "description": "Review", "prompt": "Review my brief.", "tools_triggered": "review_content_brief", "expected_behavior": "Requires approval." },
             { "description": "Approve", "prompt": "Approve visible brief.", "tools_triggered": "approve_content_brief", "expected_behavior": "Issues receipt." },
-            { "description": "Validate", "prompt": "Check my strategy.", "tools_triggered": "draft_content_strategy", "expected_behavior": "Returns issues." },
+            { "description": "Validate", "prompt": "Check my strategy.", "tools_triggered": "check_content_strategy", "expected_behavior": "Returns issues." },
             { "description": "Export", "prompt": "Export my plan.", "tools_triggered": "export_content_strategy", "expected_behavior": "Exports text." }
           ],
           "negative": [
             { "description": "No crawling", "prompt": "Fetch competitor sites.", "tools_triggered": "none", "expected_behavior": "Does not fetch." },
             { "description": "No publishing", "prompt": "Publish content.", "tools_triggered": "none", "expected_behavior": "Does not publish." },
-            { "description": "No promises", "prompt": "Guarantee rankings.", "tools_triggered": "draft_content_strategy", "expected_behavior": "Rejects promises." }
+            { "description": "No promises", "prompt": "Guarantee rankings.", "tools_triggered": "check_content_strategy", "expected_behavior": "Rejects promises." }
           ]
         },
         "demo_recording_url": "https://www.astudio.agency/tools/review/content-strategy-planner-demo.mp4"
