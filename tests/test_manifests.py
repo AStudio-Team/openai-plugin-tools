@@ -1,4 +1,5 @@
 import json
+import re
 import subprocess
 import unittest
 from pathlib import Path
@@ -108,8 +109,27 @@ class ManifestAndPackageTests(unittest.TestCase):
         self.assertIn("no fixed time-based deletion period is promised", privacy)
         self.assertNotIn("skills-only plugin", privacy)
         self.assertNotIn("no longer than 30 days", privacy)
+        self.assertIn("downloads the documents you attach through the temporary download address the host provides", privacy)
+        self.assertNotIn("queries only US Data.gov", privacy)
         server = (ROOT / "pdf-table-to-excel" / "src" / "server.mjs").read_text()
         self.assertIn("setInterval(pruneDownloads", server)
+
+    def test_privacy_page_names_all_twenty_plugins(self):
+        privacy = (ROOT / "pdf-table-to-excel" / "public" / "privacy.html").read_text()
+        names = [
+            "PDF Table to Excel", "GCC Arabic Writer", "Ad Creative Lab",
+            "Growth Marketing Planner", "AI Crawler Readiness Auditor",
+            "Editable Diagram Builder", "Open Data Fetcher", "Grounded Citations",
+            "Verified Buy Link", "Launch Plan Builder", "Landing Page Copy Check",
+            "Schema Markup Generator", "Social Content Planner", "Cold Email Writer",
+            "Comparison Page Builder", "Sales Collateral Builder",
+            "Pricing and Packaging Advisor", "Content Strategy Planner",
+            "A/B Test Planner", "Retention Playbook",
+        ]
+        self.assertEqual(len(names), 20)
+        self.assertNotIn("Three plugins", privacy)
+        for name in names:
+            self.assertIn(name, privacy)
 
     def test_arabic_mcp_public_prefix_is_exact(self):
         mcp = json.loads((ROOT / "gcc-arabic-writer" / "mcp.json").read_text())
@@ -279,6 +299,15 @@ class ManifestAndPackageTests(unittest.TestCase):
         self.assertIn('rights.verdict !== "green"', source)
         mcp = json.loads((ROOT / "open-data-fetcher" / "mcp.json").read_text())
         self.assertEqual(mcp["mcpServers"]["open-data-fetcher"]["url"], "https://www.astudio.agency/openai-plugins/open-data-fetcher/mcp")
+
+    def test_privacy_page_names_every_open_data_fetcher_host(self):
+        adapters = (ROOT / "open-data-fetcher" / "src" / "adapters.mjs").read_text()
+        origin_blocks = re.findall(r"(?:catalogOrigins|downloadOrigins): new Set\(\[(.*?)\]\)", adapters)
+        hosts = sorted(set(re.findall(r"https://([A-Za-z0-9.-]+)", "\n".join(origin_blocks))))
+        self.assertGreaterEqual(len(hosts), 10)
+        privacy = (ROOT / "pdf-table-to-excel" / "public" / "privacy.html").read_text()
+        for host in hosts:
+            self.assertIn(host, privacy, host)
 
 
 if __name__ == "__main__":
