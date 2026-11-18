@@ -26,8 +26,6 @@ const performanceClaim = /(?:\bwe will (?:increase|double|triple|grow|boost|rank
 function escapeRegex(value) { return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
 function digest(value) { return createHash("sha256").update(JSON.stringify(value)).digest("hex"); }
 function sign(value) { return createHmac("sha256", receiptKey()).update(JSON.stringify(value)).digest("hex"); }
-function makeReceipt(kind, value, selectedIndex) { const unsigned = { kind, digest: digest(value), ...(selectedIndex !== undefined ? { selectedIndex } : {}) }; return { ...unsigned, signature: sign(unsigned) }; }
-function verifyReceipt(value, kind, subject) { const parsed = receipt.parse(value); const unsigned = { kind: parsed.kind, digest: parsed.digest, ...(parsed.kind === "selection" ? { selectedIndex: parsed.selectedIndex } : {}) }; const expected = sign(unsigned); if (parsed.kind !== kind || parsed.digest !== digest(subject) || !timingSafeEqual(Buffer.from(expected, "hex"), Buffer.from(parsed.signature, "hex"))) throw Error(`A valid signed ${kind} receipt is required.`); return parsed; }
 function normalizeSource(value) { return clean(value).replace(/\s+/gu, " ").replace(/(?:[.!?:;,]|\u2026)+$/u, "").trimEnd().toLocaleLowerCase(); }
 function hasWholeFact(haystack, fact) { const value = normalizeSource(fact); return value.length > 0 && new RegExp(`(^|[^\\p{L}\\p{N}])${escapeRegex(value)}(?=$|[^\\p{L}\\p{N}])`, "iu").test(normalizeSource(haystack)); }
 function bannedClaims(value) { performanceClaim.lastIndex = 0; const found = [...String(value).matchAll(performanceClaim)].map(match => match[0]); performanceClaim.lastIndex = 0; return found; }
@@ -66,62 +64,7 @@ function sourceMatch(item, source) {
 function containsAllowedSource(value, allowed) { return allowed.some(source => sourceMatch(value, source)); }
 function validateOutsideProof(values, sourceBrief) { const allowed = proofSources(sourceBrief); for (const value of values) for (const sentence of String(value).split(/[.!?\n]+/u).map(clean).filter(Boolean)) if (isProofLikeClaim(sentence) && !allowed.some(source => wholeSourceMatch(sentence, source))) throw Error(`Unsupported claim outside proof: ${sentence}`); }
 function validateProof(items, sourceBrief, otherCopyText = []) { const allowed = proofSources(sourceBrief), unsupported = items.filter(item => !containsAllowedSource(item, allowed)); if (unsupported.length) throw Error(`Remove unsupported proof: ${unsupported.join(", ")}. Proof lines must quote a must-keep fact, the offer or the product statement: ${allowed.join(", ")}.`); validateOutsideProof([...items, ...otherCopyText], sourceBrief); }
-function validateCopy(value, sourceBrief = { mustKeepFacts: [] }) {
-  const parsed = copy.parse(value);
-  if (clean(parsed.headline).split(/\s+/u).length > 12) throw Error("The Retention Playbook house limit is 12 words for a headline.");
-  const textValues = copyTextValues(parsed);
-  const mustKeepFacts = sourceBrief.mustKeepFacts || [];
-  validateProof(parsed.proof, sourceBrief, nonProofTextValues(parsed));
-  const bannedFacts = mustKeepFacts.filter(fact => bannedClaims(fact).length);
-  if (bannedFacts.length) throw Error(`Remove banned claims from must-keep facts: ${bannedFacts.join(", ")}.`);
-  const unsupported = textValues.flatMap(bannedClaims);
-  if (unsupported.length) throw Error(`Remove banned or unsupported claims: ${unsupported.join(", ")}.`);
-  const missing = mustKeepFacts.filter(fact => !textValues.some(value => hasWholeFact(value, fact)));
-  if (missing.length) throw Error(`Missing must-keep facts: ${missing.join(", ")}.`);
-  return { copy: parsed, missing };
-}
-function escapeHtml(value) { return String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#39;"); }
-function escapeMarkdown(value) { return String(value).replace(/([\\`*_{}[\]()#+.!|>-])/g, "\\$1"); }
 
-export function openPageBrief(input = {}) { return { fields: ["pageType", "product", "audience", "offer", "goal", "tone", "currentCopy", "mustKeepFacts"], prefill: input.prefill || {}, privacyNotice: "This tool works on pasted text only. It does not fetch URLs or change sites." }; }
-export function reviewPageBrief(input) { const value = brief.parse(input); const text = [value.product, value.offer, value.goal, value.audience, value.tone, value.currentCopy, ...value.mustKeepFacts].filter(item => item !== undefined).join("\n"); const banned = [...new Set(bannedClaims(text))]; const issues = banned.map(claim => `Banned claim: ${claim}`); return { normalizedBrief: value, canApprove: issues.length === 0, confirmationRequired: true, issues, message: issues.length ? "Remove banned claims before approving this brief." : "Review the visible brief, then use the Approve brief button to authorize drafting." }; }
-export function approvePageBrief(input) { const value = brief.parse(input.brief); z.literal("approve").parse(input.approvalAction); return { approvalReceipt: makeReceipt("brief", value), approvedBrief: value }; }
-export function draftPageCopy(input) { const b = brief.parse(input.brief); verifyReceipt(input.approvalReceipt, "brief", b); const proposed = z.array(copy).min(2).max(3).parse(input.variants); const signatures = new Set(proposed.map(item => digest(item))); if (signatures.size !== proposed.length) throw Error("Draft variants must be distinct."); const variants = proposed.map(item => { const checked = validateCopy(item, b); const report = checkPageConversion({ draft: checked.copy, headline: checked.copy.headline, brief: b }); return { ...checked.copy, issues: report.issues, checklist: report.checks }; }); return { brief: b, variants, approvalReceipt: input.approvalReceipt, warnings: [] }; }
-export function checkPageConversion(input) {
-  input = conversionInput.parse(input);
-  if (input.brief) input.draft ? validateProof(input.draft.proof, input.brief, nonProofTextValues(input.draft)) : validateOutsideProof([input.headline, input.copy].filter(value => value !== undefined), input.brief);
-  const source = clean(input.copy ?? (input.draft ? copyTextValues(input.draft).join("\n") : ""));
-  if (input.formFieldCount !== undefined && (!Number.isInteger(input.formFieldCount) || input.formFieldCount < 0)) throw Error("Form field count must be a non-negative integer.");
-  if (input.popupDelaySeconds !== undefined && (!Number.isFinite(input.popupDelaySeconds) || input.popupDelaySeconds < 0)) throw Error("Popup delay must be a non-negative number.");
-  const fields = input.formFieldCount, delay = input.popupDelaySeconds;
-  const headline = clean(input.headline ?? input.draft?.headline ?? (input.copy ? source.split("\n")[0] : ""));
-  const ctas = countCtas(source);
-  const suppliedText = [input.headline, input.copy, ...(input.draft ? copyTextValues(input.draft) : [])].filter(value => value !== undefined);
-  const banned = [...new Set(suppliedText.flatMap(bannedClaims))];
-  const headlineSpecific = headlineIsSpecific(headline, input.brief);
-  const checked = (name, pass, passDetail, failDetail) => ({ name, status: pass ? "pass" : "finding", pass, detail: pass ? passDetail : failDetail });
-  const unchecked = (name, detail) => ({ name, status: "not checked", pass: null, detail });
-  const checks = [
-    source ? checked("CTA presence", ctas > 0, `${ctas} CTA phrase(s) found.`, "Add one primary CTA.") : unchecked("CTA presence", "Not checked because copy was not supplied."),
-    source ? checked("CTA focus", ctas === 1, "Exactly one primary CTA found.", ctas === 0 ? "Add one primary CTA before assessing focus." : "Use exactly one primary CTA.") : unchecked("CTA focus", "Not checked because copy was not supplied."),
-    headline ? checked("Headline clarity", headlineSpecific, "Headline names a product or concrete outcome.", "Name the product or a concrete outcome; avoid vague wording and keep it within 12 words.") : unchecked("Headline clarity", "Not checked because a headline was not supplied."),
-    fields === undefined ? unchecked("Form friction", "Not checked because form field count was not supplied.") : checked("Form friction", fields <= 5, "Form has low friction.", "Ask for fewer fields."),
-    delay === undefined ? unchecked("Popup timing", "Not checked because popup timing was not supplied.") : checked("Popup timing", delay >= 10, "Popup is not immediate.", "Delay popup at least 10 seconds."),
-  ];
-  if (source) checks.push(checked("Banned claims", banned.length === 0, "No banned claims found.", `Remove banned claims: ${banned.join(", ")}.`));
-  const scored = checks.filter(item => item.pass !== null);
-  const rawScore = scored.length ? Math.round(scored.filter(item => item.pass).length / scored.length * 100) : null;
-  return { score: rawScore === null ? null : banned.length ? Math.min(rawScore, 40) : rawScore, checks, issues: banned.map(claim => `Banned claim: ${claim}`), inputs: { formFields: fields ?? null, popupDelay: delay ?? null, ctaCount: source ? ctas : null }, limits: "Heuristic check only. It does not predict traffic or conversions." };
-}
-export function selectPageCopyVariant(input) { const variants = z.array(copy).min(2).max(3).parse(input.variants); const b = brief.parse(input.brief); const checked = variants.map(item => validateCopy(item, b)); const selected = z.number().int().min(1).max(variants.length).parse(input.selected); const chosen = checked[selected - 1]; return { variants: checked.map(item => item.copy), selected: chosen.copy, selectedIndex: selected, selectionReceipt: makeReceipt("selection", chosen.copy, selected), brief: b, factCheck: { missing: chosen.missing }, selectionRequired: false }; }
-export function exportPageCopy(input) {
-  if (!input.selectionReceipt) throw Error("A signed selection receipt is required for export.");
-  const b = brief.parse(input.brief), checked = validateCopy(input.copy, b), c = checked.copy, format = z.enum(["markdown", "html"]).parse(input.format);
-  verifyReceipt(input.selectionReceipt, "selection", c);
-  const md = `# ${escapeMarkdown(c.headline)}\n\n${escapeMarkdown(c.subhead)}\n\n${c.valuePoints.map(item => `- ${escapeMarkdown(item)}`).join("\n")}\n\n## Proof\n\n${c.proof.length ? c.proof.map(item => `- ${escapeMarkdown(item)}`).join("\n") : "None supplied."}\n\n[${escapeMarkdown(c.primaryCta)}](#cta)\n\n## FAQ\n\n${c.faq.length ? c.faq.map(item => `### ${escapeMarkdown(item.question)}\n\n${escapeMarkdown(item.answer)}`).join("\n\n") : "None supplied."}\n`;
-  const html = `<section><h1>${escapeHtml(c.headline)}</h1><p>${escapeHtml(c.subhead)}</p><ul>${c.valuePoints.map(item => `<li>${escapeHtml(item)}</li>`).join("")}</ul><h2>Proof</h2>${c.proof.length ? `<ul>${c.proof.map(item => `<li>${escapeHtml(item)}</li>`).join("")}</ul>` : "<p>None supplied.</p>"}<a href="#cta">${escapeHtml(c.primaryCta)}</a><h2>FAQ</h2>${c.faq.length ? c.faq.map(item => `<h3>${escapeHtml(item.question)}</h3><p>${escapeHtml(item.answer)}</p>`).join("") : "<p>None supplied.</p>"}</section>`;
-  return { fileName: `landing-page-copy.${format === "html" ? "html" : "md"}`, mimeType: format === "html" ? "text/html" : "text/markdown", content: format === "html" ? html : md, retained: false, factCheck: { kept: b.mustKeepFacts.filter(item => !checked.missing.includes(item)), missing: checked.missing }, warnings: checked.missing.length ? ["Some must-keep facts are absent."] : [] };
-}
 
 const retentionChannel = z.enum(["email", "in-app", "SMS", "account manager"]);
 const retentionOffer = z.enum(["discount", "pause", "downgrade", "plan switch", "none"]);
