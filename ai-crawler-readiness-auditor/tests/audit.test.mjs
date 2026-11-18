@@ -63,7 +63,7 @@ test("sitemap rejects DTD and marks request errors partial", async () => {
 });
 
 test("robots check uses the final address after a redirect", async () => {
-  const final = "https://robots-blocked.fixtures.astudio.agency/article";
+  const final = "https://fixtures-robots-blocked.astudio.agency/article";
   const request = async url => {
     const { pathname } = new URL(url);
     if (pathname === "/robots-blocked/article") return reply(final, 200, "text/html", "<!doctype html><html><head><title>Fixture</title></head><body>x</body></html>", { redirects: [{ from: url, to: final, status: 302 }] });
@@ -89,7 +89,7 @@ test("the five submitted fixture cases give the documented results", async () =>
   const page = (jsonLd) => `<!doctype html><html><head><title>Public crawler fixture</title><meta name="description" content="Synthetic public crawler audit fixture"><link rel="canonical" href="https://CANON"><script type="application/ld+json">${jsonLd}</script></head><body><main>${"This public synthetic fixture provides server-delivered text for deterministic crawler audit review. ".repeat(3)}</main></body></html>`;
   const good = '{"@context":"https://schema.org","@type":"WebPage"}';
   const run = async (name, pagePath, jsonLd = good) => {
-    const host = `${name}.fixtures.astudio.agency`;
+    const host = `fixtures-${name}.astudio.agency`;
     const request = async url => {
       const { pathname } = new URL(url);
       const finalPage = `https://${host}${pagePath}`;
