@@ -25,36 +25,11 @@ function normalizeSource(value) { return clean(value).replace(/\s+/gu, " ").repl
 function hasWholeFact(haystack, fact) { const value = normalizeSource(fact); return value.length > 0 && new RegExp(`(^|[^\\p{L}\\p{N}])${escapeRegex(value)}(?=$|[^\\p{L}\\p{N}])`, "iu").test(normalizeSource(haystack)); }
 function bannedClaims(value) { performanceClaim.lastIndex = 0; const found = [...String(value).matchAll(performanceClaim)].map(match => match[0]); performanceClaim.lastIndex = 0; return found; }
 function words(value) { return clean(value).toLocaleLowerCase().match(/[\p{L}\p{N}]+/gu) || []; }
-function wordStem(value) { return value.length > 4 ? value.replace(/(?:ies|s)$/u, match => match === "ies" ? "y" : "") : value; }
-const vagueHeadline = /\b(?:amazing|best|revolutionary|innovative|next-level|world-class|cutting-edge|seamless|powerful)\b/iu;
-const genericConcrete = new Set(["tool", "platform", "software", "app", "service", "product", "schedule", "scheduling", "team", "work", "page", "conversion", "demo", "trial", "sales", "marketing"]);
-const headlineStopWords = new Set(["a", "an", "and", "for", "in", "of", "on", "or", "the", "to", "with"]);
-function headlineIsSpecific(headline, sourceBrief) {
-  if (headline.length <= 5 || headline.split(/\s+/u).length > 12 || vagueHeadline.test(headline)) return false;
-  const headlineWords = new Set(words(headline).map(wordStem));
-  const briefWords = sourceBrief ? words([sourceBrief.product, sourceBrief.offer, sourceBrief.audience, ...(sourceBrief.mustKeepFacts || [])].join(" ")).filter(word => !headlineStopWords.has(word)).map(wordStem) : [];
-  return briefWords.some(word => headlineWords.has(word)) || (!sourceBrief && [...headlineWords].some(word => genericConcrete.has(word)));
-}
 const ctaVerb = /^(?:get|start|try|book|buy|join|see|learn|discover|request|download|contact|sign\s*up|subscribe|register|apply|claim|order|shop|schedule|talk|call|compare|choose|create|build|explore)\b/iu;
 const explicitAsk = /^(?:(?:ready|want|need)\s+(?:to\s+)?(?:get|start|try|book|buy|join|see|learn|discover|request|download|contact|sign\s*up|subscribe|register|apply|claim|order|shop|schedule|talk|call|compare|choose|create|build|explore)|(?:want|need)\s+(?:a|an|the)?\s*(?:demo|trial|quote|consultation|call))\b/iu;
 function countCtas(value) { return String(value).split(/[.!?\n]+/u).map(part => clean(part).replace(/^(?:(?:primary\s+)?cta\s*:\s*)/iu, "")).filter(part => ctaVerb.test(part) || explicitAsk.test(part)).length; }
-const claimPattern = /(?:\d|%|\p{Sc}|\b(?:AED|USD|EUR|GBP|SAR|JPY|CAD|AUD|CHF|QAR|KWD|BHD|OMR)\b|\b(?:hundreds|thousands|millions|billions|dozens)\b|\b(?:trusted\s+by|testimonials?|award(?:-winning)?|rated|five-star|five\s+star|star\s+rating|recommended\s+by|recommend\s+us|satisfaction\s+rate|case\s+study)\b)/iu;
+const claimPattern =/(?:\d|%|\p{Sc}|\b(?:AED|USD|EUR|GBP|SAR|JPY|CAD|AUD|CHF|QAR|KWD|BHD|OMR)\b|\b(?:hundreds|thousands|millions|billions|dozens)\b|\b(?:trusted\s+by|testimonials?|award(?:-winning)?|rated|five-star|five\s+star|star\s+rating|recommended\s+by|recommend\s+us|satisfaction\s+rate|case\s+study)\b)/iu;
 export function isProofLikeClaim(sentence) { return claimPattern.test(String(sentence)); }
-function proofSources(sourceBrief) { return [...new Set([...(sourceBrief.mustKeepFacts || []), sourceBrief.offer, sourceBrief.product].map(clean).filter(Boolean))]; }
-function wholeSourceMatch(item, source) { const allowed = normalizeSource(source); return allowed ? new RegExp(`(^|[^\\p{L}\\p{N}])${escapeRegex(allowed)}(?=$|[^\\p{L}\\p{N}])`, "iu").test(normalizeSource(item)) : false; }
-function sourceMatch(item, source) {
-  const value = normalizeSource(item), allowed = normalizeSource(source);
-  if (!allowed) return false;
-  const match = new RegExp(`(^|[^\\p{L}\\p{N}])(${escapeRegex(allowed)})(?=$|[^\\p{L}\\p{N}])`, "iu").exec(value);
-  if (!match) return false;
-  const start = match.index + match[1].length;
-  const remainder = `${value.slice(0, start)} ${value.slice(start + match[2].length)}`.trim();
-  if (!remainder) return true;
-  if (/\d|%|\p{Sc}/u.test(remainder)) return false;
-  if (/[^\p{L}\p{M}\s\p{P}]/u.test(remainder)) return false;
-  return (remainder.match(/[\p{L}\p{M}]+/gu) || []).length <= 3;
-}
-function containsAllowedSource(value, allowed) { return allowed.some(source => sourceMatch(value, source)); }
 
 
 const retentionChannel = z.enum(["email", "in-app", "SMS", "account manager"]);
