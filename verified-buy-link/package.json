@@ -16,8 +16,8 @@
     "@modelcontextprotocol/ext-apps": "2.0.3",
     "@modelcontextprotocol/sdk": "1.32.1",
     "ipaddr.js": "2.5.0",
-    "undici": "6.29.0",
-    "zod": "4.6.5"
+    "undici": "6.29.1",
+    "zod": "4.6.7"
   },
   "license": "MIT"
 }
