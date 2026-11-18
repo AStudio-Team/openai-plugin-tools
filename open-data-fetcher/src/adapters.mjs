@@ -32,7 +32,9 @@ export const decodeRef = value => {
 };
 
 async function jsonFetch(url, origins, options = {}) {
-  const result = await safeFetch(url, { allowedOrigins: origins, maxBytes: options.maxBytes || 8 * 1024 * 1024, fetchImpl: options.fetchImpl, lookup: options.lookup });
+  const fetchOptions = { allowedOrigins: origins, maxBytes: options.maxBytes || 8 * 1024 * 1024, fetchImpl: options.fetchImpl, lookup: options.lookup };
+  if (options.timeoutMs != null) fetchOptions.timeoutMs = options.timeoutMs;
+  const result = await safeFetch(url, fetchOptions);
   try { return JSON.parse(result.buffer.toString("utf8")); } catch { throw new Error("INVALID_UPSTREAM_JSON"); }
 }
 
@@ -138,17 +140,77 @@ async function resolveCkanResource(source, compoundId, options) {
   return { url: resource.url, format: clean(resource.format, 30).toUpperCase(), name: clean(resource.name || resourceId, 200), dataset: inspected };
 }
 
+const WORLD_BANK_INDICATOR_CACHE_MS = 24 * 60 * 60 * 1000;
+const WORLD_BANK_PARTIAL_CACHE_MS = 5 * 60 * 1000;
+const WORLD_BANK_FAILURE_CACHE_MS = 60 * 1000;
+const WORLD_BANK_INDICATOR_PAGE_BATCH = 4;
+const WORLD_BANK_MAX_PAGES = 40;
+const WORLD_BANK_LOAD_DEADLINE_MS = 25 * 1000;
+const WORLD_BANK_PAGE1_TIMEOUT_MS = 10 * 1000;
+let worldBankIndicatorCache = null;
+let worldBankIndicatorFailure = null;
+let worldBankIndicatorLoadPromise = null;
+
+async function fetchWorldBankIndicatorPage(pageNumber, options, timeoutMs) {
+  return jsonFetch(`https://api.worldbank.org/v2/indicator?format=json&per_page=1000&page=${pageNumber}`, SOURCE_REGISTRY.world_bank.catalogOrigins, { ...options, timeoutMs });
+}
+
+async function loadAllWorldBankIndicatorsOnce(options) {
+  const now = options.now || Date.now;
+  const started = now();
+  const first = await fetchWorldBankIndicatorPage(1, options, WORLD_BANK_PAGE1_TIMEOUT_MS);
+  const items = Array.isArray(first) && Array.isArray(first[1]) ? [...first[1]] : [];
+  const totalPages = Math.min(Number(first?.[0]?.pages) || 1, WORLD_BANK_MAX_PAGES);
+  let complete = true;
+  for (let start = 2; start <= totalPages; start += WORLD_BANK_INDICATOR_PAGE_BATCH) {
+    const remaining = WORLD_BANK_LOAD_DEADLINE_MS - (now() - started);
+    if (remaining <= 1000) { complete = false; break; }
+    const timeoutMs = Math.min(10000, remaining);
+    const batch = [];
+    for (let pageNumber = start; pageNumber < start + WORLD_BANK_INDICATOR_PAGE_BATCH && pageNumber <= totalPages; pageNumber += 1) batch.push(pageNumber);
+    const settled = await Promise.allSettled(batch.map(pageNumber => fetchWorldBankIndicatorPage(pageNumber, options, timeoutMs)));
+    for (const outcome of settled) {
+      if (outcome.status === "fulfilled" && Array.isArray(outcome.value) && Array.isArray(outcome.value[1])) items.push(...outcome.value[1]);
+      else complete = false;
+    }
+  }
+  return { items, complete };
+}
+
+async function loadAllWorldBankIndicators(options) {
+  const now = options.now || Date.now;
+  const nowTime = now();
+  if (worldBankIndicatorCache && nowTime - worldBankIndicatorCache.fetchedAt < worldBankIndicatorCache.ttl) return worldBankIndicatorCache.items;
+  if (worldBankIndicatorFailure && nowTime < worldBankIndicatorFailure.expiresAt) throw worldBankIndicatorFailure.error;
+  if (!worldBankIndicatorLoadPromise) {
+    worldBankIndicatorLoadPromise = loadAllWorldBankIndicatorsOnce(options)
+      .then(result => {
+        worldBankIndicatorCache = { items: result.items, fetchedAt: now(), ttl: result.complete ? WORLD_BANK_INDICATOR_CACHE_MS : WORLD_BANK_PARTIAL_CACHE_MS };
+        worldBankIndicatorFailure = null;
+        return result.items;
+      })
+      .catch(error => {
+        worldBankIndicatorFailure = { error, expiresAt: now() + WORLD_BANK_FAILURE_CACHE_MS };
+        throw error;
+      })
+      .finally(() => { worldBankIndicatorLoadPromise = null; });
+  }
+  return worldBankIndicatorLoadPromise;
+}
+
 async function searchWorldBank(query, page, options) {
-  const payload = await jsonFetch(`https://api.worldbank.org/v2/indicator?format=json&per_page=1000&page=${page}`, SOURCE_REGISTRY.world_bank.catalogOrigins, options);
-  const items = Array.isArray(payload) && Array.isArray(payload[1]) ? payload[1] : [];
+  const pageNumber = Number.isInteger(page) && page > 0 ? page : 1;
+  const items = await loadAllWorldBankIndicators(options);
   const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
-  const matches = items.filter(item => terms.every(term => `${item.id} ${item.name} ${item.source?.value || ""}`.toLowerCase().includes(term))).slice(0, 20);
+  const matches = items.filter(item => terms.every(term => `${item.id} ${item.name} ${item.source?.value || ""}`.toLowerCase().includes(term)));
+  const start = (pageNumber - 1) * 20;
+  const pageItems = matches.slice(start, start + 20);
   return {
-    results: matches.map(item => ({
+    results: pageItems.map(item => ({
       dataset_ref: ref("world_bank", item.id), title: clean(item.name, 300), publisher: clean(item.source?.value || "World Bank", 160),
       description: clean(item.sourceNote, 600), updated_at: null, license_label: "CC BY 4.0", formats: ["JSON", "CSV"],
       official_page: `${SOURCE_REGISTRY.world_bank.publisherBase}${encodeURIComponent(item.id)}`,
-    })), page, has_more: false,
+    })), page: pageNumber, has_more: start + pageItems.length < matches.length,
   };
 }
 
@@ -161,6 +223,12 @@ async function inspectWorldBank(id, options) {
     dataset: { dataset_ref: ref("world_bank", id), title: clean(item.name, 300), publisher: clean(item.source?.value || "World Bank", 160), description: clean(item.sourceNote, 600), updated_at: null, license_label: "CC BY 4.0", official_page: `${SOURCE_REGISTRY.world_bank.publisherBase}${encodeURIComponent(id)}` },
     resources: [{ resource_ref: ref("world_bank", id), name: `${clean(item.name, 160)} API data`, source_format: "JSON", declared_bytes: null, estimated_rows: null, exportable: true, blocked_reason: null }],
   };
+}
+
+export function resetWorldBankIndicatorCacheForTests() {
+  worldBankIndicatorCache = null;
+  worldBankIndicatorFailure = null;
+  worldBankIndicatorLoadPromise = null;
 }
 
 export async function searchSource(source, query, page, options = {}) {
