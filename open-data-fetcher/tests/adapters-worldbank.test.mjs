@@ -182,6 +182,31 @@ test("page 1 failure fails fast, suppresses retries for 60s across concurrent wa
   assert.equal(result.results[0].dataset_ref, "world_bank:IND.001");
 });
 
+test("page requests forward a bounded timeout to the underlying fetch: 10000ms for page 1, at most 10000ms for later pages", async () => {
+  resetWorldBankIndicatorCacheForTests();
+  const originalTimeout = AbortSignal.timeout;
+  const seenTimeouts = [];
+  AbortSignal.timeout = ms => { seenTimeouts.push(ms); return originalTimeout(ms); };
+  try {
+    const fetchImpl = async url => {
+      const value = String(url);
+      const pageNumber = Number(/[?&]page=(\d+)/.exec(value)[1]);
+      const startIndex = (pageNumber - 1) * 4 + 1;
+      const items = pageNumber <= 5 ? [bigIndicatorItem(startIndex), bigIndicatorItem(startIndex + 1), bigIndicatorItem(startIndex + 2), bigIndicatorItem(startIndex + 3)] : [];
+      return new Response(JSON.stringify(pagePayload(pageNumber, 5, items)), { headers: { "content-type": "application/json" } });
+    };
+    const options = { fetchImpl, lookup };
+
+    await searchSource("world_bank", "matching indicator", 1, options);
+
+    assert.ok(seenTimeouts.length >= 5, `expected a timeout per page, got ${seenTimeouts.length}`);
+    assert.equal(seenTimeouts[0], 10000, "page 1 must use the 10s timeout");
+    for (const ms of seenTimeouts.slice(1)) assert.ok(ms <= 10000, `later page timeout ${ms} exceeded 10000ms`);
+  } finally {
+    AbortSignal.timeout = originalTimeout;
+  }
+});
+
 test("results keep World Bank response order (page order, then order within page), never sorted by ID", async () => {
   resetWorldBankIndicatorCacheForTests();
   const fetchImpl = async url => {
