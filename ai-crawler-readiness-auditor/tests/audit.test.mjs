@@ -62,6 +62,62 @@ test("sitemap rejects DTD and marks request errors partial", async () => {
   assert.equal(malformedResult.checks[0].outcome, "warn");
 });
 
+test("robots check uses the final address after a redirect", async () => {
+  const final = "https://robots-blocked.fixtures.astudio.agency/article";
+  const request = async url => {
+    const { pathname } = new URL(url);
+    if (pathname === "/robots-blocked/article") return reply(final, 200, "text/html", "<!doctype html><html><head><title>Fixture</title></head><body>x</body></html>", { redirects: [{ from: url, to: final, status: 302 }] });
+    if (pathname === "/robots.txt") return reply(url, 200, "text/plain", "User-agent: *\nDisallow: /article\n");
+    return reply(url, 404, "text/plain", "");
+  };
+  const result = await runAudit({ url: "https://fixtures.astudio.agency/robots-blocked/article", scope: "page_and_site_controls", checks: ["target_fetch", "robots_access"] }, { request });
+  assert.equal(result.checks.find(item => item.id === "robots_access").outcome, "block");
+  assert.equal(result.remediations.find(item => item.findingIds[0] === "robots_access").id, "REM-ROBOTS-ACCESS-001");
+});
+
+test("a sitemap that times out or answers 5xx is untested and the audit is incomplete", async () => {
+  const gateway = reply("https://example.com/sitemap.xml", 504, "text/plain", "Synthetic sitemap timeout");
+  const result = await runAudit({ url: "https://example.com/page", scope: "page_and_site_controls", checks: CHECK_IDS }, { request: readyRequest({ "/sitemap.xml": gateway }) });
+  assert.equal(result.checks.find(item => item.id === "sitemap").outcome, "not_tested");
+  assert.equal(result.status, "incomplete");
+  assert.equal(result.partial, true);
+  const missing = await runAudit({ url: "https://example.com/page", scope: "page_and_site_controls", checks: CHECK_IDS }, { request: readyRequest({ "/sitemap.xml": Object.assign(new Error("timeout"), { code: "TIMEOUT" }) }) });
+  assert.equal(missing.status, "incomplete");
+});
+
+test("the five submitted fixture cases give the documented results", async () => {
+  const page = (jsonLd) => `<!doctype html><html><head><title>Public crawler fixture</title><meta name="description" content="Synthetic public crawler audit fixture"><link rel="canonical" href="https://CANON"><script type="application/ld+json">${jsonLd}</script></head><body><main>${"This public synthetic fixture provides server-delivered text for deterministic crawler audit review. ".repeat(3)}</main></body></html>`;
+  const good = '{"@context":"https://schema.org","@type":"WebPage"}';
+  const run = async (name, pagePath, jsonLd = good) => {
+    const host = `${name}.fixtures.astudio.agency`;
+    const request = async url => {
+      const { pathname } = new URL(url);
+      const finalPage = `https://${host}${pagePath}`;
+      if (pathname === `/${name}${pagePath}`) return reply(finalPage, 200, "text/html", page(jsonLd).replace("CANON", `${host}${pagePath}`), { redirects: [{ from: url, to: finalPage, status: 302 }] });
+      if (pathname === "/robots.txt") return reply(url, 200, "text/plain", name === "robots-blocked" ? "User-agent: *\nDisallow: /article\n" : `User-agent: *\nAllow: /\nSitemap: https://${host}/sitemap.xml\n`);
+      if (pathname === "/sitemap.xml") return name === "sitemap-timeout" ? reply(url, 504, "text/plain", "Synthetic sitemap timeout") : reply(url, 200, "application/xml", `<?xml version="1.0"?><urlset><url><loc>https://${host}/page</loc></url></urlset>`);
+      if (pathname === "/llms.txt" && name === "llms-html") return reply(url, 200, "text/html", "<html><body>Fixture home page</body></html>");
+      if (pathname === "/llms.txt" || pathname === "/llms-full.txt") return reply(url, 200, "text/markdown", `# Fixture\n\nPublic synthetic review fixture.\n\n## Pages\n- [Page](https://${host}/page)\n`);
+      return reply(url, 404, "text/plain", "");
+    };
+    return runAudit({ url: `https://fixtures.astudio.agency/${name}${pagePath}`, scope: "page_and_site_controls", checks: CHECK_IDS }, { request });
+  };
+  const ready = await run("ready", "/page");
+  assert.equal(ready.status, "no_issues_detected_within_scope");
+  const blocked = await run("robots-blocked", "/article");
+  assert.equal(blocked.checks.find(item => item.id === "robots_access").outcome, "block");
+  assert.ok(blocked.remediations.some(item => item.id === "REM-ROBOTS-ACCESS-001"));
+  const llms = await run("llms-html", "/page");
+  assert.equal(llms.checks.find(item => item.id === "llms_txt").outcome, "warn");
+  assert.ok(llms.checks.find(item => item.id === "llms_txt").explanation.includes("served HTML"));
+  const bad = await run("invalid-jsonld", "/product", "{invalid");
+  assert.equal(bad.checks.find(item => item.id === "structured_data").outcome, "warn");
+  assert.ok(bad.checks.filter(item => item.outcome === "pass").length >= 5);
+  const slow = await run("sitemap-timeout", "/page");
+  assert.equal(slow.status, "incomplete");
+  assert.ok(slow.remediations.length === 0 || slow.partial);
+});
+
 test("result payload drops passing evidence before warning evidence", () => {
   const huge = { schemaVersion: "1.0", auditEngineVersion: "1", target: { url: "https://example.com", displayUrl: "https://example.com", origin: "https://example.com", scope: "page_and_site_controls" }, startedAt: "x", completedAt: "x", status: "warnings_only", summary: { blockers: 0, warnings: 1, passed: 1, notTested: 0, statement: "x" }, checks: [
     { id: "target_fetch", title: "pass", category: "transport", outcome: "pass", severity: "info", explanation: "x", evidence: [{ sourceUrl: "x", retrievedAt: "x", httpStatus: 200, contentType: "x", observed: "x".repeat(90000), expected: "x", excerpt: "x" }], limitations: [] },

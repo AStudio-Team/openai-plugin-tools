@@ -161,6 +161,7 @@ function llmsCheck(id, response) {
 }
 function sitemapCheck(response, declared) {
   if (!response) return check("sitemap", "error", "medium", "The sitemap could not be tested.", [], ["The sitemap request failed."]);
+  if (response.status >= 500 || response.status === 408) return check("sitemap", "not_tested", "medium", `The sitemap could not be tested because the server answered HTTP ${response.status}.`, [evidence(response, `HTTP ${response.status}`, "Readable sitemap XML")], ["The sitemap was unreachable or timed out, so this check is untested."]);
   if (!successful(response)) return check("sitemap", "warn", "medium", `The sitemap returned HTTP ${response.status}.`, [evidence(response, `HTTP ${response.status}`, "Readable sitemap XML")]);
   const xml = response.body.toString("utf8");
   if (/<!DOCTYPE|<!ENTITY/i.test(xml)) return check("sitemap", "warn", "medium", "The sitemap contains a DTD or entity declaration and was not parsed.", [evidence(response, "DTD or entity declaration present", "XML without DTDs or external entities")]);
@@ -222,7 +223,7 @@ export async function runAudit({ url, scope, checks }, dependencies = {}) {
     if (!selected.has(id)) continue;
     if (scope === "site_controls_only" && PAGE_CHECKS.has(id)) { results.push(check(id, "not_tested", "info", "This page check was not run because site-controls-only scope was selected.", [], ["Select page-and-site-controls scope to run this check."])); continue; }
     if (id === "target_fetch") results.push(targetCheck(responses.page));
-    else if (id === "robots_access") results.push(robotsCheck(responses.robots, new URL(url).pathname || "/"));
+    else if (id === "robots_access") results.push(robotsCheck(responses.robots, new URL(finalUrl).pathname || "/"));
     else if (id === "page_directives") results.push(directivesCheck(responses.page));
     else if (id === "page_metadata") results.push(metadataCheck(responses.page));
     else if (id === "structured_data") results.push(structuredDataCheck(responses.page));
