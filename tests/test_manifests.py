@@ -108,6 +108,8 @@ class ManifestAndPackageTests(unittest.TestCase):
         self.assertIn("no fixed time-based deletion period is promised", privacy)
         self.assertNotIn("skills-only plugin", privacy)
         self.assertNotIn("no longer than 30 days", privacy)
+        self.assertIn("downloads the documents you attach through the temporary download address the host provides", privacy)
+        self.assertNotIn("queries only US Data.gov", privacy)
         server = (ROOT / "pdf-table-to-excel" / "src" / "server.mjs").read_text()
         self.assertIn("setInterval(pruneDownloads", server)
 
