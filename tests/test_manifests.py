@@ -124,6 +124,7 @@ class ManifestAndPackageTests(unittest.TestCase):
             "A/B Test Planner", "Retention Playbook",
         ]
         self.assertEqual(len(names), 20)
+        self.assertNotIn("Three plugins", privacy)
         for name in names:
             self.assertIn(name, privacy)
 
