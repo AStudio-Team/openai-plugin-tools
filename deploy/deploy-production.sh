@@ -329,7 +329,7 @@ run_container "$GROWTH_CONTAINER" "$GROWTH_IMAGE" 8790 none
 run_container "$SOCIAL_PLANNER_CONTAINER" "$SOCIAL_PLANNER_IMAGE" 8790 local
 run_container "$CRAWLER_CONTAINER" "$CRAWLER_IMAGE" 8790 local \
   -e MAX_CONCURRENT_AUDITS=4 \
-  -e ALLOWED_HOSTS=www.astudio.agency,astudio.agency,127.0.0.1,localhost,fixtures.astudio.agency,ready.fixtures.astudio.agency,robots-blocked.fixtures.astudio.agency,llms-html.fixtures.astudio.agency,invalid-jsonld.fixtures.astudio.agency,sitemap-timeout.fixtures.astudio.agency
+  -e ALLOWED_HOSTS=www.astudio.agency,astudio.agency,127.0.0.1,localhost,fixtures.astudio.agency,fixtures-ready.astudio.agency,fixtures-robots-blocked.astudio.agency,fixtures-llms-html.astudio.agency,fixtures-invalid-jsonld.astudio.agency,fixtures-sitemap-timeout.astudio.agency
 run_container "$DATA_CONTAINER" "$DATA_IMAGE" 8791 local \
   -e PUBLIC_BASE_URL=https://www.astudio.agency/openai-plugins/open-data-fetcher \
   -e APP_ORIGIN=https://www.astudio.agency
