@@ -416,7 +416,8 @@ docker exec websites-caddy-1 caddy reload --config /etc/caddy/Caddyfile
 check_health() {
   local url="$1"
   local service="$2"
-  curl --fail --silent --show-error --retry 5 --retry-delay 2 "$url" \
+  local retry_delay="${3:-2}"
+  curl --fail --silent --show-error --retry 5 --retry-delay "$retry_delay" "$url" \
     | python3 -c "import json,sys; data=json.load(sys.stdin); assert data['status'] == 'ok' and data['service'] == '$service'"
 }
 check_mcp() {
@@ -526,8 +527,8 @@ curl --fail --silent --show-error \
   --data '{"jsonrpc":"2.0","id":5,"method":"tools/call","params":{"name":"open_growth_brief","arguments":{}}}' \
   https://www.astudio.agency/openai-plugins/growth-marketing-planner/mcp \
   | python3 -c 'import json,sys; data=json.load(sys.stdin); result=data["result"]; assert not result.get("isError"); structured=result["structuredContent"]; assert structured["formVersion"] == "1.0.0" and structured["requiredFields"]'
-check_health https://www.astudio.agency/openai-plugins/ai-crawler-readiness-auditor/health ai-crawler-readiness-auditor
-check_health https://www.astudio.agency/openai-plugins/ai-crawler-readiness-auditor/ready ai-crawler-readiness-auditor
+check_health https://www.astudio.agency/openai-plugins/ai-crawler-readiness-auditor/health ai-crawler-readiness-auditor 15
+check_health https://www.astudio.agency/openai-plugins/ai-crawler-readiness-auditor/ready ai-crawler-readiness-auditor 15
 check_mcp https://www.astudio.agency/openai-plugins/ai-crawler-readiness-auditor/mcp ai-crawler-readiness-auditor validate_audit_target,run_readiness_audit
 python3 deploy/check-crawler-public.py https://www.astudio.agency/openai-plugins/ai-crawler-readiness-auditor/mcp
 check_health https://www.astudio.agency/openai-plugins/open-data-fetcher/health open-data-fetcher
