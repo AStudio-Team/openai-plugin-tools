@@ -20,7 +20,7 @@
     "fflate": "0.8.3",
     "ipaddr.js": "2.3.0",
     "pdfjs-dist": "6.4.299",
-    "zod": "4.6.5"
+    "zod": "4.6.7"
   },
   "license": "MIT"
 }
