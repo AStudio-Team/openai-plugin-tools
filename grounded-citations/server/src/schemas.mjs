@@ -17,7 +17,7 @@ export const renderInput = z.object({ session_id: sessionId, ledger_revision: z.
 export const endSessionInput = z.object({ session_id: sessionId, confirmation: z.literal("delete_session") }).strict();
 
 const warning = z.array(z.string());
-const quote = z.object({ id: z.string(), text: z.string(), source_start: z.number().int(), source_end: z.number().int(), status: z.literal("verified"), claim_label: z.string().optional() }).strict();
+const quote = z.object({ text: z.string(), source_start: z.number().int(), source_end: z.number().int(), status: z.literal("verified") }).strict();
 const sourcePreview = z.object({ source_key: z.string(), kind: z.enum(["url", "file", "pasted_text"]), display_title: z.string(), intake_status: z.enum(["accepted", "partial", "rejected", "duplicate"]), submitted_url: z.string().optional(), final_url: z.string().optional(), file_name: z.string().optional(), accessed_at: z.string(), extracted_characters: z.number().int().nonnegative(), warnings: warning }).strict();
 const publicEntry = z.object({ id: z.number().int(), source_key: z.string(), kind: z.enum(["url", "file", "pasted_text"]), display_title: z.string(), submitted_url: z.string().optional(), final_url: z.string().optional(), file_name: z.string().optional(), accessed_at: z.string(), quotes: z.array(quote), warnings: warning }).strict();
 const issue = z.object({ rule: z.string(), message: z.string(), source_ids: z.array(z.number()).optional(), sentence_count: z.number().optional() }).strict();
