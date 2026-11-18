@@ -1,4 +1,5 @@
 import json
+import re
 import subprocess
 import unittest
 from pathlib import Path
@@ -298,6 +299,15 @@ class ManifestAndPackageTests(unittest.TestCase):
         self.assertIn('rights.verdict !== "green"', source)
         mcp = json.loads((ROOT / "open-data-fetcher" / "mcp.json").read_text())
         self.assertEqual(mcp["mcpServers"]["open-data-fetcher"]["url"], "https://www.astudio.agency/openai-plugins/open-data-fetcher/mcp")
+
+    def test_privacy_page_names_every_open_data_fetcher_host(self):
+        adapters = (ROOT / "open-data-fetcher" / "src" / "adapters.mjs").read_text()
+        origin_blocks = re.findall(r"(?:catalogOrigins|downloadOrigins): new Set\(\[(.*?)\]\)", adapters)
+        hosts = sorted(set(re.findall(r"https://([A-Za-z0-9.-]+)", "\n".join(origin_blocks))))
+        self.assertGreaterEqual(len(hosts), 10)
+        privacy = (ROOT / "pdf-table-to-excel" / "public" / "privacy.html").read_text()
+        for host in hosts:
+            self.assertIn(host, privacy, host)
 
 
 if __name__ == "__main__":
