@@ -18,5 +18,5 @@ export function confirmLedger(session, selectedKeys, revision) {
   return entries;
 }
 export function publicEntry(entry) {
-  return { id: entry.id, source_key: entry.source_key, kind: entry.kind, display_title: entry.display_title, submitted_url: entry.submitted_url, final_url: entry.final_url, file_name: entry.file_name, mime_type: entry.mime_type, accessed_at: entry.accessed_at, extraction_status: entry.extraction_status, truncated: entry.truncated, quotes: entry.quotes.map(({ id, text, source_start, source_end, status, claim_label, created_at }) => ({ id, text, source_start, source_end, status, claim_label, created_at })), warnings: entry.warnings };
+  return { id: entry.id, source_key: entry.source_key, kind: entry.kind, display_title: entry.display_title, submitted_url: entry.submitted_url, final_url: entry.final_url, file_name: entry.file_name, accessed_at: entry.accessed_at, quotes: entry.quotes.map(({ text, source_start, source_end, status }) => ({ text, source_start, source_end, status })), warnings: entry.warnings };
 }
