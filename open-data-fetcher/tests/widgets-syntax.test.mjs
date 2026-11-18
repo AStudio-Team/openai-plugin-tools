@@ -39,3 +39,10 @@ test("previewWidget script parses as a valid ES module", () => {
   const script = extractModuleScript(previewWidget(bundle));
   assertParsesAsModule(script);
 });
+
+test("previewWidget hands the export to the host in the resource shape", () => {
+  const bundle = inlineBundle();
+  const script = extractModuleScript(previewWidget(bundle));
+  assert.match(script, /app\.downloadFile\(\{contents:\[\{type:'resource'/);
+  assert.doesNotMatch(script, /app\.downloadFile\(\{name:/);
+});
