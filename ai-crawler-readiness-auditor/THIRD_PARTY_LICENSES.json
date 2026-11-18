@@ -1,5 +1,5 @@
 {
-  "@hono/node-server@2.1.4": {
+  "@hono/node-server@2.1.9": {
     "licenses": "MIT",
     "repository": "https://github.com/honojs/node-server",
     "publisher": "Yusuke Wada",
@@ -51,7 +51,7 @@
     "repository": "https://github.com/ajv-validator/ajv",
     "publisher": "Evgeny Poberezkin"
   },
-  "body-parser@2.3.0": {
+  "body-parser@2.4.0": {
     "licenses": "MIT",
     "repository": "https://github.com/expressjs/body-parser"
   },
@@ -201,7 +201,7 @@
     "repository": "https://github.com/epoberezkin/fast-deep-equal",
     "publisher": "Evgeny Poberezkin"
   },
-  "fast-uri@3.1.8": {
+  "fast-uri@3.1.9": {
     "licenses": "BSD-3-Clause",
     "repository": "https://github.com/fastify/fast-uri",
     "publisher": "Vincent Le Goff",
@@ -262,7 +262,7 @@
     "publisher": "Jordan Harband",
     "email": "ljharb@gmail.com"
   },
-  "hono@4.13.13": {
+  "hono@4.13.19": {
     "licenses": "MIT",
     "repository": "https://github.com/honojs/hono",
     "publisher": "Yusuke Wada",
@@ -286,7 +286,7 @@
     "licenses": "ISC",
     "repository": "https://github.com/isaacs/inherits"
   },
-  "ip-address@10.7.3": {
+  "ip-address@10.7.6": {
     "licenses": "MIT",
     "repository": "https://github.com/beaugunderson/ip-address",
     "publisher": "Beau Gunderson",
@@ -417,7 +417,7 @@
     "publisher": "Douglas Christopher Wilson",
     "email": "doug@somethingdoug.com"
   },
-  "qs@6.16.0": {
+  "qs@6.17.1": {
     "licenses": "BSD-3-Clause",
     "repository": "https://github.com/ljharb/qs"
   },
@@ -567,7 +567,7 @@
     "repository": "https://github.com/StefanTerdell/zod-to-json-schema",
     "publisher": "Stefan Terdell"
   },
-  "zod@4.6.5": {
+  "zod@4.6.7": {
     "licenses": "MIT",
     "repository": "https://github.com/colinhacks/zod",
     "publisher": "Colin McDonnell",
