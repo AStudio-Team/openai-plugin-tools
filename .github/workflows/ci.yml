@@ -173,26 +173,26 @@ jobs:
           fi
       - name: Build production containers
         run: |
-          docker build -t plugin-pdf:ci pdf-table-to-excel
-          docker build -t plugin-arabic:ci gcc-arabic-writer
-          docker build -t plugin-ad-creative-lab:ci ad-creative-lab
-          docker build -t plugin-growth:ci growth-marketing-planner
-          docker build -t plugin-launch-plan:ci launch-plan-builder
-          docker build -t plugin-landing-copy:ci landing-page-copy-check
-          docker build -t plugin-schema-markup:ci schema-markup-generator
-          docker build -t plugin-social-planner:ci social-content-planner
-          docker build -t plugin-cold-email:ci cold-email-writer
-          docker build -t plugin-comparison-page:ci competitor-comparison-builder
-          docker build -t plugin-sales-collateral:ci sales-collateral-builder
-          docker build -t plugin-pricing-advisor:ci pricing-packaging-advisor
-          docker build -t plugin-content-strategy:ci content-strategy-planner
-          docker build -t plugin-ab-test:ci ab-test-planner
-          docker build -t plugin-retention:ci retention-playbook
-          docker build -t plugin-crawler-auditor:ci ai-crawler-readiness-auditor
-          docker build -t plugin-data:ci open-data-fetcher
-          docker build -t plugin-diagram:ci editable-diagram-builder
-          docker build -t plugin-verified-buy-link:ci verified-buy-link
-          docker build -t plugin-grounded:ci grounded-citations
+          docker build -t ci-plugin-pdf:ci pdf-table-to-excel
+          docker build -t ci-plugin-arabic:ci gcc-arabic-writer
+          docker build -t ci-plugin-ad-creative-lab:ci ad-creative-lab
+          docker build -t ci-plugin-growth:ci growth-marketing-planner
+          docker build -t ci-plugin-launch-plan:ci launch-plan-builder
+          docker build -t ci-plugin-landing-copy:ci landing-page-copy-check
+          docker build -t ci-plugin-schema-markup:ci schema-markup-generator
+          docker build -t ci-plugin-social-planner:ci social-content-planner
+          docker build -t ci-plugin-cold-email:ci cold-email-writer
+          docker build -t ci-plugin-comparison-page:ci competitor-comparison-builder
+          docker build -t ci-plugin-sales-collateral:ci sales-collateral-builder
+          docker build -t ci-plugin-pricing-advisor:ci pricing-packaging-advisor
+          docker build -t ci-plugin-content-strategy:ci content-strategy-planner
+          docker build -t ci-plugin-ab-test:ci ab-test-planner
+          docker build -t ci-plugin-retention:ci retention-playbook
+          docker build -t ci-plugin-crawler-auditor:ci ai-crawler-readiness-auditor
+          docker build -t ci-plugin-data:ci open-data-fetcher
+          docker build -t ci-plugin-diagram:ci editable-diagram-builder
+          docker build -t ci-plugin-verified-buy-link:ci verified-buy-link
+          docker build -t ci-plugin-grounded:ci grounded-citations
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: openai-plugin-submission-zips
