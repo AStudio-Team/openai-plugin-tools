@@ -178,10 +178,10 @@ class ManifestAndPackageTests(unittest.TestCase):
     def test_landing_copy_version_is_consistent(self):
         package = json.loads((ROOT / "landing-page-copy-check" / "package.json").read_text())
         lock = json.loads((ROOT / "landing-page-copy-check" / "package-lock.json").read_text())
-        self.assertEqual(self.landing_copy["version"], "1.0.1")
-        self.assertEqual(package["version"], "1.0.1")
-        self.assertEqual(lock["version"], "1.0.1")
-        self.assertEqual(lock["packages"][""]["version"], "1.0.1")
+        self.assertEqual(self.landing_copy["version"], "1.0.2")
+        self.assertEqual(package["version"], "1.0.2")
+        self.assertEqual(lock["version"], "1.0.2")
+        self.assertEqual(lock["packages"][""]["version"], "1.0.2")
 
     def test_landing_copy_mcp_public_prefix_is_exact(self):
         review = self.landing_copy["extensions"]["com.openai"]["review"]
