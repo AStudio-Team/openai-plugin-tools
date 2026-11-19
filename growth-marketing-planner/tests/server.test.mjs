@@ -136,7 +136,7 @@ test("MCP export tool still rejects a plan whose rationale fabricates proof", as
 test("MCP export tool still rejects a plan whose doNotDo list carries a secret-shaped string", async context => {
   const server = createHttpServer(); const port = await listen(server); context.after(() => new Promise(resolve => server.close(resolve)));
   const plan = finalizePlan({ confirmedBrief: briefWithoutBulkConstraint, selectedStrategy: strategies[0], selectionConfirmed: true, planVersion: 1 });
-  plan.doNotDo = [...plan.doNotDo, "sk-abcdefghijklmnopqrstuvwx"];
+  plan.doNotDo = [...plan.doNotDo, "sk-" + "abcdefghijklmnopqrstuvwx"];
   const exported = await (await rpc(port, "tools/call", { name: "export_growth_plan", arguments: { plan, format: "markdown", fileBaseName: "northstar-growth-plan" } })).json();
   assert.equal(exported.result.isError, true); assert.match(exported.result.content[0].text, /credentials/);
 });
