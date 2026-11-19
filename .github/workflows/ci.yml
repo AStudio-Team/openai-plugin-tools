@@ -173,26 +173,26 @@ jobs:
           fi
       - name: Build production containers
         run: |
-          docker build -t openai-plugin-pdf:ci pdf-table-to-excel
-          docker build -t openai-plugin-arabic:ci gcc-arabic-writer
-          docker build -t openai-plugin-ad-creative-lab:ci ad-creative-lab
-          docker build -t openai-plugin-growth:ci growth-marketing-planner
-          docker build -t openai-plugin-launch-plan:ci launch-plan-builder
-          docker build -t openai-plugin-landing-copy:ci landing-page-copy-check
-          docker build -t openai-plugin-schema-markup:ci schema-markup-generator
-          docker build -t openai-plugin-social-planner:ci social-content-planner
-          docker build -t openai-plugin-cold-email:ci cold-email-writer
-          docker build -t openai-plugin-comparison-page:ci competitor-comparison-builder
-          docker build -t openai-plugin-sales-collateral:ci sales-collateral-builder
-          docker build -t openai-plugin-pricing-advisor:ci pricing-packaging-advisor
-          docker build -t openai-plugin-content-strategy:ci content-strategy-planner
-          docker build -t openai-plugin-ab-test:ci ab-test-planner
-          docker build -t openai-plugin-retention:ci retention-playbook
-          docker build -t openai-plugin-crawler-auditor:ci ai-crawler-readiness-auditor
-          docker build -t openai-plugin-data:ci open-data-fetcher
-          docker build -t openai-plugin-diagram:ci editable-diagram-builder
-          docker build -t openai-plugin-verified-buy-link:ci verified-buy-link
-          docker build -t openai-plugin-grounded:ci grounded-citations
+          docker build -t ci-plugin-pdf:ci pdf-table-to-excel
+          docker build -t ci-plugin-arabic:ci gcc-arabic-writer
+          docker build -t ci-plugin-ad-creative-lab:ci ad-creative-lab
+          docker build -t ci-plugin-growth:ci growth-marketing-planner
+          docker build -t ci-plugin-launch-plan:ci launch-plan-builder
+          docker build -t ci-plugin-landing-copy:ci landing-page-copy-check
+          docker build -t ci-plugin-schema-markup:ci schema-markup-generator
+          docker build -t ci-plugin-social-planner:ci social-content-planner
+          docker build -t ci-plugin-cold-email:ci cold-email-writer
+          docker build -t ci-plugin-comparison-page:ci competitor-comparison-builder
+          docker build -t ci-plugin-sales-collateral:ci sales-collateral-builder
+          docker build -t ci-plugin-pricing-advisor:ci pricing-packaging-advisor
+          docker build -t ci-plugin-content-strategy:ci content-strategy-planner
+          docker build -t ci-plugin-ab-test:ci ab-test-planner
+          docker build -t ci-plugin-retention:ci retention-playbook
+          docker build -t ci-plugin-crawler-auditor:ci ai-crawler-readiness-auditor
+          docker build -t ci-plugin-data:ci open-data-fetcher
+          docker build -t ci-plugin-diagram:ci editable-diagram-builder
+          docker build -t ci-plugin-verified-buy-link:ci verified-buy-link
+          docker build -t ci-plugin-grounded:ci grounded-citations
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: openai-plugin-submission-zips
