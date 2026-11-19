@@ -46,10 +46,22 @@ function normalized(value) {
 }
 function unique(values) { return [...new Set(values.filter(Boolean))]; }
 function byteSize(value) { return Buffer.byteLength(JSON.stringify(value), "utf8"); }
+function withoutSafeguardText(value) {
+  if (Array.isArray(value)) return value.map(withoutSafeguardText);
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value)
+        .filter(([key]) => key !== "doNotDo" && key !== "completionNotice")
+        .map(([key, item]) => [key, withoutSafeguardText(item)]),
+    );
+  }
+  return value;
+}
 function assertSafeObject(value) {
   const raw = JSON.stringify(value);
   if (SECRET_SHAPE.test(raw)) throw new Error("Do not submit credentials, private keys, customer lists, or secret tokens.");
-  if (FORBIDDEN_REQUEST.test(raw)) throw new Error("This request is outside the planner's safety boundary. Use ethical, evidence-based planning without scraping, fabricated proof, vulnerable targeting, live account access, or guaranteed outcomes.");
+  const requestRaw = JSON.stringify(withoutSafeguardText(value));
+  if (FORBIDDEN_REQUEST.test(requestRaw)) throw new Error("This request is outside the planner's safety boundary. Use ethical, evidence-based planning without scraping, fabricated proof, vulnerable targeting, live account access, or guaranteed outcomes.");
 }
 function titleCase(value) { return text(value).replaceAll("_", " ").replace(/\b\w/g, letter => letter.toUpperCase()); }
 function markdownList(values, empty = "None stated") { return values?.length ? values.map(item => `- ${text(item)}`).join("\n") : `- ${empty}`; }

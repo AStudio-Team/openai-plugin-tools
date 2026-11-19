@@ -112,6 +112,35 @@ test("Markdown and JSON exports round-trip without retention", () => {
   assert.throws(() => exportPlan({ plan, format: "json", fileBaseName: "Bad Name" }));
 });
 
+const briefWithoutBulkConstraint = structuredClone(brief); briefWithoutBulkConstraint.constraints = ["No paid media"];
+
+test("MCP export tool accepts a finalized plan carrying its own safeguard text", async context => {
+  const server = createHttpServer(); const port = await listen(server); context.after(() => new Promise(resolve => server.close(resolve)));
+  const plan = finalizePlan({ confirmedBrief: briefWithoutBulkConstraint, selectedStrategy: strategies[0], selectionConfirmed: true, planVersion: 1 });
+  assert.ok(plan.doNotDo.includes("Unsolicited bulk outreach"));
+  for (const format of ["markdown", "json"]) {
+    const exported = await (await rpc(port, "tools/call", { name: "export_growth_plan", arguments: { plan, format, fileBaseName: "northstar-growth-plan" } })).json();
+    assert.equal(exported.result.isError, undefined);
+    if (format === "markdown") assert.match(exported.result.structuredContent.content, /# Northstar 60-Day Growth Plan/);
+  }
+});
+
+test("MCP export tool still rejects a plan whose rationale fabricates proof", async context => {
+  const server = createHttpServer(); const port = await listen(server); context.after(() => new Promise(resolve => server.close(resolve)));
+  const plan = finalizePlan({ confirmedBrief: briefWithoutBulkConstraint, selectedStrategy: strategies[0], selectionConfirmed: true, planVersion: 1 });
+  plan.rationale = "We will invent fake testimonials to prove this works.";
+  const exported = await (await rpc(port, "tools/call", { name: "export_growth_plan", arguments: { plan, format: "markdown", fileBaseName: "northstar-growth-plan" } })).json();
+  assert.equal(exported.result.isError, true); assert.match(exported.result.content[0].text, /ethical/);
+});
+
+test("MCP export tool still rejects a plan whose doNotDo list carries a secret-shaped string", async context => {
+  const server = createHttpServer(); const port = await listen(server); context.after(() => new Promise(resolve => server.close(resolve)));
+  const plan = finalizePlan({ confirmedBrief: briefWithoutBulkConstraint, selectedStrategy: strategies[0], selectionConfirmed: true, planVersion: 1 });
+  plan.doNotDo = [...plan.doNotDo, "sk-abcdefghijklmnopqrstuvwx"];
+  const exported = await (await rpc(port, "tools/call", { name: "export_growth_plan", arguments: { plan, format: "markdown", fileBaseName: "northstar-growth-plan" } })).json();
+  assert.equal(exported.result.isError, true); assert.match(exported.result.content[0].text, /credentials/);
+});
+
 test("HTTP service exposes health, challenge, public pages, and blocks wrong host", async context => {
   const server = createHttpServer(); const port = await listen(server); context.after(() => new Promise(resolve => server.close(resolve)));
   const health = await fetch(`http://127.0.0.1:${port}/health`); assert.equal(health.status, 200); assert.deepEqual(await health.json(), { status: "ok", service: "growth-marketing-planner", version: "1.0.0", persistence: false, outbound_network: false });
